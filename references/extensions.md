@@ -1,5 +1,18 @@
 # Extensions Reference
 
+## Contents
+
+- [withAsyncData — async data fetching (recommended pattern)](#withasyncdata--async-data-fetching-recommended-pattern)
+- [withAbort — race condition prevention](#withabort--race-condition-prevention)
+- [withChangeHook — react to state changes](#withchangehook--react-to-state-changes)
+- [withConnectHook — lazy-start on first subscriber](#withconnecthook--lazy-start-on-first-subscriber)
+- [withComputed — writable computed](#withcomputed--writable-computed)
+- [withAsync — async mutations](#withasync--async-mutations)
+- [Rich async status for high-quality UX](#rich-async-status-for-high-quality-ux)
+- [Suspense — global state initialization](#suspense--global-state-initialization)
+- [withRollback / withTransaction — optimistic updates](#withrollback--withtransaction--optimistic-updates)
+- [framePromise — Error handling without try/catch](#framepromise--error-handling-without-trycatch)
+
 ## withAsyncData — async data fetching (recommended pattern)
 
 ```typescript
@@ -158,6 +171,18 @@ const MyComponent = reatomComponent(() => {
   )
 })
 ```
+
+## Rich async status for high-quality UX
+
+Prefer `.status()` over a single `.ready()` check whenever the UI has more than one possible async state. The status flags are intentionally richer than “loading/not loading”:
+
+- `isFirstPending`: initial request; show skeletons/full-page loading.
+- `isPending` after data exists: background refresh; keep stale content and show a subtle inline pending indicator.
+- `isFulfilled`: render the happy path with narrowed `status.data` for `withAsyncData`/route loaders.
+- `isRejected`: decide between full error (no usable data yet) and inline refresh error (when stale data remains meaningful).
+- `isEverPending` / `isEverSettled`: handle rare aborted or never-started edges.
+
+For route loaders, put these branches in `route.render(self)` so TypeScript can narrow `self.loader.status().data` before it reaches the page component. Passing loaders into components spreads async policy through the view tree and often causes `any` or redundant null checks.
 
 ## Suspense — global state initialization
 

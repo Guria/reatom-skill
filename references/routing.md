@@ -1,5 +1,21 @@
 # Routing Reference
 
+## Contents
+
+- [Basic routes](#basic-routes)
+- [Nested routes](#nested-routes)
+- [Layout routes with render (v1001+ semantics)](#layout-routes-with-render-v1001-semantics)
+- [Protected routes — auth guard](#protected-routes--auth-guard)
+- [Dynamic route collisions with literal siblings](#dynamic-route-collisions-with-literal-siblings)
+- [Route loaders — data fetching](#route-loaders--data-fetching)
+- [Route loaders — factory pattern (forms + actions)](#route-loaders--factory-pattern-forms--actions)
+- [Modal gate — state in memory, no URL](#modal-gate--state-in-memory-no-url)
+- [Search-only routes](#search-only-routes)
+- [URL codecs (v1001+)](#url-codecs-v1001)
+- [Relative navigation (v1001+)](#relative-navigation-v1001)
+- [urlAtom and global state](#urlatom-and-global-state)
+- [Full SPA example](#full-spa-example)
+
 Routing validates params and search with any [Standard Schema](https://github.com/standard-schema/standard-schema) compliant library — Zod, Valibot, ArkType, etc. Examples below use Zod, but any Standard Schema works identically. **Check the target codebase's `package.json` to see which validation library is already in use and prefer that one.**
 
 **Version note:** this reference is written for v1001 routing. In v1000, `layout: true`, URL codecs, and `route.go.relative()` are not available. v1000 `render` matches partially by default; use `exactRender: true` for page/exact rendering. In v1001, page routes are exact-by-default and wrapper routes need `layout: true`.
@@ -237,29 +253,59 @@ Route loaders are async computeds with `withAsyncData` built-in. They run when r
 
 Loader API (same as `withAsyncData`): **route.loader.data()**, **.ready()**, **.error()**, **.retry()**, **.status()**.
 
+Prefer handling loader state in the route `render(self)` instead of inside the page component. `status()` is a discriminated union; checking its flags in `render` lets TypeScript narrow `status.data` before you pass it to typed UI components. It also gives better UX than a single `.ready()` check:
+
+- `isFirstPending` — first load only; use for page skeletons/full loading states.
+- `isPending` with existing data — background refresh; keep stale content visible and show an inline spinner/progress affordance.
+- `isFulfilled` — normal render; `status.data` is the resolved loader payload.
+- `isRejected` — show a full-page error when no useful data has ever loaded, or an inline refresh error when preserving stale data is appropriate for that resource.
+- `isEverPending` / `isEverSettled` — historical flags useful for rare aborted/no-data edges.
+
 ```typescript
 const userRoute = reatomRoute({
   path: 'users/:userId',
   async loader(params) {
-    const user = await wrap(
-      fetch(`/api/users/${params.userId}`).then((r) => r.json()),
-    )
-    return user
+    const user = await wrap(api.getUser(params.userId))
+    return { user }
+  },
+  render(self) {
+    const status = self.loader.status()
+
+    if (status.isFirstPending) return <UserPageSkeleton />
+
+    if (status.isFulfilled) {
+      return <UserPage model={status.data} />
+    }
+
+    // After the first success, a pending status means background refresh.
+    // Keep the previous page model visible and show a subtle refresh affordance.
+    if (status.isPending && status.data) {
+      return <UserPage model={status.data} refreshing />
+    }
+
+    if (status.isRejected) {
+      return <PageError error={self.loader.error() ?? new Error('Request failed')} onRetry={self.loader.retry} />
+    }
+
+    return <></>
   },
 })
 
-// Access loader state in components
-const UserPage = reatomComponent(() => {
-  const params = userRoute()
-  if (!params) return null
-  const ready = userRoute.loader.ready()
-  const user = userRoute.loader.data()
-  const error = userRoute.loader.error()
-  if (!ready) return <div>Loading...</div>
-  if (error) return <div>Error: {error.message}</div>
-  return <div><h1>{user.name}</h1></div>
+const UserPage = reatomComponent(({
+  model,
+  refreshing,
+}: {
+  model: { user: User }
+  refreshing?: boolean
+}) => {
+  return <>
+    {refreshing && <InlineSpinner />}
+    <h1>{model.user.name}</h1>
+  </>
 })
 ```
+
+For list/search routes, avoid replacing the whole page on every search-param change. After the first successful load, `isPending` means “refreshing”; keep previous data rendered and show a small inline pending indicator. If your loader/data shape preserves stale data on refresh failures, show the error inline instead of throwing away usable content.
 
 ## Route loaders — factory pattern (forms + actions)
 
@@ -409,26 +455,41 @@ const loginRoute = rootRoute.reatomRoute({
 })
 ```
 
-### Auth redirect in loader
+### Auth redirects and concrete loader payloads
 
-For auth pages, return `null` from the loader to block the route and redirect already-logged-in users:
+Do not put auth redirects or guard decisions inside a loader by returning `null`. That turns the loader payload into `T | null`, so every render and component has to defend against impossible `null` cases and TypeScript can no longer express “this page has a model”. Put route-blocking decisions in `params()` (or a parent guard route) before the loader runs, and keep the loader return type concrete.
 
 ```typescript
 const loginRoute = rootRoute.reatomRoute({
   path: 'login',
-  async loader() {
-    const token = authToken()
-    if (token) {
-      urlAtom.go('/dashboard')  // redirect
-      return null  // blocks the route
+  params() {
+    if (authToken()) {
+      dashboardRoute.go()
+      return null // blocks route before loader, but loader data stays concrete
     }
+    return {}
+  },
+  async loader() {
+    const form = reatomLoginForm()
+    const submit = action(async () => {
+      // authenticate, update shared auth atoms, navigate on success
+    }).extend(withAsync({ status: true }))
 
-    const form = createLoginForm()
-    // ... create action ...
-    return { form, action: loginAction }
+    return { form, submit }
+  },
+  render(self) {
+    const status = self.loader.status()
+    if (status.isFirstPending) return <AuthSkeleton />
+    if (status.isFulfilled) return <LoginPage model={status.data} />
+    if (status.isPending && status.data) return <LoginPage model={status.data} refreshing />
+    if (status.isRejected) return <PageError error={self.loader.error() ?? new Error('Request failed')} />
+
+    return <></>
   },
 })
 ```
+
+Use the same pattern for private route trees: a parent guard route `params()` can redirect unauthenticated users and return `{}` for descendants. Descendant loaders can then assume the guard has passed and return typed page models without nullable escape hatches.
 
 ### Pre-fill settings form from persisted atoms
 

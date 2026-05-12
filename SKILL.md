@@ -377,11 +377,14 @@ However, `withConnectHook` *does* support returning a cleanup function for third
 - `route.go()` takes params object or nothing — NOT a path string
 - `urlAtom()` returns a `URL` object, not a string — use `urlAtom().pathname`
 - Never use `urlAtom().startsWith()` — use `route.match()` instead
-- Loader returns `null` to block the route — use for auth redirects
+- Use `params()` returning `null` to block/redirect a route before its loader runs. Avoid returning `null` from loaders for auth/redirect control flow because it makes loader data nullable and weakens TypeScript narrowing.
 - **Separate routes for create vs edit** — don't use `params.id === 'new'` conditional logic
 - **Constrain dynamic params when literal siblings exist** — route patterns like `projects/new` and `projects/:projectId` can both match `/projects/new` unless `:projectId` is validated to reject `new`. Use a Standard Schema on `params` that matches your actual ID format (`z.uuid()`, prefixed regex, etc.). Broad `z.string()` is not enough for IDs next to literal routes.
 - **Do not hide route collisions by taking only the first outlet** — rendering `outlet().at(0)` may mask duplicate matches while the wrong loader still runs. Fix the route match with param schemas or route structure.
 - **Parent route params are merged into child params** — if a guard route returns `{ user }`, child route schemas and `go()` types may need to account for it. For auth guards, return `{}` unless descendants really need injected params; read shared user atoms/resources in loaders/components instead.
+- **Keep loader payloads concrete** — redirects, auth checks, and feature gates belong in route `params()` or a parent guard route, not as `return null` branches inside the loader. A nullable loader result forces every render/component to handle `null` even when the page model should be guaranteed.
+- **Handle loader async states in the route `render(self)`** — prefer `const status = self.loader.status()` in `render`, branch on the discriminated flags there, and pass narrowed `status.data` (or a typed model) to UI components. This keeps components typed and focused instead of passing `loader` props or falling back to `any`.
+- **Use the full status model for UX** — `isFirstPending` is for initial page skeletons; `isPending` with existing data is for subtle refresh indicators/stale-while-revalidate UI; `isFulfilled` gives narrowed data for normal render; `isRejected` decides whether to show a full error (no useful data yet) or an inline refresh error (stale data still visible, when your status/data shape supports it).
 
 ### Forms
 
@@ -438,6 +441,9 @@ Reatom provides a `shadcn`-like code delivery system via `jsrepo` at [github.com
 - **Manual data fetching** — use `computed` + `withAsyncData` instead of `effect` + `action`
 - **Identity actions** — don't create actions that just forward to `atom.set()`
 - **Route component checks** — don't do `if (!route.match()) return null`. Use `render` option
+- **Passing route loaders into page components** — route render should read `self.loader.status()`, choose loading/error/fulfilled UI, and pass typed data/model props to components. Passing a loader prop spreads routing/async concerns into view components and often leads to `any`.
+- **Nullable loader payloads for redirects** — don't return `null` from a loader just to redirect or block a page. Put that decision in route `params()` / parent guard routes so loader data stays concrete and TypeScript can narrow `status.data` cleanly.
+- **Using `.ready()` as the only loading branch** — `.ready()` hides the difference between first load, background refresh, fulfilled, rejected, and aborted states. Use `.status()` for route loaders and async data when UI quality matters.
 - **Module-level forms** — create inside route loaders for lifecycle management
 - **Single route for create/edit** — use separate routes with separate loaders
 - **Broad dynamic routes next to literal routes** — `:id` with `z.string()` beside `new`, `create`, `settings`, etc. lets literal pages also match the detail route. Use domain-shaped IDs (UUID, numeric, prefixed IDs, slugs with reserved-word exclusion) as a Standard Schema on the dynamic route.

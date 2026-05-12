@@ -85,39 +85,64 @@ Both patterns eliminate identity actions. Choose based on whether you want granu
 - Duplicate structure depth in names: `users.paging.current`
 - Name reusable factories that create atom primitives/scoped models with the `reatom*` convention: `reatomUser(userDto, 'users' + userDto.id)`, `reatomSessionForm(...)`, `reatomFeatureFlag(...)`. Prefer this over generic `create*` / `make*` names so custom factories look like Reatom primitives.
 
-## Component pattern — pull everything from loader
+## Component pattern — route render narrows, components receive models
 
-Components should only read from the route loader. Model files contain only shared app-wide state.
+Route loaders should be the source of route-specific forms/actions/data, while the route `render(self)` should own loader status branching. Page components should receive a typed model/data prop, not a `loader` prop. This keeps routing and async lifecycle concerns at the route boundary and avoids `any` creeping into form/model props.
 
 ```tsx
-// ❌ Bad — imports form and actions from model files
+// ❌ Bad — imports route-specific form/actions from model files or passes loader
 import { userForm, saveUserAction } from '../usersModel'
+const UserFormPage = reatomComponent(({ loader }: { loader: any }) => { /* ... */ })
 
-// ✅ Good — everything comes from the route loader
-const UserFormPage = reatomComponent(() => {
-  const isCreate = userCreateRoute.match()
-  const loader = isCreate ? userCreateRoute.loader : userEditRoute.loader
+// ✅ Good — loader creates the scoped model, render narrows status.data
+const reatomUserEditModel = (user: User) => {
+  const form = reatomUserForm(user)
+  const saveUser = action(async () => wrap(api.saveUser(user.id, form()))).extend(
+    withAsync({ status: true }),
+  )
+  return { form, saveUser, user }
+}
 
-  const ready = loader.ready()
-  const data = loader.data()
-  const error = loader.error()
+type UserEditModel = ReturnType<typeof reatomUserEditModel>
 
-  if (!ready) return <div>Loading...</div>
-  if (error) return <div>Error: {error.message}</div>
-  if (!data) return null
+const userEditRoute = usersRoute.reatomRoute({
+  path: ':id/edit',
+  async loader({ id }) {
+    const user = await wrap(api.getUser(id))
+    return reatomUserEditModel(user)
+  },
+  render(self) {
+    const status = self.loader.status()
+    if (status.isFirstPending) return <UserFormSkeleton />
+    if (status.isFulfilled) return <UserFormPage model={status.data} />
+    if (status.isPending && status.data) return <UserFormPage model={status.data} refreshing />
+    if (status.isRejected) return <PageError error={self.loader.error() ?? new Error('Request failed')} />
 
-  const { form, saveUserAction } = data
-  const { fields, submit, validation } = form
-  const saveStatus = saveUserAction.status()
+    return <></>
+  },
+})
+
+const UserFormPage = reatomComponent(({
+  model,
+  refreshing,
+}: {
+  model: UserEditModel
+  refreshing?: boolean
+}) => {
+  const { form, saveUser } = model
+  const saveStatus = saveUser.status()
 
   return (
-    <form onSubmit={(e) => { e.preventDefault(); saveUserAction() }}>
-      <input {...bindField(fields.name)} />
+    <form onSubmit={(e) => { e.preventDefault(); saveUser() }}>
+      <input {...bindField(form.fields.name)} />
+      {refreshing && <InlineSpinner />}
       <button disabled={saveStatus.isPending}>Save</button>
     </form>
   )
 })
 ```
+
+Keep model files for shared app-wide state. If a form/action exists only for a route instance, create it in that route loader and expose its type with `ReturnType` from a `reatom*` factory or from the loader model shape.
 
 ## Computed factory / scoped model pattern
 
