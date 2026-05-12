@@ -1,11 +1,11 @@
 ---
 name: reatom
-description: Expert guide for Reatom v1000+ state management. Use when building reactive state, forms, routing, async data fetching, persistence, or framework integration with @reatom/core and framework adapters (@reatom/react, @reatom/vue, @reatom/solid-js, @reatom/preact, @reatom/lit, @reatom/jsx).
+description: Expert guide for Reatom v1000+ state management. Use for any task involving @reatom/* packages — reactive state, atoms, actions, computeds, effects, forms, routing, async data, persistence, framework adapters (@reatom/react, @reatom/vue, @reatom/solid-js, @reatom/preact, @reatom/lit, @reatom/jsx), testing, or migrating from v3. Triggers on files importing from @reatom/*, reactive/atom patterns, or any Reatom question.
 ---
 
 # Reatom v1000+
 
-2 KB gzipped, framework-agnostic reactive state management. Atom-centric model where all primitives inherit from a single core — the atom.
+Atom-centric reactive state management. All primitives (actions, computeds, effects) are built on a single core — the atom.
 
 > **⚠️ v1000+ only — do not rely on any v3 or earlier packages.** The v3 ecosystem (`@reatom/lens`, `@reatom/hooks`, `@reatom/effects`, `@reatom/persist-web-storage`, etc.) is completely separate and incompatible. v1000+ consolidated everything into `@reatom/core` and `@reatom/react`. When researching, always target the `v1000+` branch — v3 docs will mislead you.
 
@@ -14,6 +14,21 @@ description: Expert guide for Reatom v1000+ state management. Use when building 
 - **Repo**: https://github.com/reatom/reatom
 - **Docs**: https://v1000.reatom.dev
 - **Examples**: https://github.com/reatom/reatom/tree/v1000/examples
+
+### Reference files — read on demand
+
+| File | Read when |
+|---|---|
+| `references/extensions.md` | Using `.extend()`, looking up `withAsyncData`, `withAbort`, `withChangeHook`, `withConnectHook`, `withComputed`, `withSuspense`, `withRollback`, `withTransaction`, `framePromise` |
+| `references/routing.md` | Working with `reatomRoute`, nested routes, loaders, layouts, URL params, navigation, protected routes |
+| `references/forms.md` | Working with `reatomForm`, `bindField`, field validation, form factories |
+| `references/persistence.md` | Using `withLocalStorage`, `withIndexedDb`, `withCookie`, or any storage adapter |
+| `references/react.md` | Using `@reatom/react`: `reatomComponent`, `bindField`, StrictMode issues |
+| `references/jsx.md` | Using `@reatom/jsx` native JSX runtime, CSS-in-JS, direct DOM bindings |
+| `references/patterns.md` | Architectural decisions: atomization, standalone atoms vs lenses, file organization |
+| `references/sampling.md` | Debounce/throttle, `take()`, `onEvent()`, `race()`, `abortVar`, checkpoint pattern |
+| `references/packages.md` | Looking up which @reatom/* package to install, checking if a v3 package is deprecated |
+| `references/migration.md` | Migrating code from v3 to v1000+, mapping old APIs to new |
 
 ## Core Primitives
 
@@ -314,6 +329,16 @@ These are the most common mistakes. Read before writing any Reatom code.
   })
   ```
 
+### Lifecycle & Automatic Cleanup
+
+Reatom's reactive context tracks and cleans up resources automatically — effects, aborts, subscriptions are disposed when atoms disconnect or computations rerun. Manual unsubscribe/cancel/dispose is rarely needed.
+
+The context composes: nesting a `computed` inside an `effect`, an `effect` inside `withConnectHook`, or `wrap()` inside any of them — cleanup and abort propagation works across all layers. There is a single reactive call stack, and `abortVar` gives access to its abort signal from anywhere inside it.
+
+Reatom primitives that create reactive resources (`effect`, `computed`, `action` with `withAbort`/`withAsyncData`) are already tracked by the context — they clean up and abort themselves. There is no need to manually return their unsubscribe handles from `withConnectHook`.
+
+However, `withConnectHook` *does* support returning a cleanup function for third-party resources that the reactive context doesn't manage (DOM listeners, WebSocket connections, library instances). If the callback returns a function, it is called on disconnect. Use this for non-Reatom cleanup. For Reatom-managed resources, just call them — the context handles the rest.
+
 ### Build & Packages
 
 - **ES2017+ build target required** — `wrap()` relies on native `async`/`await` microtask semantics. If your bundler/TS targets below `es2017`, `async/await` gets compiled to `.then()` chains which breaks `wrap()`'s seal → `"missing async stack"` error. Ensure **all** toolchain targets (TypeScript, bundler, test runner) are `es2017` or higher.
@@ -363,6 +388,27 @@ These are the most common mistakes. Read before writing any Reatom code.
 - `ReatomForm` is not exported — define inline interface
 - Use `React.ReactNode` instead of `JSX.Element`
 
+## Package Index
+
+| Package | Purpose |
+|---|---|
+| `@reatom/core` | Core primitives, extensions, forms, routing, persistence, built-in methods |
+| `@reatom/react` | React adapter: `reatomComponent`, `bindField` |
+| `@reatom/preact` | Preact adapter |
+| `@reatom/vue` | Vue adapter |
+| `@reatom/solid-js` | Solid adapter |
+| `@reatom/lit` | Lit adapter |
+| `@reatom/jsx` | Native JSX runtime (no VDOM) — alternative to `@reatom/react` |
+| `@reatom/zod` | Zod v4 integration |
+| `@reatom/eslint-plugin` | ESLint rules |
+| `@reatom/admin` | Admin dashboard |
+
+Reatom provides a `shadcn`-like code delivery system via `jsrepo` at [github.com/reatom/reusables](https://github.com/reatom/reusables). Copy-paste abstract, pre-built Reatom components and hooks directly into your project.
+
+### Deprecated v3 packages — DO NOT USE in v1000+ codebases
+
+`@reatom/hooks`, `@reatom/async`, `@reatom/persist`, `@reatom/persist-*`, `@reatom/form`, `@reatom/url`, `@reatom/timer`, `@reatom/lens`, `@reatom/undo`, `@reatom/primitives`, `@reatom/npm-react`, `@reatom/npm-vue`, `@reatom/devtools` — all merged into `@reatom/core` or obsoleted.
+
 ## Anti-patterns
 
 - **Manual data fetching** — use `computed` + `withAsyncData` instead of `effect` + `action`
@@ -374,62 +420,4 @@ These are the most common mistakes. Read before writing any Reatom code.
 - **Syncing atoms with change hooks** — use `computed` / `withComputed` instead
 - **Avoiding atom props** — thinking that passing atoms to children components is an anti-pattern. It is the recommended way to decouple models from views!
 
-## v3 → v1000+ Migration
 
-| v3 | v1000+ |
-|---|---|
-| `ctx` parameter | implicit context (no `ctx`) |
-| `ctx.schedule(promise)` | `wrap(promise)` |
-| `ctx.spy(atom)` | `atom()` |
-| `ctx.get(atom)` | `peek(atom)` |
-| `atom(ctx, value)` | `atom.set(value)` |
-| `atom(callback)` | `computed(callback)` |
-| `ctx.spy(atom, cb)` | `ifChanged(atom, cb)` |
-| `ctx.spy(action, cb)` | `getCalls(action).forEach(cb)` |
-| `reatomAsync(cb)` | `action(cb).extend(withAsync())` |
-| `reatomResource(cb)` | `computed(cb).extend(withAsyncData())` |
-| `reaction` | `effect` |
-| `atom.onChange(cb)` | `atom.extend(withChangeHook(cb))` |
-| `onConnect(atom, cb)` | `atom.extend(withConnectHook(cb))` |
-| `withConcurrency` | `withAbort` |
-
-## Installation
-
-```bash
-npm install @reatom/core @reatom/react  # or your framework adapter
-```
-
-## Package Index
-
-| Package | Purpose |
-|---|---|
-| `@reatom/core` | Core primitives, extensions, forms, routing, persistence, methods (`framePromise`, `peek`, `wrap`, `sleep`, `schedule`, `take`, `onEvent`, `race`, `all`, `memo`, `variable`, `abortVar`, `throwAbort`, `log`, `settled`, `suspense`, `reatomLens`, `reatomObservable`, `ifChanged`, `getCalls`, `deatomize`, `effect`, `reatomTransaction`, `withRollback`, `withTransaction`, `withSuspense`, `withSuspenseInit`, `withSuspenseRetry`) |
-| `@reatom/react` | React adapter: `reatomComponent`, `bindField` |
-| `@reatom/preact` | Preact adapter |
-| `@reatom/vue` | Vue adapter |
-| `@reatom/solid-js` | Solid adapter |
-| `@reatom/lit` | Lit adapter |
-| `@reatom/jsx` | Native JSX runtime (no VDOM) with zero re-renders, direct DOM updates, and built-in CSS-in-JS. An alternative to `@reatom/react` for framework-less apps. |
-| `@reatom/devtools` | DevTools for debugging |
-| `@reatom/zod` | Zod v4 integration |
-| `@reatom/eslint-plugin` | ESLint rules |
-| `@reatom/admin` | Admin dashboard |
-
-### Reatom Reusables
-
-Reatom provides a `shadcn`-like code delivery system via `jsrepo` at [github.com/reatom/reusables](https://github.com/reatom/reusables). Use it to copy-paste abstract, pre-built Reatom components and hooks directly into your project.
-
-### Deprecated v1-v3 Packages (DO NOT USE)
-
-The following packages are from the v1-v3 ecosystem and are **deprecated**. Their functionality has been merged into `@reatom/core` in v1000+. **Never use these:**
-
-- `@reatom/hooks` — use `withChangeHook`, `withConnectHook` from core
-- `@reatom/async` — use `withAsync`, `withAsyncData` from core
-- `@reatom/persist` / `@reatom/persist-*` — use `withLocalStorage`, `withIndexedDb`, etc. from core
-- `@reatom/form` — use `reatomForm` from core
-- `@reatom/url` — use `reatomRoute` from core
-- `@reatom/timer` — use `wrap(sleep())` or `withAsyncData` polling
-- `@reatom/lens` — use `reatomLens` or `withComputed` from core
-- `@reatom/undo` — use `withRollback` from core
-- `@reatom/primitives` — use `reatomBoolean`, `reatomNumber`, etc. from core
-- `@reatom/npm-react` / `@reatom/npm-vue` etc. — use `@reatom/react`, `@reatom/vue`
