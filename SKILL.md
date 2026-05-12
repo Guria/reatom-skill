@@ -193,7 +193,7 @@ See [references/persistence.md](references/persistence.md) for complete persiste
 Quick reference:
 
 ```typescript
-import { atom, withLocalStorage, withSessionStorage, withIndexedDb, withBroadcastChannel, withCookie, withCookieStore } from '@reatom/core'
+import { atom, withLocalStorage, withSessionStorage, withIndexedDb, withBroadcastChannel, withCookie, withCookieStore, withSearchParams, searchParamsAtom } from '@reatom/core'
 
 const theme = atom<Theme>('light', 'theme').extend(withLocalStorage('theme'))
 const prefs = atom({}, 'prefs').extend(withSessionStorage('prefs'))
@@ -201,6 +201,12 @@ const cache = atom(new Map(), 'cache').extend(withIndexedDb('my-db'))
 const crossTab = atom(0, 'crossTab').extend(withBroadcastChannel('sync'))
 const token = atom('', 'token').extend(withCookie({ secure: true })('auth-token'))
 const session = atom('', 'session').extend(withCookieStore()('session-id'))
+
+// URL search params — shareable, bookmarkable state
+const searchQuery = atom('', 'searchQuery').extend(withSearchParams('q'))
+const pageNumber = atom(1, 'pageNumber').extend(withSearchParams('page', {
+  parse: (v) => Number(v ?? '1'),
+}))
 ```
 
 ## React Integration

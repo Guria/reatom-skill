@@ -11,6 +11,7 @@
 - [Route loaders - factory pattern (forms + actions)](#route-loaders--factory-pattern-forms--actions)
 - [Modal gate - state in memory, no URL](#modal-gate--state-in-memory-no-url)
 - [Search-only routes](#search-only-routes)
+  - [Route search schemas vs withSearchParams](#route-search-schemas-vs-withsearchparams)
 - [URL codecs (v1001+)](#url-codecs-v1001)
 - [Relative navigation (v1001+)](#relative-navigation-v1001)
 - [urlAtom and global state](#urlatom-and-global-state)
@@ -565,6 +566,31 @@ const dialogRoute = reatomRoute({
 // At URL: /profile?dialog=login
 dialogRoute() // { dialog: 'login' }
 // Close: dialogRoute.go({})
+```
+
+### Route search schemas vs withSearchParams
+
+Route `search` schemas and `withSearchParams` both sync state to URL query params, but serve different purposes:
+
+- **Route `search` schemas** — params that define route state, feed into loaders, and are part of route navigation. They are validated, typed, and scoped to the route lifecycle. Use when the param affects what data the page loads.
+
+- **`withSearchParams`** — standalone atoms that persist to the URL without being tied to a specific route. Use for UI state (filters, tabs, expanded sections, panel sizes) that multiple independent components read/write. See [persistence reference](persistence.md#url-search-params--withsearchparams) for the full API.
+
+```typescript
+// ✅ Route search — affects loader data
+const usersRoute = reatomRoute({
+  path: 'users',
+  search: z.object({ q: z.string().optional(), page: z.string().transform(Number).default('1') }),
+  async loader({ q, page }) { /* fetch with q + page */ },
+})
+
+// ✅ withSearchParams — standalone UI state, no loader involvement
+const sidebarCollapsed = atom(false, 'sidebar').extend(
+  withSearchParams('sidebar', {
+    parse: (v) => v === '1',
+    serialize: (v) => (v ? '1' : undefined),
+  }),
+)
 ```
 
 ## URL codecs (v1001+)

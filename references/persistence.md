@@ -143,6 +143,84 @@ const user = atom({ name: '', age: 0 }).extend(
 | `withIndexedDb` | ✅ | ✅ (BroadcastChannel) | Hundreds of MB | ❌ |
 | `withCookie` | ✅ | ❌ | 4KB | ✅ (sync) |
 | `withCookieStore` | ✅ | ✅ (change events) | 4KB | ✅ (async, Chrome 87+) |
+| `withSearchParams` | ✅ (in URL) | ✅ (URL changes) | URL length limit | ✅ |
+
+## URL Search Params — withSearchParams
+
+`withSearchParams` syncs atom state to the browser's URL search parameters. Unlike storage adapters, this persists state in the URL itself — shareable, bookmarkable, and tied to the current page.
+
+```typescript
+import { atom, withSearchParams, searchParamsAtom } from '@reatom/core'
+
+// Simple: sync atom to a URL param (string by default)
+const searchAtom = atom('', 'search').extend(withSearchParams('q'))
+
+// With parse/serialize for typed values
+const pageAtom = atom(1, 'page').extend(
+  withSearchParams('page', {
+    parse: (value) => Number(value ?? '1'),
+    serialize: (value) => String(value),
+  }),
+)
+
+// Scoped to a specific URL path (atom resets when navigating away)
+const filterAtom = atom('all', 'filter').extend(
+  withSearchParams('filter', {
+    path: '/results',  // only syncs on /results and subpaths
+  }),
+)
+
+// With replace history (no new history entry on change)
+const tabAtom = atom(0, 'tab').extend(
+  withSearchParams('tab', {
+    parse: (v) => Number(v ?? '0'),
+    replace: true,
+  }),
+)
+```
+
+### searchParamsAtom — low-level API
+
+`searchParamsAtom` is the underlying computed that reads all search params and provides `set`/`del`/`lens` methods:
+
+```typescript
+import { searchParamsAtom } from '@reatom/core'
+
+// Read all params as Record<string, string>
+const params = searchParamsAtom()  // { q: 'hello', page: '2' }
+
+// Set a param (pushes history entry)
+searchParamsAtom.set('sort', 'asc')
+
+// Set with replace (no new history entry)
+searchParamsAtom.set('sort', 'desc', true)
+
+// Delete a param
+searchParamsAtom.del('sort')
+
+// Create a typed lens atom for a specific param
+const pageSize = searchParamsAtom.lens('size', {
+  parse: (v) => Number(v ?? '20'),
+  serialize: (v) => String(v),
+})
+pageSize()   // 20
+pageSize.set(50)  // updates URL ?size=50
+```
+
+### Options
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `key` | `string` | **required** | URL parameter name |
+| `parse` | `(value?: string) => T` | identity | Parse URL string into typed value |
+| `serialize` | `(value: T) => string \| undefined` | `String` | Serialize value back to URL string. Return `undefined` to remove the param |
+| `replace` | `boolean` | `false` | Replace history entry instead of pushing |
+| `path` | `string` | `''` (any path) | Limit sync to a specific URL path. Append `/` for exact or `/*` for subpaths |
+
+### When to use withSearchParams vs route search schemas
+
+- **Route search schemas** (`reatomRoute({ search: z.object({...}) })`) — for params that define route state, affect loader inputs, and are part of navigation. Validated, typed, scoped to the route.
+- **`withSearchParams`** — for standalone atoms that need URL persistence without being tied to a specific route. Useful for UI state (filters, tabs, expanded sections) shared across independent components.
 
 ## Custom Storage Implementation
 
