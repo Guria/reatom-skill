@@ -125,8 +125,10 @@ Protected routes use `params()` callback returning `null` to block the route and
 // - Return an object to inject derived parameters
 // - Call .go() inside params for redirects
 
+const authToken = atom(localStorage.getItem('token'), 'authToken')
+
 const user = computed(async () => {
-  const token = localStorage.getItem('token')
+  const token = authToken()
   if (!token) return null
   return await wrap(fetch('/api/me').then((r) => r.json()))
 }, 'user').extend(withAsyncData())
@@ -134,13 +136,18 @@ const user = computed(async () => {
 const protectedRoute = layoutRoute.reatomRoute({
   layout: true,
   params() {
-    const userData = user.data()
-    // Not authenticated — redirect to login
-    if (!userData) {
-      if (user.ready() && !loginRoute.match()) {
-        loginRoute.go()
-      }
+    const token = authToken()
+    // No-token is a synchronous auth decision; do not wait on user.ready().
+    if (!token) {
+      if (!loginRoute.match()) loginRoute.go()
       return null  // blocks this route and all children
+    }
+
+    const userData = user.data()
+    // Token exists, so user.ready() represents the real /api/me request.
+    if (!userData) {
+      if (user.ready() && !loginRoute.match()) loginRoute.go()
+      return null
     }
     // Already logged in but on login page — redirect to dashboard
     if (loginRoute.match()) {
@@ -491,7 +498,7 @@ Routes:
 
 ```ts
 // routes.ts
-import { computed, reatomRoute, withAsyncData, wrap } from '@reatom/core'
+import { atom, computed, reatomRoute, withAsyncData, wrap } from '@reatom/core'
 import { z } from 'zod/v4'
 
 type User = { id: string; name: string; role: string }
@@ -513,8 +520,10 @@ export const loginRoute = layoutRoute.reatomRoute({
 })
 
 // auth state
+const authToken = atom(localStorage.getItem('token'), 'authToken')
+
 const user = computed(async () => {
-  const token = localStorage.getItem('token')
+  const token = authToken()
   if (!token) return null
   return await wrap(fetch('/api/me').then((r) => r.json()))
 }, 'user').extend(withAsyncData())
@@ -523,6 +532,12 @@ const user = computed(async () => {
 export const protectedRoute = layoutRoute.reatomRoute({
   layout: true,
   params() {
+    const token = authToken()
+    if (!token) {
+      if (!loginRoute.match()) loginRoute.go()
+      return null
+    }
+
     const userData = user.data()
     if (!userData) {
       if (user.ready() && !loginRoute.match()) loginRoute.go()

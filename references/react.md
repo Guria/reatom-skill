@@ -52,9 +52,26 @@ const MyForm = reatomComponent(() => {
 
 ## React-specific rules
 
-- Do not use React `useEffect`/`useState` to synchronize or mutate Reatom model state. Put state transitions in atoms, actions, computeds, or Reatom hooks/extensions; React should render and bind atoms, not own Reatom invariants.
+### React is only the view adapter
+
+In a Reatom app, React should render and bind atoms; it should not own model invariants. Treat React-owned state/effects as a **red flag** whenever they hold domain state, mirror atom values, trigger Reatom side effects, coordinate navigation/data loading, or decide app lifecycle. Those responsibilities belong in atoms, actions, computeds, route loaders, and Reatom lifecycle extensions.
+
+React built-in hooks are fine for isolated view/DOM integration: refs, focus, measurement, portals, media-query/read-only browser data, third-party UI-library hooks, memoizing expensive view calculations, stable DOM callbacks, or ephemeral widget state that does not affect application behavior. This warning is about React owning or synchronizing application state; it is not a ban on `@reatom/react` adapter APIs such as `reatomComponent`, `useAtom`, or `useWrap` when a codebase intentionally uses hook-style integration.
+
+- Do not use React `useEffect`/`useState` to synchronize or mutate Reatom model state. Put state transitions in atoms, actions, computeds, or Reatom hooks/extensions.
 - Components that call atom getters must be wrapped with `reatomComponent`; this applies to extracted child/row components as well as page-level components.
 - **Passing atoms as props is perfectly valid** — unlike Redux where passing state to children is sometimes discouraged, Reatom atoms are first-class primitives. Passing them as props (e.g., `<CheckboxField field={form.fields.rememberMe} />`) is the standard way to build abstract, reusable components and avoid prop drilling of values.
+
+## Initial render and instant async completion
+
+`reatomComponent` establishes its React subscription after the component is committed. That is normally fine for network requests and other real async work, but there is a subtle edge case: an async computed extended with `withAsyncData` may resolve in the same microtask as the first render when it has a cached/no-op branch (for example, “no token, return null”). A component that gates rendering only on `.ready()` can render a loading branch, miss the immediate settle notification, and remain stuck until some unrelated atom changes.
+
+Conceptual guidance:
+
+- Do not use an instantly resolving async atom's `.ready()` as the only source of truth for first-render app bootstrapping/auth inside React components.
+- Gate initial branching from synchronous state when possible: persisted token atoms, URL/route state, static config, explicit initialized atoms, or route params.
+- Use async `.data()`/`.ready()` for data that has a real async boundary (network, IndexedDB, timers) or after a component is already mounted and subscribed.
+- Avoid “fixing” this with React `useEffect`/`useState`; that mixes runtimes. Prefer changing the Reatom model so the first branch has a synchronous source of truth or an explicit initialization atom.
 
 ## StrictMode caveat
 
