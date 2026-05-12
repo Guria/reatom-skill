@@ -19,7 +19,8 @@ Atom-centric reactive state management. All primitives (actions, computeds, effe
 
 | File | Read when |
 |---|---|
-| `references/extensions.md` | Using `.extend()`, looking up `withAsyncData`, `withAbort`, `withChangeHook`, `withConnectHook`, `withComputed`, `withSuspense`, `withRollback`, `withTransaction`, `framePromise` |
+| `references/extensions.md` | Using built-in extensions: `withAsyncData`, `withAbort`, `withChangeHook`, `withConnectHook`, `withComputed`, `withSuspense`, `withRollback`, `withTransaction`, `framePromise` |
+| `references/writing-extensions.md` | Writing custom `.extend()` helpers, lifecycle/resource integration, middleware, hooks, type-safe extension APIs |
 | `references/routing.md` | Working with `reatomRoute`, nested routes, loaders, layouts, URL params, navigation, protected routes |
 | `references/forms.md` | Working with `reatomForm`, `bindField`, field validation, form factories |
 | `references/persistence.md` | Using `withLocalStorage`, `withIndexedDb`, `withCookie`, or any storage adapter |
@@ -78,7 +79,7 @@ effect(() => {
 
 ## Extensions
 
-Extensions add capabilities via `.extend()`. See [references/extensions.md](references/extensions.md) for complete API with examples (`withAsyncData`, `withAsync`, `withAbort`, `withChangeHook`, `withConnectHook`, `withComputed`, `withSuspense`, `withRollback`, `withTransaction`, `framePromise`).
+Extensions add capabilities via `.extend()`. See [references/extensions.md](references/extensions.md) for built-in APIs (`withAsyncData`, `withAsync`, `withAbort`, `withChangeHook`, `withConnectHook`, `withComputed`, `withSuspense`, `withRollback`, `withTransaction`, `framePromise`). When authoring reusable custom extensions, read [references/writing-extensions.md](references/writing-extensions.md).
 
 Quick reference — the two most common:
 
