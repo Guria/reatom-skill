@@ -5,18 +5,18 @@
 - [Basic routes](#basic-routes)
 - [Nested routes](#nested-routes)
 - [Layout routes with render (v1001+ semantics)](#layout-routes-with-render-v1001-semantics)
-- [Protected routes — auth guard](#protected-routes--auth-guard)
+- [Protected routes - auth guard](#protected-routes--auth-guard)
 - [Dynamic route collisions with literal siblings](#dynamic-route-collisions-with-literal-siblings)
-- [Route loaders — data fetching](#route-loaders--data-fetching)
-- [Route loaders — factory pattern (forms + actions)](#route-loaders--factory-pattern-forms--actions)
-- [Modal gate — state in memory, no URL](#modal-gate--state-in-memory-no-url)
+- [Route loaders - data fetching](#route-loaders--data-fetching)
+- [Route loaders - factory pattern (forms + actions)](#route-loaders--factory-pattern-forms--actions)
+- [Modal gate - state in memory, no URL](#modal-gate--state-in-memory-no-url)
 - [Search-only routes](#search-only-routes)
 - [URL codecs (v1001+)](#url-codecs-v1001)
 - [Relative navigation (v1001+)](#relative-navigation-v1001)
 - [urlAtom and global state](#urlatom-and-global-state)
 - [Full SPA example](#full-spa-example)
 
-Routing validates params and search with any [Standard Schema](https://github.com/standard-schema/standard-schema) compliant library — Zod, Valibot, ArkType, etc. Examples below use Zod, but any Standard Schema works identically. **Check the target codebase's `package.json` to see which validation library is already in use and prefer that one.**
+Routing validates params and search with any [Standard Schema](https://github.com/standard-schema/standard-schema) compliant library - Zod, Valibot, ArkType, etc. Examples below use Zod, but any Standard Schema works identically. **Check the target codebase's `package.json` to see which validation library is already in use and prefer that one.**
 
 **Version note:** this reference is written for v1001 routing. In v1000, `layout: true`, URL codecs, and `route.go.relative()` are not available. v1000 `render` matches partially by default; use `exactRender: true` for page/exact rendering. In v1001, page routes are exact-by-default and wrapper routes need `layout: true`.
 
@@ -26,10 +26,10 @@ Routing validates params and search with any [Standard Schema](https://github.co
 import { reatomRoute, urlAtom, wrap } from '@reatom/core'
 import { z } from 'zod/v4'
 
-// Root route — empty string matches any URL
+// Root route - empty string matches any URL
 const rootRoute = reatomRoute('')
 
-// String path — NO leading slash (auto-prepended)
+// String path - NO leading slash (auto-prepended)
 const userRoute = reatomRoute('users/:userId')
 userRoute()           // { userId: '123' } | null
 userRoute.exact()     // true only for /users/123
@@ -44,14 +44,14 @@ userDetailRoute.go({ id: '123' })
 const url = userDetailRoute.path({ id: '123' })  // '/users/123'
 userRoute.path({ userId: '123' }) // build URL without navigating
 
-// Object config — path, search params
+// Object config - path, search params
 const goodsRoute = reatomRoute({
   path: 'goods/:category',
   search: z.object({ sort: z.enum(['asc', 'desc']).optional() }),
 })
 goodsRoute.go({ category: 'tech', sort: 'asc' })  // /goods/tech?sort=asc
 
-// Current URL — urlAtom() returns a URL OBJECT, not a string!
+// Current URL - urlAtom() returns a URL OBJECT, not a string!
 const url = urlAtom()
 url.pathname  // '/users/123?tab=posts'
 url.search    // '?tab=posts'
@@ -81,13 +81,13 @@ usersRoute.exact() // false (child is active)
 Routes define `render` for framework-agnostic component composition. `render(self)` receives the route: `self()` for params (non-null inside render), `self.loader` for loader data.
 
 Two kinds of routes in **v1001+**:
-- **Layout routes** (`layout: true`) — render on any match, use `self.outlet()` to wrap child content. Use for shells, sidebars, protection layers.
-- **Page routes** (default) — render only on exact match. When a child is active, the page steps aside and its content bubbles up to the nearest layout's `outlet()`.
+- **Layout routes** (`layout: true`) - render on any match, use `self.outlet()` to wrap child content. Use for shells, sidebars, protection layers.
+- **Page routes** (default) - render only on exact match. When a child is active, the page steps aside and its content bubbles up to the nearest layout's `outlet()`.
 
 **v1000 migration note:** there is no `layout` option. A route with `render` behaves like a layout by default (`match()`); add `exactRender: true` for exact/page behavior. When migrating v1000 → v1001, add `layout: true` to old wrapper routes and remove `exactRender: true` from old page routes.
 
 ```typescript
-// Layout route — always active, wraps children
+// Layout route - always active, wraps children
 const layoutRoute = reatomRoute({
   layout: true,
   render({ outlet }) {
@@ -107,7 +107,7 @@ const aboutRoute = layoutRoute.reatomRoute({
 const isUsersPage = computed(() => usersRoute.match())
 const isUserDetailPage = computed(() => userDetailRoute.match())
 
-// ✅ Navigate with route.go() — NEVER with string paths
+// ✅ Navigate with route.go() - NEVER with string paths
 export const goLogin = () => loginRoute.go()
 export const goUserDetail = (id: string) => userDetailRoute.go({ id })
 export const goBackToUsers = () => usersRoute.go()
@@ -131,9 +131,9 @@ const navItems = [
 
 Typical app structure: root layout → optional auth/protection layers (also layout) → page routes. Entire app renders from root: `computed(() => layoutRoute.render())`.
 
-## Protected routes — auth guard
+## Protected routes - auth guard
 
-Protected routes use `params()` callback returning `null` to block the route and all descendants. Reactive: re-runs when read atoms change — use for auth, roles, feature flags, wizards.
+Protected routes use `params()` callback returning `null` to block the route and all descendants. Reactive: re-runs when read atoms change - use for auth, roles, feature flags, wizards.
 
 ```typescript
 // The `params` function enables protected routes:
@@ -165,7 +165,7 @@ const protectedRoute = layoutRoute.reatomRoute({
       if (user.ready() && !loginRoute.match()) loginRoute.go()
       return null
     }
-    // Already logged in but on login page — redirect to dashboard
+    // Already logged in but on login page - redirect to dashboard
     if (loginRoute.match()) {
       dashboardRoute.go()
     }
@@ -195,7 +195,7 @@ const projectDetailRoute = projectsRoute.reatomRoute({ path: ':projectId' })
 // /projects/new matches both unless :projectId rejects "new"
 ```
 
-This is not just a rendering issue. If both routes match, both can appear in `outlet()` and the dynamic route loader can run with `projectId === 'new'`, often producing a confusing “not found” error below the intended page. Do not fix this by rendering only `outlet().at(0)` — that hides the duplicate match while the wrong route may still be active.
+This is not just a rendering issue. If both routes match, both can appear in `outlet()` and the dynamic route loader can run with `projectId === 'new'`, often producing a confusing "not found" error below the intended page. Do not fix this by rendering only `outlet().at(0)` - that hides the duplicate match while the wrong route may still be active.
 
 Use the dynamic route's `params` as a match predicate. Prefer a direct Standard Schema over manual parsing in a function; decode failures make the route unmatched.
 
@@ -218,7 +218,7 @@ const projectDetailRoute = projectsRoute.reatomRoute({
 })
 ```
 
-Shape the schema to your actual ID format — the broader the `z.string()`, the more likely it collides with a literal sibling:
+Shape the schema to your actual ID format - the broader the `z.string()`, the more likely it collides with a literal sibling:
 
 - UUID database IDs: `z.uuid()` or your validation library's UUID schema.
 - Numeric IDs: `z.string().regex(/^\d+$/).transform(Number)` (or a v1001 codec if navigation should accept numbers too).
@@ -247,7 +247,7 @@ const protectedRoute = rootRoute.reatomRoute({
 
 Inject parent params only when descendants genuinely need those values as route params.
 
-## Route loaders — data fetching
+## Route loaders - data fetching
 
 Route loaders are async computeds with `withAsyncData` built-in. They run when route matches, auto-abort on navigation away. Nested loaders await parents and receive merged params. Effects inside loaders also auto-abort on navigation.
 
@@ -255,11 +255,13 @@ Loader API (same as `withAsyncData`): **route.loader.data()**, **.ready()**, **.
 
 Prefer handling loader state in the route `render(self)` instead of inside the page component. `status()` is a discriminated union; checking its flags in `render` lets TypeScript narrow `status.data` before you pass it to typed UI components. It also gives better UX than a single `.ready()` check:
 
-- `isFirstPending` — first load only; use for page skeletons/full loading states.
-- `isPending` with existing data — background refresh; keep stale content visible and show an inline spinner/progress affordance.
-- `isFulfilled` — normal render; `status.data` is the resolved loader payload.
-- `isRejected` — show a full-page error when no useful data has ever loaded, or an inline refresh error when preserving stale data is appropriate for that resource.
-- `isEverPending` / `isEverSettled` — historical flags useful for rare aborted/no-data edges.
+- `isFirstPending` - first load only; use for page skeletons/full loading states.
+- `isPending` with existing data - background refresh; keep stale content visible and show an inline spinner/progress affordance.
+- `isFulfilled` - normal render; `status.data` is the resolved loader payload.
+- `isRejected` - show a full-page error when no useful data has ever loaded, or an inline refresh error when preserving stale data is appropriate for that resource.
+- `isEverPending` / `isEverSettled` - historical flags useful for rare aborted/no-data edges.
+
+With concrete loader payloads (no `undefined` branches), TypeScript narrows `status.data` to the full loader type in `AnotherPending`. The branch order handles edge cases: `isFirstPending` covers the initial load, `isRejected` covers failures — by the time you reach `isPending && isEverSettled`, the type system confirms data exists. Only add a `status.data !== undefined` guard if the loader itself returns `undefined` in some branch.
 
 ```typescript
 const userRoute = reatomRoute({
@@ -277,9 +279,9 @@ const userRoute = reatomRoute({
       return <UserPage model={status.data} />
     }
 
-    // After the first success, a pending status means background refresh.
-    // Keep the previous page model visible and show a subtle refresh affordance.
-    if (status.isPending && status.data) {
+    // Once a concrete page model exists, pending means background refresh.
+    // Keep it visible; the type system confirms data exists for concrete loader types.
+    if (status.isPending && status.isEverSettled) {
       return <UserPage model={status.data} refreshing />
     }
 
@@ -305,18 +307,18 @@ const UserPage = reatomComponent(({
 })
 ```
 
-For list/search routes, avoid replacing the whole page on every search-param change. After the first successful load, `isPending` means “refreshing”; keep previous data rendered and show a small inline pending indicator. If your loader/data shape preserves stale data on refresh failures, show the error inline instead of throwing away usable content.
+For list/search routes, avoid replacing the whole page on every search-param change. With a concrete loader model, `isPending` after `isEverSettled` means "refreshing" — keep previous data rendered with a subtle pending indicator.
 
-## Route loaders — factory pattern (forms + actions)
+## Route loaders - factory pattern (forms + actions)
 
-Route loaders are the **single source of truth** for all route-specific state. Create forms, actions, and computed atoms **inside** the loader — they get garbage collected when the route unmounts, giving you automatic memory management with global accessibility.
+Route loaders are the **single source of truth** for all route-specific state. Create forms, actions, and computed atoms **inside** the loader - they get garbage collected when the route unmounts, giving you automatic memory management with global accessibility.
 
 ### Separate routes for create vs edit
 
-**Never** use a single route with conditional logic (`params.id === 'new'`). Use separate routes — each gets its own loader, its own form instance, and automatic cleanup on navigation. Also ensure the dynamic detail/edit route's `params` schema rejects literal siblings such as `new`; separate routes alone do not prevent `:id` from matching a literal segment.
+**Never** use a single route with conditional logic (`params.id === 'new'`). Use separate routes - each gets its own loader, its own form instance, and automatic cleanup on navigation. Also ensure the dynamic detail/edit route's `params` schema rejects literal siblings such as `new`; separate routes alone do not prevent `:id` from matching a literal segment.
 
 ```typescript
-// ❌ Bad — single route with conditional logic
+// ❌ Bad - single route with conditional logic
 const userDetailRoute = usersRoute.reatomRoute({
   path: ':id',
   params: z.object({ id: z.string() }),
@@ -329,7 +331,7 @@ const userDetailRoute = usersRoute.reatomRoute({
   },
 })
 
-// ✅ Good — separate routes
+// ✅ Good - separate routes
 export const userCreateRoute = usersRoute.reatomRoute({
   path: 'new',
   async loader() {
@@ -395,9 +397,9 @@ export const userEditRoute = usersRoute.reatomRoute({
 ```
 
 **Why separate routes?**
-- Each route gets its own loader instance — navigating from `/users/123/edit` → `/users/456/edit` creates a **fresh form** for user 456
-- No `memo()` needed — separate routes handle lifecycle naturally
-- No stale state — old form is garbage collected on route unmount
+- Each route gets its own loader instance - navigating from `/users/123/edit` → `/users/456/edit` creates a **fresh form** for user 456
+- No `memo()` needed - separate routes handle lifecycle naturally
+- No stale state - old form is garbage collected on route unmount
 - No conditional logic inside loaders
 
 ### Form factory functions
@@ -457,7 +459,7 @@ const loginRoute = rootRoute.reatomRoute({
 
 ### Auth redirects and concrete loader payloads
 
-Do not put auth redirects or guard decisions inside a loader by returning `null`. That turns the loader payload into `T | null`, so every render and component has to defend against impossible `null` cases and TypeScript can no longer express “this page has a model”. Put route-blocking decisions in `params()` (or a parent guard route) before the loader runs, and keep the loader return type concrete.
+Do not put auth redirects or guard decisions inside a loader by returning `null`. That turns the loader payload into `T | null`, so every render and component has to defend against impossible `null` cases and TypeScript can no longer express "this page has a model". Put route-blocking decisions in `params()` (or a parent guard route) before the loader runs, and keep the loader return type concrete.
 
 ```typescript
 const loginRoute = rootRoute.reatomRoute({
@@ -481,7 +483,7 @@ const loginRoute = rootRoute.reatomRoute({
     const status = self.loader.status()
     if (status.isFirstPending) return <AuthSkeleton />
     if (status.isFulfilled) return <LoginPage model={status.data} />
-    if (status.isPending && status.data) return <LoginPage model={status.data} refreshing />
+    if (status.isPending && status.isEverSettled) return <LoginPage model={status.data} refreshing />
     if (status.isRejected) return <PageError error={self.loader.error() ?? new Error('Request failed')} />
 
     return <></>
@@ -543,7 +545,7 @@ const settingsRoute = rootRoute.reatomRoute({
 })
 ```
 
-## Modal gate — state in memory, no URL
+## Modal gate - state in memory, no URL
 
 ```typescript
 const confirmModal = protectedRoute.reatomRoute({
@@ -612,7 +614,7 @@ It throws if the parent route is not currently matched. In v1000, call `reviewRo
 Setup logging system:
 
 ```ts
-// setup.ts — import this file before others in the repo root!
+// setup.ts - import this file before others in the repo root!
 import { connectLogger, log } from '@reatom/core'
 if (import.meta.env.MODE === 'development') connectLogger()
 declare global {
@@ -630,7 +632,7 @@ import { z } from 'zod/v4'
 
 type User = { id: string; name: string; role: string }
 
-// layout — no path, always active, renders outlet
+// layout - no path, always active, renders outlet
 export const layoutRoute = reatomRoute({
   layout: true,
   render({ outlet }) {
@@ -655,7 +657,7 @@ const user = computed(async () => {
   return await wrap(fetch('/api/me').then((r) => r.json()))
 }, 'user').extend(withAsyncData())
 
-// protected route — blocks all children when not authenticated
+// protected route - blocks all children when not authenticated
 export const protectedRoute = layoutRoute.reatomRoute({
   layout: true,
   params() {
@@ -699,11 +701,21 @@ export const usersRoute = protectedRoute.reatomRoute({
     return await wrap(response.json())
   },
   render(self) {
-    const { isPending, data } = self.status()
-    if (isPending) return html`Loading users...`
-    return html`<ul>${data.items.map(
-      (u: User) => html`<li>${u.name}</li>`
-    )}</ul>`
+    const status = self.loader.status()
+    if (status.isFirstPending) return html`Loading users...`
+    // Keep stale data visible during background refresh (search param changes, retry, etc.).
+    // Without this guard, typing in a search input would unmount the page.
+    if (status.isPending && status.isEverSettled) {
+      return html`<ul>${status.data.items.map(
+        (u: User) => html`<li>${u.name}</li>`
+      )}</ul>`
+    }
+    if (status.isFulfilled) {
+      return html`<ul>${status.data.items.map(
+        (u: User) => html`<li>${u.name}</li>`
+      )}</ul>`
+    }
+    return html`Loading...`
   },
 })
 ```

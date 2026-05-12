@@ -87,7 +87,7 @@ Both patterns eliminate identity actions. Choose based on whether you want granu
 
 ## Component pattern — route render narrows, components receive models
 
-Route loaders should be the source of route-specific forms/actions/data, while the route `render(self)` should own loader status branching. Page components should receive a typed model/data prop, not a `loader` prop. This keeps routing and async lifecycle concerns at the route boundary and avoids `any` creeping into form/model props.
+Route loaders should be the source of route-specific forms/actions/data, while the route `render(self)` should own loader status branching. Page components should receive a typed, concrete model/data prop, not a `loader` prop. This keeps routing and async lifecycle concerns at the route boundary and avoids `any` creeping into form/model props. With concrete loader return types (no `undefined` branches), TypeScript narrows `status.data` to the full type in the refresh branch — no extra guards needed.
 
 ```tsx
 // ❌ Bad — imports route-specific form/actions from model files or passes loader
@@ -115,7 +115,7 @@ const userEditRoute = usersRoute.reatomRoute({
     const status = self.loader.status()
     if (status.isFirstPending) return <UserFormSkeleton />
     if (status.isFulfilled) return <UserFormPage model={status.data} />
-    if (status.isPending && status.data) return <UserFormPage model={status.data} refreshing />
+    if (status.isPending && status.isEverSettled) return <UserFormPage model={status.data} refreshing />
     if (status.isRejected) return <PageError error={self.loader.error() ?? new Error('Request failed')} />
 
     return <></>
