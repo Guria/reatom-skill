@@ -241,6 +241,40 @@ See [references/patterns.md](references/patterns.md) for atomization, standalone
 
 When authoring reusable factories that create Reatom atom primitives or scoped models, follow the library convention: name the factory `reatom*` (for example `reatomUser`, `reatomSessionForm`, `reatomFeatureFlag`) rather than `create*` / `make*`. This keeps custom primitives visually aligned with built-ins like `reatomBoolean`, `reatomForm`, and `reatomRoute`.
 
+## Retrying Computeds & Resetting Dependencies
+
+`retryComputed` and `reset` from `@reatom/core` handle re-evaluation and invalidation of computed atoms:
+
+- **`reset(target)`** — clears all computed atom dependencies without re-running the computation. Useful for invalidating cached resources/effects so the next read triggers a fresh computation.
+- **`retryComputed(target)`** — resets deps AND immediately re-evaluates the computed function. Returns the new value.
+
+Both throw if the target is an action (only reactive atoms are supported).
+
+The primary use case is **retrying failed async loaders** in route `render` — when a loader rejects, show an error UI with a retry button:
+
+```typescript
+import { retryComputed, wrap } from '@reatom/core'
+
+// In route render:
+render: (self) => {
+  const { isPending, data } = self.loader.status()
+  const error = self.loader.error()
+  if (isPending) return <Loading />
+  if (error) {
+    return (
+      <PageError
+        title="Something went wrong"
+        description={error.message}
+        onRetry={wrap(() => retryComputed(self.loader))}
+      />
+    )
+  }
+  return <Content data={data} />
+}
+```
+
+`retryComputed` propagates through the dependency graph — retrying a source computed also recalculates all downstream computeds that depend on it.
+
 ## Sampling & Events
 
 See [references/sampling.md](references/sampling.md) for debounce/throttle via `wrap(sleep())`, `take()`, `onEvent()`, `race()`, `all()`, `variable()`, `abortVar`, and the checkpoint pattern.
@@ -371,6 +405,7 @@ However, `withConnectHook` *does* support returning a cleanup function for third
 
 ### Routing
 
+- **Use `retryComputed(self.loader)` for error retry buttons** — when a route loader fails, pass `onRetry={wrap(() => retryComputed(self.loader))}` to error UI instead of manually re-calling the loader action
 - `reatomRoute()` with no arguments throws — use `reatomRoute('')` for root
 - Paths must NOT start with `/` — Reatom auto-prepends it
 - v1001 routing render semantics changed: use `layout: true` for layout/wrapper routes; page routes are exact-by-default. In v1000 there is no `layout` option: render is match-by-default and `exactRender: true` makes a page route.
