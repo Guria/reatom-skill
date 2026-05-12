@@ -45,6 +45,7 @@ const MyForm = reatomComponent(() => {
 
 - Do not use React `useEffect`/`useState` to synchronize or mutate Reatom model state. Put state transitions in atoms, actions, computeds, or Reatom hooks/extensions; React should render and bind atoms, not own Reatom invariants.
 - Components that call atom getters must be wrapped with `reatomComponent`; this applies to extracted child/row components as well as page-level components.
+- **Passing atoms as props is perfectly valid** — unlike Redux where passing state to children is sometimes discouraged, Reatom atoms are first-class primitives. Passing them as props (e.g., `<CheckboxField field={form.fields.rememberMe} />`) is the standard way to build abstract, reusable components and avoid prop drilling of values.
 
 ## StrictMode caveat
 

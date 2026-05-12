@@ -219,6 +219,18 @@ const result = await wrap(race({
 }))
 ```
 
+## Lifecycle Queue Priorities
+
+Reatom operates queues to manage updates with different priorities, achieving intuitive and efficient execution order with batching. The nested loop execution order is:
+
+1. **Updates** (`anAction(payload)`, `anAtom(newState)`)
+2. **Hooks** (`anAtom.extend(withChangeHook(cb))`)
+3. **Computations** (`computed(() => ...)` and `effect(() => ...)`)
+4. **Cleanups** (temporal state clearing)
+5. **Effects** (`anAtom.subscribe(cb)`, `schedule(cb)`, `anAtom.extend(withConnectHook(cb))`)
+
+*Effects are processed after all computations, computations after all hooks, and hooks after all updates (scheduled to next microtask).*
+
 ## Async Context — wrap() Rules
 
 `wrap()` preserves async context for actions, effects, computed async bodies, event handlers, and callbacks that read or write atoms after an async boundary.
@@ -319,6 +331,7 @@ These are the most common mistakes. Read before writing any Reatom code.
 
 - Do not use React `useEffect`/`useState` to synchronize Reatom state — use atoms, actions, computeds
 - Components that call atom getters must be `reatomComponent` — including child components
+- **Passing atoms as props is perfectly valid** — unlike Redux where passing state is discouraged, Reatom atoms are first-class primitives. Passing them as props (e.g. `<CheckboxField field={form.fields.rememberMe} />`) is the standard way to build abstract, reusable components.
 - **`@reatom/react` does NOT support React StrictMode** — causes `AbortError: Component unmount`. Workaround: disable StrictMode or use `clearStack()`
 
 ### TypeScript
@@ -341,6 +354,7 @@ These are the most common mistakes. Read before writing any Reatom code.
 - **Single route for create/edit** — use separate routes with separate loaders
 - **Actions in model files** — create route-specific actions inside route loaders
 - **Syncing atoms with change hooks** — use `computed` / `withComputed` instead
+- **Avoiding atom props** — thinking that passing atoms to children components is an anti-pattern. It is the recommended way to decouple models from views!
 
 ## v3 → v1000+ Migration
 
@@ -382,3 +396,22 @@ npm install @reatom/core @reatom/react  # or your framework adapter
 | `@reatom/zod` | Zod v4 integration |
 | `@reatom/eslint-plugin` | ESLint rules |
 | `@reatom/admin` | Admin dashboard |
+
+### Reatom Reusables
+
+Reatom provides a `shadcn`-like code delivery system via `jsrepo` at [github.com/reatom/reusables](https://github.com/reatom/reusables). Use it to copy-paste abstract, pre-built Reatom components and hooks directly into your project.
+
+### Deprecated v1-v3 Packages (DO NOT USE)
+
+The following packages are from the v1-v3 ecosystem and are **deprecated**. Their functionality has been merged into `@reatom/core` in v1000+. **Never use these:**
+
+- `@reatom/hooks` — use `withChangeHook`, `withConnectHook` from core
+- `@reatom/async` — use `withAsync`, `withAsyncData` from core
+- `@reatom/persist` / `@reatom/persist-*` — use `withLocalStorage`, `withIndexedDb`, etc. from core
+- `@reatom/form` — use `reatomForm` from core
+- `@reatom/url` — use `reatomRoute` from core
+- `@reatom/timer` — use `wrap(sleep())` or `withAsyncData` polling
+- `@reatom/lens` — use `reatomLens` or `withComputed` from core
+- `@reatom/undo` — use `withRollback` from core
+- `@reatom/primitives` — use `reatomBoolean`, `reatomNumber`, etc. from core
+- `@reatom/npm-react` / `@reatom/npm-vue` etc. — use `@reatom/react`, `@reatom/vue`
