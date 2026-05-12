@@ -205,7 +205,7 @@ const session = atom('', 'session').extend(withCookieStore()('session-id'))
 
 ## React Integration
 
-See [references/react.md](references/react.md) for `reatomComponent`, `bindField`, StrictMode caveat, and TypeScript gotchas.
+See [references/react.md](references/react.md) for `reatomComponent`, `useAtom`, `useAction`, `bindField`, StrictMode caveat, and TypeScript gotchas.
 
 Quick reference:
 
@@ -398,8 +398,9 @@ However, `withConnectHook` *does* support returning a cleanup function for third
 
 - Treat React as a rendering adapter, not a second state/runtime layer. **React-owned state/effects are a red flag in a Reatom app** when they hold domain state, mirror atoms, run Reatom side effects, or coordinate app flow. Put app state and transitions in atoms, actions, computeds, route loaders, and Reatom lifecycle hooks.
 - React built-in hooks are acceptable for view-only integration glue: refs/focus/measurement, imperative widgets, third-party UI hooks, memoizing expensive view calculations, stable DOM callbacks, or purely local DOM affordances. This warning is about React owning or synchronizing application state; it is not a ban on `@reatom/react` adapter APIs such as `reatomComponent`, `useAtom`, or `useWrap` when a codebase intentionally uses the hook-style integration.
+- **`reatomComponent` is the preferred way to consume atoms in React**, but `useAtom` / `useAction` hooks are also valid — especially in codebases that prefer hook-style composition. `reatomComponent` automatically subscribes to any atom getter called inside it; `useAtom(anAtom)` does the same per-atom but with a hooks API (returns `[state, setter, atom, frame]`). Before choosing a style, check existing components in the project to see which pattern is already established. If the codebase consistently uses one approach, follow it. If there's no clear pattern or the project is new, default to `reatomComponent`. If uncertain, ask the user and offer to record the preference in `AGENTS.md` or `CLAUDE.md` for future consistency.
 - Do not use React `useEffect`/`useState` to synchronize Reatom state — use atoms, actions, computeds.
-- Components that call atom getters must be `reatomComponent` — including child components.
+- Components that call atom getters must be `reatomComponent` — including child components. If using `useAtom` instead, the component does not need `reatomComponent` since `useAtom` manages its own subscription via `useSyncExternalStore`.
 - **Initial React render + instant async completion gotcha**: `reatomComponent` subscribes after React commits; an async computed/`withAsyncData` that resolves immediately (for example a cached/no-token branch returning `null`) can settle before the subscription is mounted. Do not gate first-render app boot/auth purely on `.ready()` from an instantly resolving async atom inside a React component. Prefer a synchronous source of truth for initial branching (persisted token atom, URL state, route params, explicit init atom), and use async `.data()`/`.ready()` for work with a real async boundary or after the relevant component is already mounted.
 - **Passing atoms as props is perfectly valid** — unlike Redux where passing state is discouraged, Reatom atoms are first-class primitives. Passing them as props (e.g. `<CheckboxField field={form.fields.rememberMe} />`) is the standard way to build abstract, reusable components.
 - **React StrictMode is version-sensitive** — in v1000 it can cause `AbortError: Component unmount`; disable StrictMode or use `clearStack()`. In v1001, `reatomComponent` defaults `abortOnUnmount: false`, which avoids the old abort-on-unmount behavior; set `{ abortOnUnmount: true }` only when you intentionally need v1000-style cancellation on unmount.

@@ -50,6 +50,45 @@ const MyForm = reatomComponent(() => {
 })
 ```
 
+## useAtom and useAction
+
+`@reatom/react` exports `useAtom` and `useAction` as hook-based alternatives to `reatomComponent`. They use `useSyncExternalStore` internally and manage their own subscriptions, so the component does **not** need `reatomComponent`.
+
+### useAtom
+
+```tsx
+import { useAtom, useAction } from '@reatom/react'
+
+// Pass an atom directly — returns [state, setter, atom, frame]
+const [count, setCount] = useAtom(counterAtom)
+
+// Pass a computed callback — subscribes to the derived value
+const [doubled] = useAtom(() => counter() * 2, [counter])
+
+// Pass an initial value — creates a local atom scoped to the component
+const [value, setValue] = useAtom(0)
+```
+
+`useAtom` also accepts an optional `options` argument for `name` and `subscribe` (pass `{ subscribe: false }` to read without subscribing).
+
+### useAction
+
+```tsx
+import { useAction } from '@reatom/react'
+
+// Bind an existing action
+const handleIncrement = useAction(incrementAction)
+
+// Inline function (deps array for recreation)
+const handleSave = useAction(() => saveForm(form()), [form])
+```
+
+### `useAtom` / `useAction` vs `reatomComponent`
+
+`reatomComponent` wraps the entire component in a reactive boundary — any atom getter called inside automatically subscribes. `useAtom` / `useAction` are more granular: each hook manages its own subscription via `useSyncExternalStore`, and the component stays a plain React function component.
+
+Both are valid. `reatomComponent` is more concise when reading many atoms; `useAtom` hooks give more control and may feel more natural in codebases that prefer explicit hook-style composition. Check existing components to see which pattern the project already uses and follow it. If there's no clear pattern, ask the user and offer to persist the preference in `AGENTS.md` or `CLAUDE.md`.
+
 ## React-specific rules
 
 ### React is only the view adapter
