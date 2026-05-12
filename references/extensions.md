@@ -270,6 +270,24 @@ const saveTodo = action(async (todo: Todo) => {
 // saveTodo.stop() commits and clears rollback queue
 ```
 
+**v1001+**: `withTransaction({ shouldRollback })` filters which errors trigger rollback. v1000 rolls back on every non-abort error.
+
+```typescript
+class NetworkError extends Error {}
+
+const status = atom<'idle' | 'saving'>('idle', 'status').extend(withRollback())
+
+const save = action(async () => {
+  status.set('saving')
+  await wrap(api.save())
+}, 'save').extend(
+  withAsync(),
+  withTransaction({
+    shouldRollback: (error) => error instanceof NetworkError,
+  }),
+)
+```
+
 ## framePromise — Error handling without try/catch
 
 `framePromise()` returns a promise that resolves to the current frame's state (action payload or atom state). Call `.catch()` on it at the top of an async action to capture errors from all subsequent `await wrap()` calls — no try/catch needed.
@@ -318,7 +336,7 @@ export const processOrder = action(async (orderId: string) => {
   await wrap(fetchOrder(orderId))
 })
 ```
-- Accepts an optional `queue` parameter (`'effect'` by default)
+- **v1001+**: takes no arguments and always schedules in the `'effect'` queue. **v1000** accepted an optional queue argument; remove it when migrating.
 - Respects `wrap` and `abortVar` policies — aborted operations don't trigger `.catch()`
 - Use `.finally()` for cleanup (resources, loading states, etc.)
 

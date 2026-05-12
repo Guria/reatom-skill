@@ -7,7 +7,15 @@ description: Expert guide for Reatom v1000+ state management. Use for any task i
 
 Atom-centric reactive state management. All primitives (actions, computeds, effects) are built on a single core — the atom.
 
-> **⚠️ v1000+ only — do not rely on any v3 or earlier packages.** The v3 ecosystem (`@reatom/lens`, `@reatom/hooks`, `@reatom/effects`, `@reatom/persist-web-storage`, etc.) is completely separate and incompatible. v1000+ consolidated everything into `@reatom/core` and `@reatom/react`. When researching, always target the `v1000+` branch — v3 docs will mislead you.
+> **⚠️ v1000+ only — do not rely on any v3 or earlier packages.** The v3 ecosystem (`@reatom/lens`, `@reatom/hooks`, `@reatom/effects`, `@reatom/persist-web-storage`, etc.) is completely separate and incompatible. v1000+ consolidated everything into `@reatom/core` and `@reatom/react`. When researching, always target the `v1000+` / `v1001` branches — v3 docs will mislead you.
+
+## Version policy (v1000 vs v1001)
+
+When editing an existing project, inspect `package.json` / lockfile and match its installed `@reatom/*` version. Do not apply v1001-only APIs to a v1000.x codebase unless you also upgrade packages.
+
+**Appeared in v1001 — mark these explicitly in answers and migrations:** routing `layout: true` with page routes exact-by-default, URL codecs for `params`/`search`, `route.go.relative()`, React `reatomComponent({ abortOnUnmount })` with default `false`, new `reatomObservable` / `withObservable` producer API, action subscription callbacks `(payload, params)`, `withMiddleware(..., 'read' | 'computed' | 'invalidation')`, `withTransaction({ shouldRollback })`, `fromEntries`, `framePromise()` no queue arg, and `reatomEnum.set` accepting arbitrary strings (runtime-validated).
+
+The **computed factory / scoped model pattern** (`computed` returning scoped atoms/forms/actions, extended with `withAbort()`) works in both v1000 and v1001. Only the surrounding routing syntax is version-sensitive: v1001 uses `layout: true` + default-exact pages, v1000 uses `exactRender: true`. See `references/v1001.md` before version-sensitive work.
 
 ## Resources
 
@@ -19,6 +27,7 @@ Atom-centric reactive state management. All primitives (actions, computeds, effe
 
 | File | Read when |
 |---|---|
+| `references/v1001.md` | Comparing v1001 to v1000, deciding whether an API is v1001-only, migrations from v1000 |
 | `references/extensions.md` | Using built-in extensions: `withAsyncData`, `withAbort`, `withChangeHook`, `withConnectHook`, `withComputed`, `withSuspense`, `withRollback`, `withTransaction`, `framePromise` |
 | `references/writing-extensions.md` | Writing custom `.extend()` helpers, lifecycle/resource integration, middleware, hooks, type-safe extension APIs |
 | `references/routing.md` | Working with `reatomRoute`, nested routes, loaders, layouts, URL params, navigation, protected routes |
@@ -26,7 +35,7 @@ Atom-centric reactive state management. All primitives (actions, computeds, effe
 | `references/persistence.md` | Using `withLocalStorage`, `withIndexedDb`, `withCookie`, or any storage adapter |
 | `references/react.md` | Using `@reatom/react`: `reatomComponent`, `bindField`, StrictMode issues |
 | `references/jsx.md` | Using `@reatom/jsx` native JSX runtime, CSS-in-JS, direct DOM bindings |
-| `references/patterns.md` | Architectural decisions: atomization, standalone atoms vs lenses, file organization |
+| `references/patterns.md` | Architectural decisions: atomization, computed factory/scoped models, standalone atoms vs lenses, file organization |
 | `references/sampling.md` | Debounce/throttle, `take()`, `onEvent()`, `race()`, `abortVar`, checkpoint pattern |
 | `references/packages.md` | Looking up which @reatom/* package to install, checking if a v3 package is deprecated |
 | `references/migration.md` | Migrating code from v3 to v1000+, mapping old APIs to new |
@@ -64,6 +73,8 @@ const fetchData = action(async (id: number) => {
   return await wrap(res.json())
 }, 'fetchData')
 ```
+
+Action subscription callback shape is version-sensitive: v1001+ uses `action.subscribe((payload, params) => ...)`; v1000 uses call-history arrays `action.subscribe((calls) => ...)`.
 
 ### Effect — auto-subscribes for side effects
 
@@ -119,6 +130,9 @@ isModalOpen.toggle()
 const priority = reatomEnum(['low', 'medium', 'high'], 'priority')
 priority.setHigh()
 priority()  // 'high'
+
+// v1001+: .set accepts string values too, still runtime-validates against variants
+priority.set('low')
 ```
 
 ## Routing
@@ -357,6 +371,7 @@ However, `withConnectHook` *does* support returning a cleanup function for third
 
 - `reatomRoute()` with no arguments throws — use `reatomRoute('')` for root
 - Paths must NOT start with `/` — Reatom auto-prepends it
+- v1001 routing render semantics changed: use `layout: true` for layout/wrapper routes; page routes are exact-by-default. In v1000 there is no `layout` option: render is match-by-default and `exactRender: true` makes a page route.
 - `route.go()` takes params object or nothing — NOT a path string
 - `urlAtom()` returns a `URL` object, not a string — use `urlAtom().pathname`
 - Never use `urlAtom().startsWith()` — use `route.match()` instead
@@ -376,7 +391,7 @@ However, `withConnectHook` *does* support returning a cleanup function for third
 - Do not use React `useEffect`/`useState` to synchronize Reatom state — use atoms, actions, computeds
 - Components that call atom getters must be `reatomComponent` — including child components
 - **Passing atoms as props is perfectly valid** — unlike Redux where passing state is discouraged, Reatom atoms are first-class primitives. Passing them as props (e.g. `<CheckboxField field={form.fields.rememberMe} />`) is the standard way to build abstract, reusable components.
-- **`@reatom/react` does NOT support React StrictMode** — causes `AbortError: Component unmount`. Workaround: disable StrictMode or use `clearStack()`
+- **React StrictMode is version-sensitive** — in v1000 it can cause `AbortError: Component unmount`; disable StrictMode or use `clearStack()`. In v1001, `reatomComponent` defaults `abortOnUnmount: false`, which avoids the old abort-on-unmount behavior; set `{ abortOnUnmount: true }` only when you intentionally need v1000-style cancellation on unmount.
 
 ### TypeScript
 

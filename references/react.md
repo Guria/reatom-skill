@@ -14,6 +14,15 @@ const Counter = reatomComponent(() => {
 
 Components that call atom getters must be wrapped with `reatomComponent`; this applies to extracted child/row components as well as page-level components.
 
+**v1001+ appeared:** `reatomComponent` accepts `{ abortOnUnmount?: boolean }` and defaults it to `false`. Set `abortOnUnmount: true` only to restore v1000-style abort-on-unmount behavior.
+
+```tsx
+const LegacyUnmountAbort = reatomComponent(
+  () => <div>{counter()}</div>,
+  { name: 'LegacyUnmountAbort', abortOnUnmount: true },
+)
+```
+
 ## bindField
 
 `bindField` creates `value`/`onChange`/`onFocus`/`onBlur` props for form field atoms. Works with `<input>` and `<textarea>`, but **NOT** with `<select>`.
@@ -49,7 +58,10 @@ const MyForm = reatomComponent(() => {
 
 ## StrictMode caveat
 
-**`@reatom/react` does NOT support React StrictMode yet** — in development, StrictMode double-mounts components, which breaks Reatom's abort controller and implicit stack mechanism. This causes `AbortError: Component unmount` or actions executing twice on first click ([`reatomAbstractRender.ts`](https://github.com/reatom/reatom/blob/dec84cc80804023bd4b00d24311cbc3ef2/packages/core/src/reatomAbstractRender.ts#L97), [`reatomComponent.ts`](https://github.com/reatom/reatom/blob/dec84cc80804023bd4b00d24311cbc3ef2/packages/react/src/reatomComponent.ts#L122)). The fix is tracked in v1001 (not yet released). **Workaround**: Disable StrictMode in dev or use `clearStack()` at app bootstrap.
+StrictMode behavior is version-sensitive:
+
+- **v1000**: StrictMode double-mount can break the abort controller / implicit stack and cause `AbortError: Component unmount` or actions executing twice on first click. Workaround: disable StrictMode in dev or use `clearStack()` at app bootstrap.
+- **v1001+**: `reatomComponent` defaults `abortOnUnmount` to `false`, which avoids the old abort-on-unmount default and improves remount/StrictMode behavior. If code relied on unmount aborting async work, pass `{ abortOnUnmount: true }` explicitly.
 
 ## TypeScript gotchas
 

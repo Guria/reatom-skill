@@ -2,6 +2,8 @@
 
 Routing validates params and search with any [Standard Schema](https://github.com/standard-schema/standard-schema) compliant library — Zod, Valibot, ArkType, etc. Examples below use Zod, but any Standard Schema works identically. **Check the target codebase's `package.json` to see which validation library is already in use and prefer that one.**
 
+**Version note:** this reference is written for v1001 routing. In v1000, `layout: true`, URL codecs, and `route.go.relative()` are not available. v1000 `render` matches partially by default; use `exactRender: true` for page/exact rendering. In v1001, page routes are exact-by-default and wrapper routes need `layout: true`.
+
 ## Basic routes
 
 ```typescript
@@ -58,13 +60,15 @@ usersRoute()     // { }
 usersRoute.exact() // false (child is active)
 ```
 
-## Layout routes with render
+## Layout routes with render (v1001+ semantics)
 
 Routes define `render` for framework-agnostic component composition. `render(self)` receives the route: `self()` for params (non-null inside render), `self.loader` for loader data.
 
-Two kinds of routes:
+Two kinds of routes in **v1001+**:
 - **Layout routes** (`layout: true`) — render on any match, use `self.outlet()` to wrap child content. Use for shells, sidebars, protection layers.
 - **Page routes** (default) — render only on exact match. When a child is active, the page steps aside and its content bubbles up to the nearest layout's `outlet()`.
+
+**v1000 migration note:** there is no `layout` option. A route with `render` behaves like a layout by default (`match()`); add `exactRender: true` for exact/page behavior. When migrating v1000 → v1001, add `layout: true` to old wrapper routes and remove `exactRender: true` from old page routes.
 
 ```typescript
 // Layout route — always active, wraps children
@@ -426,6 +430,44 @@ const dialogRoute = reatomRoute({
 dialogRoute() // { dialog: 'login' }
 // Close: dialogRoute.go({})
 ```
+
+## URL codecs (v1001+)
+
+v1001 adds bidirectional codecs for route params/search. `decode` reads raw URL strings into typed values; `encode` writes typed values back to URL-safe strings. `route.go()` and `route.path()` accept the decoded/output types.
+
+```typescript
+const itemRoute = reatomRoute({
+  path: 'items/:id',
+  params: {
+    decode: (input: { id: string }) => ({ id: Number(input.id) }),
+    encode: (output: { id: number }) => ({ id: String(output.id) }),
+  },
+  search: {
+    decode: (input: { page?: string }) => ({ page: input.page ? Number(input.page) : 1 }),
+    encode: (output: { page: number }) => ({ page: String(output.page) }),
+  },
+})
+
+itemRoute.go({ id: 42, page: 3 }) // /items/42?page=3
+itemRoute() // { id: 42, page: 3 } | null
+```
+
+Zod codecs such as `z.codec(...)` and `z.stringbool()` also work in v1001. Decode errors make the route unmatched (`null`). In v1000, manually encode/decode and pass URL-string-shaped params to `go()`.
+
+## Relative navigation (v1001+)
+
+`route.go.relative(params?)` merges currently matched parent params, useful for sibling navigation.
+
+```typescript
+const projectRoute = reatomRoute('projects/:projectId')
+const settingsRoute = projectRoute.reatomRoute('settings')
+const reviewRoute = projectRoute.reatomRoute('review')
+
+settingsRoute.go({ projectId: '123' }) // /projects/123/settings
+reviewRoute.go.relative()             // /projects/123/review
+```
+
+It throws if the parent route is not currently matched. In v1000, call `reviewRoute.go({ projectId })` explicitly.
 
 ## urlAtom and global state
 

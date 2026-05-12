@@ -144,11 +144,13 @@ export const withLogger =
 
 Use middleware when behavior must be in the target call path. For simple side effects after atom changes or action calls, prefer hooks.
 
-Middleware placement:
+Middleware placement (**v1001+ appeared**):
 
 - default (`'invalidation'`) — before cache invalidation; typical for writes/calls.
 - `'read'` — intercept reads too.
 - `'computed'` — runs inside computed middleware so atoms read by the middleware become reactive dependencies.
+
+In v1000 the second argument was an options object: `withMiddleware(cb, { reactive: true })`. That is the closest equivalent of v1001 `'computed'` placement. Do not use the string placement API in v1000 code.
 
 ### Connect an external resource lazily
 

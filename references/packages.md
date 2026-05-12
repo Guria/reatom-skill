@@ -17,7 +17,7 @@
 
 ## @reatom/core Exports
 
-`atom`, `computed`, `action`, `effect`, `peek`, `wrap`, `sleep`, `schedule`, `take`, `onEvent`, `race`, `all`, `memo`, `variable`, `abortVar`, `throwAbort`, `log`, `settled`, `suspense`, `ifChanged`, `getCalls`, `deatomize`, `framePromise`, `reatomLens`, `reatomObservable`, `reatomTransaction`, `reatomBoolean`, `reatomEnum`, `reatomArray`, `reatomMap`, `reatomSet`, `reatomRecord`, `reatomLinkedList`, `reatomNumber`, `reatomString`, `reatomForm`, `reatomRoute`, `reatomComponent`, `withAsyncData`, `withAsync`, `withAbort`, `withChangeHook`, `withConnectHook`, `withComputed`, `withSuspense`, `withSuspenseInit`, `withSuspenseRetry`, `withRollback`, `withTransaction`, `withLocalStorage`, `withSessionStorage`, `withIndexedDb`, `withBroadcastChannel`, `withCookie`, `withCookieStore`, `context`, `mock`
+`atom`, `computed`, `action`, `effect`, `peek`, `wrap`, `sleep`, `schedule`, `take`, `onEvent`, `race`, `all`, `memo`, `variable`, `abortVar`, `throwAbort`, `log`, `settled`, `suspense`, `ifChanged`, `getCalls`, `deatomize`, `framePromise`, `reatomLens`, `reatomObservable`, `reatomTransaction`, `reatomBoolean`, `reatomEnum`, `reatomArray`, `reatomMap`, `reatomSet`, `reatomRecord`, `reatomLinkedList`, `reatomNumber`, `reatomString`, `reatomForm`, `reatomRoute`, `reatomComponent`, `withAsyncData`, `withAsync`, `withAbort`, `withChangeHook`, `withConnectHook`, `withComputed`, `withSuspense`, `withSuspenseInit`, `withSuspenseRetry`, `withRollback`, `withTransaction`, `withLocalStorage`, `withSessionStorage`, `withIndexedDb`, `withBroadcastChannel`, `withCookie`, `withCookieStore`, `context`, `mock`, `fromEntries` (v1001+)
 
 ## Reatom Reusables
 

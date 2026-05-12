@@ -96,19 +96,29 @@ const deleteItem = action(async (itemId: string) => {
 
 ### Subscribing to action calls
 
-Actions are observable reactive events. You can subscribe to action calls just like atom changes:
+Actions are observable reactive events. The subscription callback shape changed in **v1001**.
 
 ```typescript
-increment.subscribe((calls) => {
-  console.log('Calls:', ...calls)
+// v1001+
+increment.subscribe((payload, params) => {
+  console.log('Call:', { payload, params })
 })
 
 increment()
 increment(5)
-// Next tick: Calls: { params: [], payload: 11 }, { params: [5], payload: 16 }
+// Effect queue: callback receives (payload, params) for each call
 ```
 
-Action subscriptions are batched to the next microtick — all calls within a synchronous block are delivered together as an array.
+```typescript
+// v1000.x
+increment.subscribe((calls) => {
+  console.log('Calls:', ...calls)
+})
+// Often called initially with [] and then with call-history arrays:
+// [{ params: [], payload: 11 }, { params: [5], payload: 16 }]
+```
+
+When writing version-agnostic guidance, prefer `take(action)` or `withCallHook` unless direct subscription is required; if using `.subscribe`, match the installed Reatom version.
 
 ## onEvent — await DOM/external events
 

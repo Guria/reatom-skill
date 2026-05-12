@@ -117,6 +117,36 @@ const UserFormPage = reatomComponent(() => {
 })
 ```
 
+## Computed factory / scoped model pattern
+
+A `computed` can return a scoped model (atoms, forms, actions, effects) whose instance is replaced when dependencies change. Add `withAbort()` when the returned model can start async work so old-scope tasks are cancelled.
+
+```typescript
+import { atom, computed, reatomForm, withAbort, wrap } from '@reatom/core'
+
+const editedUserId = atom<string | null>(null, 'editedUserId')
+
+const editedUserModel = computed(() => {
+  const id = editedUserId()
+  if (!id) return null
+
+  const form = reatomForm(
+    { name: '' },
+    {
+      name: `editedUserForm#${id}`,
+      onSubmit: (values) => wrap(fetch(`/api/users/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(values),
+      })),
+    },
+  )
+
+  return { id, form }
+}, 'editedUserModel').extend(withAbort())
+```
+
+Use this for selected rows, edit sessions, modals, and route-scoped models. Route loaders are often the best host because the URL already defines the scope.
+
 ## File organization
 
 ```typescript
