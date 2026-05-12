@@ -63,7 +63,7 @@ Prefer a plain helper or factory when there is no existing primitive to extend, 
 | Intercept behavior | `withMiddleware` | Use for logging, validation, parameter/result transformation |
 | Transform parameters | `withParams` | Safer than trying to replace `.set` |
 | Add computed write semantics | `withComputed` | Use instead of syncing atoms with hooks |
-| Dynamic temporary hook | `addChangeHook` / `addCallHook` | Rare; prefer `effect`, `take`, or `getCalls` in dynamic scopes |
+| Dynamic temporary hook | `addChangeHook` / `addCallHook` | Lifecycle-scoped hooks inside `withConnectHook`; prefer `withChangeHook`/`withCallHook` for permanent hooks |
 
 ## Common patterns
 
@@ -241,6 +241,63 @@ export const withSubmitHandler =
 
 Constrain the target to the smallest type you need. If full exported types are too broad or hard to infer, define a local `FormLike`/`RouteLike`/`ResourceLike` subset containing only the members your extension uses.
 
+### Dynamic hooks inside withConnectHook — lifecycle-scoped reactivity
+
+`addChangeHook` and `addCallHook` are the runtime companions to `withChangeHook` / `withCallHook`. Instead of permanently attaching a hook at definition time, they return an unsubscribe function so you can add and remove hooks dynamically. The core use case is **inside `withConnectHook`** to react to changes only while the atom has subscribers — when it disconnects, the hook is cleaned up.
+
+This is the pattern for building extensions that need lifecycle-scoped side effects: DOM updates, title changes, analytics, external sync, or conditional reactions that should only run while the atom is connected.
+
+```ts
+import { addChangeHook, withConnectHook } from '@reatom/core'
+
+// DOM sync — only update document.title while the atom is connected
+const documentTitleAtom = computed(() => /* derive title */).extend(
+  withConnectHook((target) => {
+    document.title = target()  // set initial value
+    return addChangeHook(target, (title) => {
+      document.title = title   // update on change
+    })
+  }),
+)
+```
+
+For extensions that need to track changes with custom cleanup (not just a simple hook), the same structure works — `addChangeHook` inside `withConnectHook`, returning a cleanup function that also disposes the hook:
+
+```ts
+import { addChangeHook, withConnectHook } from '@reatom/core'
+
+function withMatchLifecycle(onMatch: () => () => void): Ext<AtomLike<boolean>> {
+  return (target) => {
+    target.extend(
+      withConnectHook(() => {
+        let dispose: (() => void) | undefined
+
+        const sync = (isMatch: boolean) => {
+          dispose?.()
+          dispose = undefined
+          if (isMatch) dispose = onMatch()
+        }
+
+        sync(target())                         // initial state
+        const unhook = addChangeHook(target, sync)  // react to changes
+
+        return () => {                          // cleanup on disconnect
+          unhook()
+          dispose?.()
+        }
+      }),
+    )
+    return target
+  }
+}
+```
+
+**Why `addChangeHook` instead of `withChangeHook` inside `withConnectHook`?**
+
+`withChangeHook` permanently adds middleware to the atom — calling it inside `withConnectHook` would stack a new middleware on every connect/disconnect cycle. `addChangeHook` does the same thing but returns an unsubscribe function, so you can remove the hook on disconnect without polluting the middleware chain.
+
+When the hook is simpler (always active, no lifecycle scoping needed), prefer `withChangeHook` at definition time. Reserve `addChangeHook` / `addCallHook` for cases where the hook should be active only during a connected lifetime or a temporary window.
+
 ## Lifecycle and cleanup rules
 
 - Reatom-managed resources (`effect`, `computed`, actions with `withAbort`, subscriptions created in the current reactive context) are automatically cleaned up by the reactive context.
@@ -281,7 +338,7 @@ When a pattern appears only once, inline hooks may be enough. Extract an extensi
 ## Gotchas
 
 - Do not use `withChangeHook` to maintain derived state; use `computed` or `withComputed`.
-- Do not use dynamic `addChangeHook` / `addCallHook` as a default. They are for temporary runtime hooks; static extensions should use `withChangeHook` / `withCallHook`.
+- Do not use dynamic `addChangeHook` / `addCallHook` as a default for permanent hooks. They are for lifecycle-scoped or temporary runtime hooks (typically inside `withConnectHook`). For permanent hooks, use `withChangeHook` / `withCallHook` at definition time.
 - Do not manually clean up Reatom effects/subscriptions created inside a reactive context unless you intentionally stepped outside Reatom's lifecycle.
 - Do not hide broad factory wrappers behind an extension name. If you duplicate another API's creation options, you inherit its maintenance burden.
 - Be careful with `withComputed(..., { tail: false })`; use it only when the dependency set is fixed.
