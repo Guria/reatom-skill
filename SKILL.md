@@ -187,6 +187,24 @@ const Counter = reatomComponent(() => {
 })
 ```
 
+## Native JSX (@reatom/jsx)
+
+See [references/jsx.md](references/jsx.md) for the native JSX runtime API: zero re-renders, CSS-in-JS (`css` prop), `reatomClassName`, `$spread`, and two-way bindings.
+
+Quick reference:
+
+```tsx
+import { atom } from '@reatom/core'
+import { mount } from '@reatom/jsx' // no virtual DOM!
+
+const Counter = () => {
+  const count = atom(0) // runs once!
+  return <button on:click={() => count.set(c => c + 1)}>Count: {count}</button>
+}
+
+mount(document.body, <Counter />)
+```
+
 ## Patterns & Architecture
 
 See [references/patterns.md](references/patterns.md) for atomization, standalone atoms vs lenses, loader-as-SSOT pattern, component patterns, and file organization.
@@ -391,7 +409,7 @@ npm install @reatom/core @reatom/react  # or your framework adapter
 | `@reatom/vue` | Vue adapter |
 | `@reatom/solid-js` | Solid adapter |
 | `@reatom/lit` | Lit adapter |
-| `@reatom/jsx` | JSX utilities |
+| `@reatom/jsx` | Native JSX runtime (no VDOM) with zero re-renders, direct DOM updates, and built-in CSS-in-JS. An alternative to `@reatom/react` for framework-less apps. |
 | `@reatom/devtools` | DevTools for debugging |
 | `@reatom/zod` | Zod v4 integration |
 | `@reatom/eslint-plugin` | ESLint rules |
