@@ -15,6 +15,7 @@
 - [URL codecs (v1001+)](#url-codecs-v1001)
 - [Relative navigation (v1001+)](#relative-navigation-v1001)
 - [urlAtom and global state](#urlatom-and-global-state)
+  - [Default redirect with urlAtom.extend(withChangeHook(...))](#default-redirect-with-urlatomextendwithchangehook)
 - [Full SPA example](#full-spa-example)
 
 Routing validates params and search with any [Standard Schema](https://github.com/standard-schema/standard-schema) compliant library - Zod, Valibot, ArkType, etc. Examples below use Zod, but any Standard Schema works identically. **Check the target codebase's `package.json` to see which validation library is already in use and prefer that one.**
@@ -633,7 +634,34 @@ It throws if the parent route is not currently matched. In v1000, call `reviewRo
 
 ## urlAtom and global state
 
-`urlAtom.go('/path')` navigates, `urlAtom()` reads `{ pathname, search, hash }`, `urlAtom.catchLinks(false)` disables SPA link interception, `urlAtom.routes` is a registry of all created routes. `isSomeLoaderPending` tracks global loading state across all route loaders.
+`urlAtom.go('/path')` navigates, `urlAtom()` reads the current `URL` object, `urlAtom.catchLinks(false)` disables SPA link interception, `urlAtom.routes` is a registry of all created routes. `isSomeLoaderPending` tracks global loading state across all route loaders.
+
+### Default redirect with urlAtom.extend(withChangeHook(...))
+
+A common pattern is redirecting the root URL to a default page. Use `urlAtom.extend(withChangeHook(...))` at module scope (typically in the app entry file) to watch every URL change and redirect when needed:
+
+```typescript
+// App.tsx (or app entry file)
+import { urlAtom, withChangeHook } from '@reatom/core'
+import { rootRoute } from '#shared/router'
+import { dashboardRoute } from '#pages/dashboard'
+
+// Redirect root URL to the default page
+// Uses replace (second arg `true`) so the root URL doesn't appear in browser history
+urlAtom.extend(
+  withChangeHook(() => {
+    if (rootRoute.exact()) {
+      dashboardRoute.go(undefined, true)
+    }
+  }),
+)
+```
+
+Key details:
+- `urlAtom.extend(...)` at module scope is a **deliberate side effect** — it runs once when the module loads and persists for the app lifetime. This is idiomatic for app-level routing setup.
+- Use `.go(undefined, true)` (replace) so the redirect doesn't create a history entry — the back button skips the root and goes to whatever was before.
+- `rootRoute.exact()` checks for a bare `/` match without children — this avoids redirecting when any sub-route is active.
+- This same pattern works for other global URL reactions (analytics, scroll restoration, storybook URL isolation).
 
 ## Full SPA example
 
