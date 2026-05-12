@@ -159,17 +159,98 @@ const MyComponent = reatomComponent(() => {
 })
 ```
 
-## withSuspense — Suspense integration
+## Suspense — global state initialization
+
+⚠️ **Suspense is recommended only for global states** (user data, settings, feature flags, locale) that load once at app startup. For dynamic data fetching and page-specific content, use `withAsync` / `withAsyncData` instead.
+
+### withSuspense — React Suspense integration
+
+Adds a `.suspended` computed atom. When read: returns value if fulfilled, throws promise if pending (for Suspense to catch), throws error if rejected.
 
 ```typescript
-import { computed, withAsyncData, withSuspense, wrap } from '@reatom/core'
+import { computed, wrap, withSuspense } from '@reatom/core'
 
-const data = computed(async () => {
-  return await wrap(api.getData())
-}, 'data').extend(withAsyncData()).extend(withSuspense())
+const userSettings = computed(async () => {
+  const response = await wrap(fetch('/api/settings'))
+  return await wrap(response.json())
+}, 'userSettings').extend(withSuspense())
 
-// In a Suspense boundary:
-// data.suspended() throws the promise
+// In React with Suspense boundary:
+// userSettings.suspended() — returns settings or throws promise
+```
+
+Use `preserve: true` to keep previous data while loading (prevents UI flicker on refresh):
+
+```typescript
+const settings = computed(async () => {
+  return await wrap(fetch('/api/settings').then(r => r.json()))
+}, 'settings').extend(withSuspense({ preserve: true }))
+```
+
+### suspense() helper — inline suspended access
+
+Access suspended values without manually applying `withSuspense()`:
+
+```typescript
+import { computed, wrap, suspense } from '@reatom/core'
+
+const user = computed(async () => {
+  return await wrap(fetch('/api/user').then(r => r.json()))
+}, 'user')
+
+const userName = computed(() => {
+  const userData = suspense(user)  // throws promise if pending
+  return userData.name
+}, 'userName')
+```
+
+### withSuspenseInit — async init, sync after
+
+For local-first architectures: async load from storage/backend at startup, then operate synchronously. Removes "async coloring" from code.
+
+```typescript
+import { atom, withSuspenseInit, withChangeHook } from '@reatom/core'
+
+// Loads from IndexedDB at startup, sync atom after that
+const todos = atom<Todo[]>([]).extend(
+  withSuspenseInit(async () => {
+    const cached = await indexedDB.get('todos')
+    return cached ?? []
+  }),
+  withChangeHook((newState) => {
+    indexedDB.set('todos', newState)  // auto-persist changes
+  }),
+)
+
+// After init: todos() is synchronous, changes auto-persist
+```
+
+### withSuspenseRetry — retry when suspended atoms resolve
+
+When an action reads suspended atoms, `withSuspenseRetry` automatically retries until all suspensions resolve:
+
+```typescript
+import { action, wrap, withSuspenseRetry } from '@reatom/core'
+
+const fetchUserBooks = action(async () => {
+  const { id } = userSettings()  // may throw if pending
+  const response = await wrap(fetch(`/api/users/${id}/books`))
+  return await wrap(response.json())
+}, 'fetchUserBooks').extend(withSuspenseRetry())
+```
+
+⚠️ Be careful with non-idempotent operations — the action body may execute multiple times during retries.
+
+### settled() — check promise state without throwing
+
+Standalone utility (works anywhere, not Reatom-specific). Returns fallback if pending, throws if rejected, returns value if fulfilled.
+
+```typescript
+import { settled } from '@reatom/core'
+
+const promise = fetch('/api/data').then(r => r.json())
+const result = settled(promise, 'loading')  // 'loading' while pending
+const maybeValue = settled(promise)          // undefined while pending
 ```
 
 ## withRollback / withTransaction — optimistic updates

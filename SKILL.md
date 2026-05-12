@@ -158,13 +158,19 @@ form.validation()     // { errors: FieldSetFieldError[], triggered: boolean }
 
 ## Persistence
 
+See [references/persistence.md](references/persistence.md) for complete persistence API: all storage adapters, configuration options, version migration, TTL, schema validation, custom storage, and cross-tab sync.
+
+Quick reference:
+
 ```typescript
-import { atom, withLocalStorage, withSessionStorage, withIndexedDb, withBroadcastChannel } from '@reatom/core'
+import { atom, withLocalStorage, withSessionStorage, withIndexedDb, withBroadcastChannel, withCookie, withCookieStore } from '@reatom/core'
 
 const theme = atom<Theme>('light', 'theme').extend(withLocalStorage('theme'))
 const prefs = atom({}, 'prefs').extend(withSessionStorage('prefs'))
 const cache = atom(new Map(), 'cache').extend(withIndexedDb('my-db'))
 const crossTab = atom(0, 'crossTab').extend(withBroadcastChannel('sync'))
+const token = atom('', 'token').extend(withCookie({ secure: true })('auth-token'))
+const session = atom('', 'session').extend(withCookieStore()('session-id'))
 ```
 
 ## React Integration
@@ -184,6 +190,34 @@ const Counter = reatomComponent(() => {
 ## Patterns & Architecture
 
 See [references/patterns.md](references/patterns.md) for atomization, standalone atoms vs lenses, loader-as-SSOT pattern, component patterns, and file organization.
+
+## Sampling & Events
+
+See [references/sampling.md](references/sampling.md) for debounce/throttle via `wrap(sleep())`, `take()`, `onEvent()`, `race()`, `all()`, `variable()`, `abortVar`, and the checkpoint pattern.
+
+Quick reference:
+
+```typescript
+import { action, wrap, sleep, take, onEvent, race, withAbort } from '@reatom/core'
+
+// Debounce — withAbort cancels previous
+const search = action(async (query: string) => {
+  await wrap(sleep(500))
+  return await wrap(fetchResults(query))
+}).extend(withAbort())
+
+// Wait for state change
+await wrap(take(formIsValid, (v) => v || throwAbort()))
+
+// Wait for DOM event
+await wrap(onEvent(dialog, 'close'))
+
+// First wins, others cancelled
+const result = await wrap(race({
+  data: take(dataAtom, (v) => v !== null),
+  timeout: sleep(5000),
+}))
+```
 
 ## Async Context — wrap() Rules
 
@@ -248,6 +282,19 @@ These are the most common mistakes. Read before writing any Reatom code.
   const saveAction = action(async () => {
     const t = authToken()  // atom is in scope
   })
+  ```
+
+### Build & Packages
+
+- **ES2017+ build target required** — `wrap()` relies on native `async`/`await` microtask semantics. If your bundler/TS targets below `es2017`, `async/await` gets compiled to `.then()` chains which breaks `wrap()`'s seal → `"missing async stack"` error. Ensure **all** toolchain targets (TypeScript, bundler, test runner) are `es2017` or higher.
+- **Package deduplication** — `@reatom/core` is a **singleton** (uses internal `STACK` and other global variables). If your package manager installs multiple copies, you get type incompatibilities or runtime errors. After updating Reatom packages, always deduplicate:
+  ```bash
+  # npm
+  npm i --prefer-dedupe @reatom/react@latest
+  # yarn 3+
+  yarn add @reatom/react@latest && yarn dedupe "@reatom/*"
+  # pnpm
+  pnpm rm @reatom/core @reatom/react && pnpm i @reatom/core@latest @reatom/react@latest
   ```
 
 ### Routing
@@ -324,7 +371,7 @@ npm install @reatom/core @reatom/react  # or your framework adapter
 
 | Package | Purpose |
 |---|---|
-| `@reatom/core` | Core primitives, extensions, forms, routing, persistence, methods (`framePromise`, `peek`, `wrap`, `schedule`, `take`, `memo`, `variable`, `log`, `reatomLens`, `reatomObservable`, `ifChanged`, `getCalls`, `deatomize`, `effect`, `reatomTransaction`, `withRollback`, `withTransaction`) |
+| `@reatom/core` | Core primitives, extensions, forms, routing, persistence, methods (`framePromise`, `peek`, `wrap`, `sleep`, `schedule`, `take`, `onEvent`, `race`, `all`, `memo`, `variable`, `abortVar`, `throwAbort`, `log`, `settled`, `suspense`, `reatomLens`, `reatomObservable`, `ifChanged`, `getCalls`, `deatomize`, `effect`, `reatomTransaction`, `withRollback`, `withTransaction`, `withSuspense`, `withSuspenseInit`, `withSuspenseRetry`) |
 | `@reatom/react` | React adapter: `reatomComponent`, `bindField` |
 | `@reatom/preact` | Preact adapter |
 | `@reatom/vue` | Vue adapter |
