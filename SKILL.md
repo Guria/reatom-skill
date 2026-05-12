@@ -239,6 +239,8 @@ mount(document.body, <Counter />)
 
 See [references/patterns.md](references/patterns.md) for atomization, standalone atoms vs lenses, loader-as-SSOT pattern, component patterns, and file organization.
 
+When authoring reusable factories that create Reatom atom primitives or scoped models, follow the library convention: name the factory `reatom*` (for example `reatomUser`, `reatomSessionForm`, `reatomFeatureFlag`) rather than `create*` / `make*`. This keeps custom primitives visually aligned with built-ins like `reatomBoolean`, `reatomForm`, and `reatomRoute`.
+
 ## Sampling & Events
 
 See [references/sampling.md](references/sampling.md) for debounce/throttle via `wrap(sleep())`, `take()`, `onEvent()`, `race()`, `all()`, `variable()`, `abortVar`, and the checkpoint pattern.
@@ -377,6 +379,9 @@ However, `withConnectHook` *does* support returning a cleanup function for third
 - Never use `urlAtom().startsWith()` — use `route.match()` instead
 - Loader returns `null` to block the route — use for auth redirects
 - **Separate routes for create vs edit** — don't use `params.id === 'new'` conditional logic
+- **Constrain dynamic params when literal siblings exist** — route patterns like `projects/new` and `projects/:projectId` can both match `/projects/new` unless `:projectId` is validated to reject `new`. Use a Standard Schema on `params` that matches your actual ID format (`z.uuid()`, prefixed regex, etc.). Broad `z.string()` is not enough for IDs next to literal routes.
+- **Do not hide route collisions by taking only the first outlet** — rendering `outlet().at(0)` may mask duplicate matches while the wrong loader still runs. Fix the route match with param schemas or route structure.
+- **Parent route params are merged into child params** — if a guard route returns `{ user }`, child route schemas and `go()` types may need to account for it. For auth guards, return `{}` unless descendants really need injected params; read shared user atoms/resources in loaders/components instead.
 
 ### Forms
 
@@ -435,7 +440,9 @@ Reatom provides a `shadcn`-like code delivery system via `jsrepo` at [github.com
 - **Route component checks** — don't do `if (!route.match()) return null`. Use `render` option
 - **Module-level forms** — create inside route loaders for lifecycle management
 - **Single route for create/edit** — use separate routes with separate loaders
+- **Broad dynamic routes next to literal routes** — `:id` with `z.string()` beside `new`, `create`, `settings`, etc. lets literal pages also match the detail route. Use domain-shaped IDs (UUID, numeric, prefixed IDs, slugs with reserved-word exclusion) as a Standard Schema on the dynamic route.
 - **Actions in model files** — create route-specific actions inside route loaders
 - **Syncing atoms with change hooks** — use `computed` / `withComputed` instead
 - **Avoiding atom props** — thinking that passing atoms to children components is an anti-pattern. It is the recommended way to decouple models from views!
+- **Misnaming atom factories** — custom factories that create atom primitives/scoped models should use the `reatom*` convention, not generic `create*` / `make*` names.
 - **React-owned app state** — using `useState`/`useReducer`/context to own domain state, duplicate atom values, drive routing/data loading, or coordinate effects. In Reatom apps this mixes two reactive systems and is a strong architecture smell; keep app logic in Reatom and leave React built-in hooks for isolated UI/DOM integration or view-only memoization/callbacks.

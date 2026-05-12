@@ -169,6 +169,68 @@ const dashboardRoute = protectedRoute.reatomRoute({
 })
 ```
 
+## Dynamic route collisions with literal siblings
+
+Reatom route matching is pattern-based. A literal route and a dynamic route at the same level can both match the same URL segment:
+
+```typescript
+const projectCreateRoute = projectsRoute.reatomRoute({ path: 'new' })
+const projectDetailRoute = projectsRoute.reatomRoute({ path: ':projectId' })
+// /projects/new matches both unless :projectId rejects "new"
+```
+
+This is not just a rendering issue. If both routes match, both can appear in `outlet()` and the dynamic route loader can run with `projectId === 'new'`, often producing a confusing “not found” error below the intended page. Do not fix this by rendering only `outlet().at(0)` — that hides the duplicate match while the wrong route may still be active.
+
+Use the dynamic route's `params` as a match predicate. Prefer a direct Standard Schema over manual parsing in a function; decode failures make the route unmatched.
+
+```typescript
+import { z } from 'zod/v4'
+
+const projectIdSchema = z.string().regex(/^p_(?:\d+|[0-9a-f-]{36})$/)
+
+const projectCreateRoute = projectsRoute.reatomRoute({
+  path: 'new',
+  // create loader/form
+})
+
+const projectDetailRoute = projectsRoute.reatomRoute({
+  path: ':projectId',
+  params: z.object({ projectId: projectIdSchema }),
+  async loader({ projectId }) {
+    return await wrap(api.getProject(projectId))
+  },
+})
+```
+
+Shape the schema to your actual ID format — the broader the `z.string()`, the more likely it collides with a literal sibling:
+
+- UUID database IDs: `z.uuid()` or your validation library's UUID schema.
+- Numeric IDs: `z.string().regex(/^\d+$/).transform(Number)` (or a v1001 codec if navigation should accept numbers too).
+- Prefixed IDs: `z.string().regex(/^usr_[\w-]+$/)` / `project_...`.
+- Slugs with reserved words: reject reserved literals (`new`, `create`, `settings`, `edit`) with a schema refinement or choose a route structure that avoids ambiguity.
+- Known type segments: use an enum/union schema so unrelated literals do not match.
+
+Route order is not the main tool here; make each dynamic segment describe what it is allowed to be. This keeps matching, loaders, outlets, and navigation types aligned.
+
+### Parent params and child schemas
+
+Nested route params are merged. If a parent protected route injects `{ user }`, a child `params` schema may need to accept that merged input, and `go()` typing can become more cumbersome. For auth guards, prefer returning `{}` when children can read the user from a shared atom/resource:
+
+```typescript
+const protectedRoute = rootRoute.reatomRoute({
+  layout: true,
+  params() {
+    if (!authToken()) {
+      loginRoute.go()
+      return null
+    }
+    return {} // guard only; don't inject unrelated params
+  },
+})
+```
+
+Inject parent params only when descendants genuinely need those values as route params.
+
 ## Route loaders — data fetching
 
 Route loaders are async computeds with `withAsyncData` built-in. They run when route matches, auto-abort on navigation away. Nested loaders await parents and receive merged params. Effects inside loaders also auto-abort on navigation.
@@ -205,7 +267,7 @@ Route loaders are the **single source of truth** for all route-specific state. C
 
 ### Separate routes for create vs edit
 
-**Never** use a single route with conditional logic (`params.id === 'new'`). Use separate routes — each gets its own loader, its own form instance, and automatic cleanup on navigation.
+**Never** use a single route with conditional logic (`params.id === 'new'`). Use separate routes — each gets its own loader, its own form instance, and automatic cleanup on navigation. Also ensure the dynamic detail/edit route's `params` schema rejects literal siblings such as `new`; separate routes alone do not prevent `:id` from matching a literal segment.
 
 ```typescript
 // ❌ Bad — single route with conditional logic
@@ -248,9 +310,13 @@ export const userCreateRoute = usersRoute.reatomRoute({
   },
 })
 
+const userIdSchema = z.uuid()
+
 export const userEditRoute = usersRoute.reatomRoute({
   path: ':id/edit',
-  params: z.object({ id: z.string() }),
+  // Use the real ID shape here. Avoid broad z.string() when literal sibling
+  // routes such as "new" or "settings" share the same parent.
+  params: z.object({ id: userIdSchema }),
   async loader(params) {
     const token = authToken()
     if (!token) throw new Error('Not authenticated')

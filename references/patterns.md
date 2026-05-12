@@ -83,7 +83,7 @@ Both patterns eliminate identity actions. Choose based on whether you want granu
 
 - Use `#${ID}` pattern for dynamically created atoms: `goods.list#${id}.addToCart`
 - Duplicate structure depth in names: `users.paging.current`
-- Use factory pattern: `reatomUser(userDto, 'users' + userDto.id)`
+- Name reusable factories that create atom primitives/scoped models with the `reatom*` convention: `reatomUser(userDto, 'users' + userDto.id)`, `reatomSessionForm(...)`, `reatomFeatureFlag(...)`. Prefer this over generic `create*` / `make*` names so custom factories look like Reatom primitives.
 
 ## Component pattern — pull everything from loader
 
