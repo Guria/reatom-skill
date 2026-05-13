@@ -25,6 +25,7 @@ reatom/
     │   └── jsx.md                    # @reatom/jsx native runtime
     ├── meta/
     │   ├── packages.md               # Package index, deprecated v3 list
+    │   ├── reusables.md              # jsrepo catalog (form helpers, undo, logger, test, tweakpane…)
     │   ├── migration.md              # v3 → v1000+ API mapping
     │   └── v1001.md                  # Delta vs v1000 (API gating)
     └── setup/

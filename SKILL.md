@@ -55,6 +55,7 @@ references/
 | `references/setup/start-from-scratch.md` | Bootstrapping a new TypeScript + Vite + Reatom project (toolchain, lint/format, validate pipeline, browser smoke test, post-bootstrap pitfall summary) |
 | `references/meta/v1001.md` | Comparing v1001 to v1000, deciding whether an API is v1001-only, migrations from v1000 |
 | `references/meta/packages.md` | Looking up which @reatom/* package to install, checking if a v3 package is deprecated |
+| `references/meta/reusables.md` | Browsing the [reatom/reusables](https://github.com/reatom/reusables) jsrepo catalog — form helpers, history/undo, logger, test harness, tweakpane integration, etc. |
 | `references/meta/migration.md` | Migrating code from v3 to v1000+, mapping old APIs to new |
 | `references/core/extensions.md` | Using built-in extensions: `withAsyncData`, `withAbort`, `withChangeHook`, `withConnectHook`, `withComputed`, `withSuspense`, `withRollback`, `withTransaction`, `framePromise` |
 | `references/core/writing-extensions.md` | Writing custom `.extend()` helpers, lifecycle/resource integration, middleware, hooks, type-safe extension APIs |
@@ -512,7 +513,7 @@ Deeper React notes (StrictMode, instant-async resolution, choosing `reatomCompon
 
 ## Package Index
 
-Full table, deprecation list, and `jsrepo` reusables system in [`references/meta/packages.md`](references/meta/packages.md). The most common installs are `@reatom/core` plus one adapter (`@reatom/react`, `@reatom/jsx`, `@reatom/vue`, `@reatom/solid-js`, `@reatom/preact`, or `@reatom/lit`).
+Full table, deprecation list, and `jsrepo` reusables system in [`references/meta/packages.md`](references/meta/packages.md). Browse the copy-paste reusables catalog (form helpers, undo/redo, logger, test harness, tweakpane integration) in [`references/meta/reusables.md`](references/meta/reusables.md). The most common installs are `@reatom/core` plus one adapter (`@reatom/react`, `@reatom/jsx`, `@reatom/vue`, `@reatom/solid-js`, `@reatom/preact`, or `@reatom/lit`).
 
 > **Do not install** any v3 package (`@reatom/hooks`, `@reatom/async`, `@reatom/persist*`, `@reatom/form`, `@reatom/url`, `@reatom/timer`, `@reatom/lens`, `@reatom/undo`, `@reatom/primitives`, `@reatom/npm-react`, `@reatom/npm-vue`, `@reatom/devtools`) — all merged into `@reatom/core` or obsoleted.
 

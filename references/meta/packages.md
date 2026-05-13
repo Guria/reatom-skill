@@ -23,7 +23,7 @@
 
 ## Reatom Reusables
 
-`shadcn`-like code delivery via `jsrepo` at [github.com/reatom/reusables](https://github.com/reatom/reusables). Copy-paste abstract, pre-built Reatom components and hooks directly into your project.
+**Reusables registry** — a `shadcn`-style code delivery system at [github.com/reatom/reusables](https://github.com/reatom/reusables) distributed via [`jsrepo`](https://www.jsrepo.dev). Items are vendored into your source tree, not installed as npm packages. Catalog covers form helpers (`withFormAutoFocusOnError`, `withFormAutoSubmit`, `withFormSubmitHandler`, `withFormUnsavedWarning`), undo/redo (`withHistory`), logging (`withLogger`), reset (`withReset`), library-instance lifecycle (`reatomInstance` + `withInstance`), HMR-safe wrap (`hotWrap`), a Vitest test harness (`test`), and a Tweakpane integration. See [`./reusables.md`](./reusables.md) for the full catalog with per-item source links and "when to use a reusable vs. core vs. write your own" guidance.
 
 ## Deprecated v1-v3 Packages (DO NOT USE)
 

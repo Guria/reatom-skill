@@ -294,6 +294,8 @@ The `validate` pipeline catches type, lint, and format problems but cannot catch
 - **Vitest browser mode** — lower ceremony, runs your Vite app in a real browser through Playwright/WebDriverIO under the hood, integrates with `npm run test`. Good default for greenfield apps.
 - **Playwright** standalone — heavier setup but better for full end-to-end flows beyond smoke tests; pick this if you already plan to write E2E coverage.
 
+If the project plans to write meaningful Reatom unit tests beyond a single boot smoke check, also pull the `test` utility from the reusables registry (`npx jsrepo add test` after initializing jsrepo against [reatom/reusables](https://github.com/reatom/reusables)). It bundles a Vitest wrapper with automatic Reatom context lifecycle and mock-subscription helpers, replacing the hand-rolled spy below. See [`../meta/reusables.md`](../meta/reusables.md) for the wider catalog.
+
 Verify versions before installing (`npm view <pkg> dist-tags`).
 
 ### Vitest browser mode (recommended default)
