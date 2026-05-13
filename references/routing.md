@@ -8,7 +8,7 @@
 - [Protected routes - auth guard](#protected-routes--auth-guard)
 - [Dynamic route collisions with literal siblings](#dynamic-route-collisions-with-literal-siblings)
 - [Route loaders - data fetching](#route-loaders--data-fetching)
-  - [Identity-changing routes and clean scoped state](#identity-changing-routes-and-clean-scoped-state)
+  - [Identity-changing routes, parent loader data, and clean scoped state](#identity-changing-routes-parent-loader-data-and-clean-scoped-state)
 - [Route loaders - factory pattern (forms + actions)](#route-loaders--factory-pattern-forms--actions)
 - [Modal gate - state in memory, no URL](#modal-gate--state-in-memory-no-url)
 - [Search-only routes](#search-only-routes)
@@ -310,79 +310,86 @@ const UserPage = reatomComponent(({
 })
 ```
 
-For list/search routes, avoid replacing the whole page on every search-param change. With a concrete loader model, `isPending` after `isEverSettled` means "refreshing" — keep previous data rendered with a subtle pending indicator. For routes where params identify a different entity, use the clean-scope pattern below instead of preserving the previous entity model.
+For list/search routes, avoid replacing the whole page on every search-param change. With a concrete loader model, `isPending` after `isEverSettled` means "refreshing" — keep previous data rendered with a subtle pending indicator. When params identify a different entity, use the parent-loader pattern below instead of preserving the previous entity model.
 
-### Identity-changing routes and clean scoped state
+### Identity-changing routes, parent loader data, and clean scoped state
 
 `status.data` deliberately keeps the last fulfilled loader payload while a new loader run is pending. That is helpful for list/search refreshes because it preserves focus and stale results, but it can briefly show the previous entity on detail/edit pages while a new `:id` loads.
 
-When a route param represents a new identity and the UI should start clean immediately, have the loader return a fresh scoped model before awaiting remote data. The model owns the data request and starts from `null` or another empty state; the page renders the model's loading/error state rather than the route loader's stale payload.
+For identity pages, shape the route tree around the identity: put the entity fetch in a parent layout route, then let child routes create route-specific forms/actions from the parent loader data. Nested loaders can call `await wrap(parentRoute.loader())`. Reatom starts child loaders in parallel and exposes the child result only after the parent loader settles successfully, so the child model is fresh for the current identity without a duplicate entity fetch.
 
 ```typescript
-const reatomItemDetailModel = (itemId: string, name = `itemDetail#${itemId}`) => {
-  const item = atom<Item | null>(null, `${name}.item`)
-
-  const load = action(async () => {
-    const next = await wrap(api.getItem(itemId))
-    item.set(next)
-    return next
-  }, `${name}.load`).extend(
-    withAsync({ status: true, cacheParams: true }),
-    withAbort(),
-  )
-
-  const save = action(async () => {
-    const current = item()
-    if (!current) throw new Error('Item is still loading')
-    const saved = await wrap(api.saveItem(current))
-    item.set(saved)
-    return saved
-  }, `${name}.save`).extend(withAsync({ status: true }))
-
-  return { itemId, item, load, save }
-}
-
-type ItemDetailModel = ReturnType<typeof reatomItemDetailModel>
-
-const itemDetailRoute = itemsRoute.reatomRoute({
+const itemRoute = itemsRoute.reatomRoute({
   path: ':itemId',
   params: z.object({ itemId: z.string().regex(/^item_/) }),
+  layout: true,
   async loader({ itemId }) {
-    const model = reatomItemDetailModel(itemId)
-
-    // Start the scoped request in the route scope, but do not await it. The
-    // loader resolves to a fresh model immediately; the model owns data loading.
-    void model.load().catch(() => undefined)
-
-    return model
+    return await wrap(api.getItem(itemId))
   },
   render(self) {
     const status = self.loader.status()
-    if (status.isFirstPending) return <PageSkeleton />
-    if (status.isFulfilled) return <ItemDetailPage model={status.data} />
-    if (status.isRejected) return <PageError error={self.loader.error() ?? new Error('Failed to create page model')} />
-    return <PageSkeleton />
+
+    // On identity changes, do not render the previous child's outlet while the
+    // parent entity is pending. This is intentionally different from list
+    // stale-while-refresh behavior.
+    if (status.isFirstPending || status.isPending) return <PageSkeleton />
+    if (status.isRejected) {
+      return <PageError error={self.loader.error() ?? new Error('Failed to load item')} />
+    }
+
+    return <>{self.outlet()}</>
   },
 })
 
-const ItemDetailPage = reatomComponent(({ model }: { model: ItemDetailModel }) => {
-  const item = model.item()
-  const loadStatus = model.load.status()
-  const loadError = model.load.error()
+const itemEditRoute = itemRoute.reatomRoute({
+  path: 'edit',
+  async loader({ itemId }) {
+    const item = await wrap(itemRoute.loader())
+    const form = reatomItemForm(item, `itemEdit#${itemId}.form`)
 
-  if (!item) {
-    return loadError ? (
-      <InlineError error={loadError} onRetry={wrap(() => model.load.retry())} />
-    ) : (
-      <InlineLoader pending={loadStatus.isPending} />
+    const save = action(async () => {
+      const saved = await wrap(api.saveItem(item.id, form()))
+      form.init(saved)
+      return saved
+    }, `itemEdit#${itemId}.save`).extend(
+      withAsync({ status: true }),
+      withAbort(),
     )
-  }
 
-  return <ItemEditor item={item} save={model.save} />
+    return { item, form, save }
+  },
+  render(self) {
+    const status = self.loader.status()
+    if (status.isFirstPending || status.isPending) return <PageSkeleton />
+    if (status.isFulfilled) return <ItemEditPage model={status.data} />
+    if (status.isRejected) {
+      return <PageError error={self.loader.error() ?? new Error('Failed to create edit model')} />
+    }
+    return <PageSkeleton />
+  },
 })
 ```
 
-Use this pattern for details, edit sessions, selected-row panels, and any page where showing the previous identity would be misleading. Use the ordinary loader-data pattern for list/search pages where stale-while-refresh is the desired UX.
+If a child page must mount before the entity request resolves, return a fresh scoped model with `null`/empty atoms and an internal `load` action or async computed. Use that as an intentional alternative for progressive UI, not as a workaround for forgetting that child loaders can reuse parent loader data.
+
+#### Index child loaders under layout routes
+
+A v1001 page route renders exact-by-default, but loader activation follows route matching. A child with `path: ''` under a layout route can match descendant URLs for loader purposes even though its render is exact. If that child is an index/list page with a loader, constrain it explicitly:
+
+```typescript
+const itemsIndexRoute = itemsRoute.reatomRoute({
+  path: '',
+  params(params) {
+    const pathname = urlAtom().pathname.replace(/\/$/, '') || '/'
+    return pathname === itemsRoute.path() ? params : null
+  },
+  async loader(params) {
+    return await wrap(api.listItems(params))
+  },
+})
+```
+
+This keeps the index loader from running when a nested detail/edit route is active.
 
 ## Route loaders - factory pattern (forms + actions)
 

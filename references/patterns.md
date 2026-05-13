@@ -132,35 +132,49 @@ Guidelines:
 
 Route loaders should be the source of route-specific forms/actions/data, while the route `render(self)` should own loader status branching. Page components should receive a typed, concrete model/data prop, not a `loader` prop. This keeps routing and async lifecycle concerns at the route boundary and avoids `any` creeping into form/model props. With concrete loader return types (no `undefined` branches), TypeScript narrows `status.data` to the full type in the refresh branch — no extra guards needed.
 
-That refresh branch is for the same page identity: list filters, search params, or other refreshes where stale content is useful. If route params describe a different entity, create a fresh scoped model for the new params before awaiting remote data. The model can start from empty/null atoms and own its load status, avoiding the confusing moment where route-loader `status.data` still contains the previous identity.
+That refresh branch is for the same page identity: list filters, search params, or other refreshes where stale content is useful. If route params describe a different entity, shape the tree around that identity: a parent layout route loads the entity, and child routes build scoped page models from `await wrap(parentRoute.loader())`. The parent can render a skeleton instead of `outlet()` while the identity is pending, so children do not display a previous entity by accident.
 
 ```tsx
 // ❌ Bad — imports route-specific form/actions from model files or passes loader
 import { userForm, saveUserAction } from '../usersModel'
 const UserFormPage = reatomComponent(({ loader }: { loader: any }) => { /* ... */ })
 
-// ✅ Good — loader creates the scoped model, render narrows status.data
+// ✅ Good — parent loader owns entity data; child loader creates the scoped model
 const reatomUserEditModel = (user: User) => {
   const form = reatomUserForm(user)
   const saveUser = action(async () => wrap(api.saveUser(user.id, form()))).extend(
     withAsync({ status: true }),
+    withAbort(),
   )
   return { form, saveUser, user }
 }
 
 type UserEditModel = ReturnType<typeof reatomUserEditModel>
 
-const userEditRoute = usersRoute.reatomRoute({
-  path: ':id/edit',
+const userRoute = usersRoute.reatomRoute({
+  path: ':id',
+  layout: true,
   async loader({ id }) {
-    const user = await wrap(api.getUser(id))
+    return await wrap(api.getUser(id))
+  },
+  render(self) {
+    const status = self.loader.status()
+    if (status.isFirstPending || status.isPending) return <UserPageSkeleton />
+    if (status.isRejected) return <PageError error={self.loader.error() ?? new Error('Request failed')} />
+    return <>{self.outlet()}</>
+  },
+})
+
+const userEditRoute = userRoute.reatomRoute({
+  path: 'edit',
+  async loader() {
+    const user = await wrap(userRoute.loader())
     return reatomUserEditModel(user)
   },
   render(self) {
     const status = self.loader.status()
-    if (status.isFirstPending) return <UserFormSkeleton />
+    if (status.isFirstPending || status.isPending) return <UserFormSkeleton />
     if (status.isFulfilled) return <UserFormPage model={status.data} />
-    if (status.isPending && status.isEverSettled) return <UserFormPage model={status.data} refreshing />
     if (status.isRejected) return <PageError error={self.loader.error() ?? new Error('Request failed')} />
 
     return <></>
@@ -169,10 +183,8 @@ const userEditRoute = usersRoute.reatomRoute({
 
 const UserFormPage = reatomComponent(({
   model,
-  refreshing,
 }: {
   model: UserEditModel
-  refreshing?: boolean
 }) => {
   const { form, saveUser } = model
   const saveStatus = saveUser.status()
@@ -180,14 +192,13 @@ const UserFormPage = reatomComponent(({
   return (
     <form onSubmit={(e) => { e.preventDefault(); saveUser() }}>
       <input {...bindField(form.fields.name)} />
-      {refreshing && <InlineSpinner />}
       <button disabled={saveStatus.isPending}>Save</button>
     </form>
   )
 })
 ```
 
-Keep model files for shared app-wide state. If a form/action exists only for a route instance, create it in that route loader and expose its type with `ReturnType` from a `reatom*` factory or from the loader model shape. For identity-keyed pages, the scoped model can include `entityAtom = atom<Entity | null>(null)`, a `load` action with `withAsync({ status: true, cacheParams: true })` plus `withAbort()` (or a computed resource with `withAsyncData()`), and domain actions that guard against `null` until the entity loads. This gives each identity clean atoms before the data request resolves.
+Keep model files for shared app-wide state. If a form/action exists only for a route instance, create it in that route loader and expose its type with `ReturnType` from a `reatom*` factory or from the loader model shape. For identity-keyed pages, use parent loader data when the entity is required before the child model exists. If the child model must mount before the entity request resolves, use a fresh `entityAtom = atom<Entity | null>(null)`, a `load` action with `withAsync({ status: true, cacheParams: true })` plus `withAbort()` (or a computed resource with `withAsyncData()`), and domain actions that guard against `null` until the entity loads.
 
 ## Computed factory / scoped model pattern
 
