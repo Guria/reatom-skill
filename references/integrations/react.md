@@ -1,5 +1,16 @@
 # React Reference
 
+## Sources
+
+Package: [`packages/react`](https://github.com/reatom/reatom/tree/v1001/packages/react)
+
+| API | Source | Tests |
+|---|---|---|
+| `reatomComponent` | [`reatomComponent.ts`](https://github.com/reatom/reatom/blob/v1001/packages/react/src/reatomComponent.ts) | [`reatomComponent.test.tsx`](https://github.com/reatom/reatom/blob/v1001/packages/react/src/reatomComponent.test.tsx) |
+| `useAtom`, `useAction`, `useWrap`, `useUpdate` | [`hooks.ts`](https://github.com/reatom/reatom/blob/v1001/packages/react/src/hooks.ts) | [`hooks.test.tsx`](https://github.com/reatom/reatom/blob/v1001/packages/react/src/hooks.test.tsx) |
+| `bindField` | [`bindField.ts`](https://github.com/reatom/reatom/blob/v1001/packages/react/src/bindField.ts) | — |
+| StrictMode behavior | [`reatomStrictMode.test.tsx`](https://github.com/reatom/reatom/blob/v1001/packages/react/src/reatomStrictMode.test.tsx) | — |
+
 ## reatomComponent
 
 Wrap any React component that reads atom values with `reatomComponent`. This establishes a reactive subscription boundary — the component re-renders when read atoms change.

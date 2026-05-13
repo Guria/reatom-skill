@@ -1,5 +1,11 @@
 # Patterns Reference
 
+## Sources
+
+- Examples illustrating these patterns: [`examples/`](https://github.com/reatom/reatom/tree/v1001/examples)
+- Core primitives behind the patterns: [`packages/core/src/core/atom.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/core/atom.ts), [`packages/core/src/core/action.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/core/action.ts), [`packages/core/src/methods/variable.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/methods/variable.ts)
+- Atomization & factory examples in dashboard demo: [`examples/mantine-dashboard`](https://github.com/reatom/reatom/tree/v1001/examples/mantine-dashboard)
+
 ## Atomization pattern
 
 Keep immutable structure as plain data, lift mutable fields into atoms.

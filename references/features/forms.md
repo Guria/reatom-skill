@@ -1,5 +1,18 @@
 # Forms Reference
 
+## Sources
+
+Forms live in [`packages/core/src/form`](https://github.com/reatom/reatom/tree/v1001/packages/core/src/form).
+
+| API | Source | Tests |
+|---|---|---|
+| `reatomForm` | [`reatomForm.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/form/reatomForm.ts) | [`reatomForm.test.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/form/reatomForm.test.ts) |
+| `reatomField` | [`reatomField.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/form/reatomField.ts) | [`reatomField.test.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/form/reatomField.test.ts) |
+| `reatomFieldArray` | [`reatomFieldArray.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/form/reatomFieldArray.ts) | [`reatomFieldArray.test.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/form/reatomFieldArray.test.ts) |
+| `reatomFieldSet` | [`reatomFieldSet.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/form/reatomFieldSet.ts) | — |
+| `reatomFieldsAtomize` | [`reatomFieldsAtomize.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/form/reatomFieldsAtomize.ts) | [`reatomFieldsAtomize.test.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/form/reatomFieldsAtomize.test.ts) |
+| `bindField` (React) | [`packages/react/src/bindField.ts`](https://github.com/reatom/reatom/blob/v1001/packages/react/src/bindField.ts) | — |
+
 Forms accept any [Standard Schema](https://github.com/standard-schema/standard-schema) compliant library for validation — Zod, Valibot, ArkType, etc. Examples below use Zod, but any Standard Schema works identically via the `schema` option. **Check the target codebase's `package.json` to see which validation library is already in use and prefer that one.**
 
 ## Basic form

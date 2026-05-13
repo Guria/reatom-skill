@@ -15,7 +15,7 @@ When editing an existing project, inspect `package.json` / lockfile and match it
 
 **Appeared in v1001 — mark these explicitly in answers and migrations:** routing `layout: true` with page routes exact-by-default, URL codecs for `params`/`search`, `route.go.relative()`, React `reatomComponent({ abortOnUnmount })` with default `false`, new `reatomObservable` / `withObservable` producer API, action subscription callbacks `(payload, params)`, `withMiddleware(..., 'read' | 'computed' | 'invalidation')`, `withTransaction({ shouldRollback })`, `fromEntries`, `framePromise()` removed queue arg (v1000 accepts `QueueKind` with default `'effect'`, calling with no args works in both), and `reatomEnum.set` accepting arbitrary strings (runtime-validated).
 
-The **computed factory / scoped model pattern** (`computed` returning scoped atoms/forms/actions, extended with `withAbort()`) works in both v1000 and v1001. Only the surrounding routing syntax is version-sensitive: v1001 uses `layout: true` + default-exact pages, v1000 uses `exactRender: true`. See `references/v1001.md` before version-sensitive work.
+The **computed factory / scoped model pattern** (`computed` returning scoped atoms/forms/actions, extended with `withAbort()`) works in both v1000 and v1001. Only the surrounding routing syntax is version-sensitive: v1001 uses `layout: true` + default-exact pages, v1000 uses `exactRender: true`. See `references/meta/v1001.md` before version-sensitive work.
 
 ## Resources
 
@@ -25,20 +25,32 @@ The **computed factory / scoped model pattern** (`computed` returning scoped ato
 
 ### Reference files — read on demand
 
+References are grouped into subfolders for fast scanning:
+
+```
+references/
+├── core/         core primitives, extensions, sampling, architectural patterns
+├── features/     forms, routing, persistence (built into @reatom/core)
+├── integrations/ framework adapters: React, native JSX runtime
+├── meta/         package index, version delta, migration
+└── setup/        starting a new project from scratch
+```
+
 | File | Read when |
 |---|---|
-| `references/v1001.md` | Comparing v1001 to v1000, deciding whether an API is v1001-only, migrations from v1000 |
-| `references/extensions.md` | Using built-in extensions: `withAsyncData`, `withAbort`, `withChangeHook`, `withConnectHook`, `withComputed`, `withSuspense`, `withRollback`, `withTransaction`, `framePromise` |
-| `references/writing-extensions.md` | Writing custom `.extend()` helpers, lifecycle/resource integration, middleware, hooks, type-safe extension APIs |
-| `references/routing.md` | Working with `reatomRoute`, nested routes, loaders, layouts, URL params, navigation, protected routes |
-| `references/forms.md` | Working with `reatomForm`, `bindField`, field validation, form factories |
-| `references/persistence.md` | Using `withLocalStorage`, `withIndexedDb`, `withCookie`, or any storage adapter |
-| `references/react.md` | Using `@reatom/react`: `reatomComponent`, `bindField`, StrictMode issues |
-| `references/jsx.md` | Using `@reatom/jsx` native JSX runtime, CSS-in-JS, direct DOM bindings |
-| `references/patterns.md` | Architectural decisions: atomization, computed factory/scoped models, standalone atoms vs lenses, file organization |
-| `references/sampling.md` | Debounce/throttle, `take()`, `onEvent()`, `race()`, `abortVar`, checkpoint pattern |
-| `references/packages.md` | Looking up which @reatom/* package to install, checking if a v3 package is deprecated |
-| `references/migration.md` | Migrating code from v3 to v1000+, mapping old APIs to new |
+| `references/setup/start-from-scratch.md` | Bootstrapping a new TypeScript + Vite + Reatom project (toolchain, lint/format, validate pipeline) |
+| `references/meta/v1001.md` | Comparing v1001 to v1000, deciding whether an API is v1001-only, migrations from v1000 |
+| `references/meta/packages.md` | Looking up which @reatom/* package to install, checking if a v3 package is deprecated |
+| `references/meta/migration.md` | Migrating code from v3 to v1000+, mapping old APIs to new |
+| `references/core/extensions.md` | Using built-in extensions: `withAsyncData`, `withAbort`, `withChangeHook`, `withConnectHook`, `withComputed`, `withSuspense`, `withRollback`, `withTransaction`, `framePromise` |
+| `references/core/writing-extensions.md` | Writing custom `.extend()` helpers, lifecycle/resource integration, middleware, hooks, type-safe extension APIs |
+| `references/core/sampling.md` | Debounce/throttle, `take()`, `onEvent()`, `race()`, `abortVar`, checkpoint pattern |
+| `references/core/patterns.md` | Architectural decisions: atomization, computed factory/scoped models, standalone atoms vs lenses, file organization |
+| `references/features/routing.md` | Working with `reatomRoute`, nested routes, loaders, layouts, URL params, navigation, protected routes |
+| `references/features/forms.md` | Working with `reatomForm`, `bindField`, field validation, form factories |
+| `references/features/persistence.md` | Using `withLocalStorage`, `withIndexedDb`, `withCookie`, or any storage adapter |
+| `references/integrations/react.md` | Using `@reatom/react`: `reatomComponent`, `bindField`, StrictMode issues |
+| `references/integrations/jsx.md` | Using `@reatom/jsx` native JSX runtime, CSS-in-JS, direct DOM bindings |
 
 ## Core Primitives
 
@@ -90,7 +102,7 @@ effect(() => {
 
 ## Extensions
 
-Extensions add capabilities via `.extend()`. See [references/extensions.md](references/extensions.md) for built-in APIs (`withAsyncData`, `withAsync`, `withAbort`, `withChangeHook`, `withConnectHook`, `withComputed`, `withSuspense`, `withRollback`, `withTransaction`, `framePromise`). When authoring reusable custom extensions, read [references/writing-extensions.md](references/writing-extensions.md).
+Extensions add capabilities via `.extend()`. See [references/core/extensions.md](references/core/extensions.md) for built-in APIs (`withAsyncData`, `withAsync`, `withAbort`, `withChangeHook`, `withConnectHook`, `withComputed`, `withSuspense`, `withRollback`, `withTransaction`, `framePromise`). When authoring reusable custom extensions, read [references/core/writing-extensions.md](references/core/writing-extensions.md).
 
 Quick reference — the two most common:
 
@@ -140,7 +152,7 @@ priority.set('low')
 
 ## Routing
 
-See [references/routing.md](references/routing.md) for complete routing API: routes, nested routes, loaders, layout/page routes, protected routes, modal gates, search-only routes, and a full SPA example.
+See [references/features/routing.md](references/features/routing.md) for complete routing API: routes, nested routes, loaders, layout/page routes, protected routes, modal gates, search-only routes, and a full SPA example.
 
 Routing accepts any [Standard Schema](https://github.com/standard-schema/standard-schema) compliant library (Zod, Valibot, ArkType, etc.) for params and search validation.
 
@@ -159,7 +171,7 @@ userRoute.path({ userId: '123' }) // build URL without navigating
 
 ## Forms
 
-See [references/forms.md](references/forms.md) for complete forms API: `reatomForm`, React binding with `bindField`, field access patterns, and form factories.
+See [references/features/forms.md](references/features/forms.md) for complete forms API: `reatomForm`, React binding with `bindField`, field access patterns, and form factories.
 
 Forms accept any [Standard Schema](https://github.com/standard-schema/standard-schema) compliant library (Zod, Valibot, ArkType, etc.) for validation.
 
@@ -191,7 +203,7 @@ form.validation()     // { errors: FieldSetFieldError[], triggered: boolean }
 
 ## Persistence
 
-See [references/persistence.md](references/persistence.md) for complete persistence API: all storage adapters, configuration options, version migration, TTL, schema validation, custom storage, and cross-tab sync.
+See [references/features/persistence.md](references/features/persistence.md) for complete persistence API: all storage adapters, configuration options, version migration, TTL, schema validation, custom storage, and cross-tab sync.
 
 Quick reference:
 
@@ -214,7 +226,7 @@ const pageNumber = atom(1, 'pageNumber').extend(withSearchParams('page', {
 
 ## React Integration
 
-See [references/react.md](references/react.md) for `reatomComponent`, `useAtom`, `useAction`, `bindField`, StrictMode caveat, and TypeScript gotchas.
+See [references/integrations/react.md](references/integrations/react.md) for `reatomComponent`, `useAtom`, `useAction`, `bindField`, StrictMode caveat, and TypeScript gotchas.
 
 Quick reference:
 
@@ -228,7 +240,7 @@ const Counter = reatomComponent(() => {
 
 ## Native JSX (@reatom/jsx)
 
-See [references/jsx.md](references/jsx.md) for the native JSX runtime API: zero re-renders, CSS-in-JS (`css` prop), `reatomClassName`, `$spread`, and two-way bindings.
+See [references/integrations/jsx.md](references/integrations/jsx.md) for the native JSX runtime API: zero re-renders, CSS-in-JS (`css` prop), `reatomClassName`, `$spread`, and two-way bindings.
 
 Quick reference:
 
@@ -246,7 +258,7 @@ mount(document.body, <Counter />)
 
 ## Patterns & Architecture
 
-See [references/patterns.md](references/patterns.md) for atomization, standalone atoms vs lenses, loader-as-SSOT pattern, component patterns, and file organization.
+See [references/core/patterns.md](references/core/patterns.md) for atomization, standalone atoms vs lenses, loader-as-SSOT pattern, component patterns, and file organization.
 
 When authoring reusable factories that create Reatom atom primitives or scoped models, follow the library convention: name the factory `reatom*` (for example `reatomUser`, `reatomSessionForm`, `reatomFeatureFlag`) rather than `create*` / `make*`. This keeps custom primitives visually aligned with built-ins like `reatomBoolean`, `reatomForm`, and `reatomRoute`.
 
@@ -334,7 +346,7 @@ render: (self) => {
 
 ## Sampling & Events
 
-See [references/sampling.md](references/sampling.md) for debounce/throttle via `wrap(sleep())`, `take()`, `onEvent()`, `race()`, `all()`, `variable()`, `abortVar`, and the checkpoint pattern.
+See [references/core/sampling.md](references/core/sampling.md) for debounce/throttle via `wrap(sleep())`, `take()`, `onEvent()`, `race()`, `all()`, `variable()`, `abortVar`, and the checkpoint pattern.
 
 Quick reference:
 
@@ -502,7 +514,7 @@ However, `withConnectHook` *does* support returning a cleanup function for third
 - **Constrain dynamic params when literal siblings exist** — route patterns like `projects/new` and `projects/:projectId` can both match `/projects/new` unless `:projectId` is validated to reject `new`. Use a Standard Schema on `params` that matches your actual ID format (`z.uuid()`, prefixed regex, etc.). Broad `z.string()` is not enough for IDs next to literal routes.
 - **Do not hide route collisions by taking only the first outlet** — rendering `outlet().at(0)` may mask duplicate matches while the wrong loader still runs. Fix the route match with param schemas or route structure.
 - **Parent route params are merged into child params** — if a guard route returns `{ user }`, child route schemas and `go()` types may need to account for it. For auth guards, return `{}` unless descendants really need injected params; read shared user atoms/resources in loaders/components instead.
-- **Guard index child loaders** — v1001 page `render` is exact-by-default, but loaders follow route matching. A `{ path: '' }` child under a layout can still match descendants and run. Add an exact-path `params()` guard (see `references/routing.md`) or restructure routes.
+- **Guard index child loaders** — v1001 page `render` is exact-by-default, but loaders follow route matching. A `{ path: '' }` child under a layout can still match descendants and run. Add an exact-path `params()` guard (see `references/features/routing.md`) or restructure routes.
 - **Keep loader payloads concrete** — redirects, auth checks, and feature gates belong in route `params()` or a parent guard route, not as `return null` branches inside the loader. A nullable loader result forces every render/component to handle `null` even when the page model should be guaranteed.
 - **Default redirects are source-attached URL reactions** — register `urlAtom.extend(withChangeHook(...))` at module scope for app-level redirects from `/` or other URL normalization. This is declaration-time extension registration, not a live subscription. Do not replace it with a top-level `effect()` or boot-only `start*Effects()` helper.
 - **Handle loader async states in the route `render(self)`** — prefer `const status = self.loader.status()` in `render`, branch on the discriminated flags there, and pass narrowed `status.data` (or a typed model) to UI components. This keeps components typed and focused instead of passing `loader` props or falling back to `any`.

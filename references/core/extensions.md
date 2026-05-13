@@ -1,5 +1,24 @@
 # Extensions Reference
 
+## Sources
+
+All extensions live in [`packages/core/src/extensions`](https://github.com/reatom/reatom/tree/v1001/packages/core/src/extensions) and async helpers in [`packages/core/src/async`](https://github.com/reatom/reatom/tree/v1001/packages/core/src/async).
+
+| Extension | Source | Tests |
+|---|---|---|
+| `withAsyncData` | [`async/withAsyncData.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/async/withAsyncData.ts) | [`withAsyncData.test.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/async/withAsyncData.test.ts) |
+| `withAsync` | [`async/withAsync.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/async/withAsync.ts) | [`withAsync.test.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/async/withAsync.test.ts) |
+| `withAsyncStatus` | [`async/withAsyncStatus.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/async/withAsyncStatus.ts) | [`withAsyncStatus.test.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/async/withAsyncStatus.test.ts) |
+| `withAbort` | [`extensions/withAbort.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/extensions/withAbort.ts) | [`withAbort.test.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/extensions/withAbort.test.ts) |
+| `withChangeHook` | [`extensions/withChangeHook.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/extensions/withChangeHook.ts) | [`withChangeHook.test.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/extensions/withChangeHook.test.ts) |
+| `withConnectHook` | [`extensions/withConnectHook.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/extensions/withConnectHook.ts) | [`withConnectHook.test.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/extensions/withConnectHook.test.ts) |
+| `withComputed` | [`extensions/withComputed.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/extensions/withComputed.ts) | [`withComputed.test.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/extensions/withComputed.test.ts) |
+| `withSuspense` | [`extensions/withSuspense.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/extensions/withSuspense.ts) | [`withSuspense.test.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/extensions/withSuspense.test.ts) |
+| `withInit` | [`extensions/withInit.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/extensions/withInit.ts) | [`withInit.test.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/extensions/withInit.test.ts) |
+| `withMemo` | [`extensions/withMemo.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/extensions/withMemo.ts) | [`withMemo.test.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/extensions/withMemo.test.ts) |
+| `withTransaction` / rollback | [`methods/transaction.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/methods/transaction.ts) | [`transaction.test.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/methods/transaction.test.ts) |
+| `framePromise` | [`methods/framePromise.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/methods/framePromise.ts) | [`framePromise.test.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/methods/framePromise.test.ts) |
+
 ## Contents
 
 - [withAsyncData — async data fetching (recommended pattern)](#withasyncdata--async-data-fetching-recommended-pattern)

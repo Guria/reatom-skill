@@ -1,5 +1,10 @@
 # Package Index
 
+## Sources
+
+- Monorepo root: [`packages/`](https://github.com/reatom/reatom/tree/v1001/packages)
+- Each package has its own `package.json` and `src/index.ts` defining the public surface.
+
 ## Active Packages
 
 | Package | Purpose |

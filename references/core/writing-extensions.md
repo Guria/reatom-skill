@@ -1,6 +1,14 @@
 # Writing Reatom Extensions
 
-Use this when creating custom `.extend(...)` helpers for Reatom atoms, actions, forms, routes, or third-party integrations. For built-in extension APIs, read `references/extensions.md` first.
+## Sources
+
+- [`packages/core/src/core/extend.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/core/extend.ts) — `extend()` mechanics
+- [`packages/core/src/extensions/`](https://github.com/reatom/reatom/tree/v1001/packages/core/src/extensions) — reference implementations to copy from
+- [`packages/core/src/core/atom.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/core/atom.ts) — atom internals (`withMiddleware`, `withParams`, `_set`, etc.)
+- Built-in `withMiddleware` example: [`async/withAsync.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/async/withAsync.ts)
+- Type-level extension example: [`extensions/withAbort.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/extensions/withAbort.ts)
+
+Use this when creating custom `.extend(...)` helpers for Reatom atoms, actions, forms, routes, or third-party integrations. For built-in extension APIs, read `../core/extensions.md` first.
 
 ## Core model
 

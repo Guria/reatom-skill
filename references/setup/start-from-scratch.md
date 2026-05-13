@@ -1,0 +1,289 @@
+# Starting a Reatom Project From Scratch
+
+Use this when bootstrapping a brand-new project around Reatom. The default stack below is opinionated for production use; **adjust any layer if the user already specified a preference**. If the user has not, **use this default and verify the current latest versions with the available tooling before pinning** (`npm view <pkg> dist-tags`).
+
+> Always run `npm view <pkg> version` (or `dist-tags`) right before scaffolding. Versions in this file are verified examples, not pins.
+
+## Default stack (verify before installing)
+
+| Layer | Package | Verified latest at writing time |
+|---|---|---|
+| Language | `typescript` | `6.0.3` (`latest` dist-tag) |
+| Bundler / dev server | `vite` | `8.0.12` (`latest` dist-tag, requires Node `^20.19.0 \|\| >=22.12.0`) |
+| State | `@reatom/core` | `1000.15.2` (stable). `1001.0.0-rc.1` available on `rc` dist-tag |
+| Linter | `oxlint` | `1.64.0` ([oxc-project/oxc](https://github.com/oxc-project/oxc)) |
+| Formatter | `oxfmt` | `0.49.0` (`oxc-project/oxc` formatter; alpha — track upstream) |
+| Code intelligence | `fallow` | `2.73.0` ([fallow-rs/fallow](https://github.com/fallow-rs/fallow)) |
+| Schema (optional) | `zod` | `4.4.3` (Reatom forms/routing accept any [Standard Schema](https://github.com/standard-schema/standard-schema)) |
+
+Adjust freely if the user requested:
+
+- a different framework adapter — swap `@reatom/react` for `@reatom/vue`, `@reatom/solid-js`, `@reatom/preact`, `@reatom/lit`, or use `@reatom/jsx` (no React)
+- ESLint/Prettier instead of oxlint/oxfmt
+- a different validator (Valibot, ArkType, etc.)
+- a different bundler (Rspack, Rsbuild, esbuild) — Reatom is bundler-agnostic provided the build target is `es2017+`
+
+## Step 1 — Scaffold
+
+```bash
+# Create an empty project
+mkdir my-app && cd my-app
+npm init -y
+
+# Verify versions BEFORE installing
+npm view typescript dist-tags
+npm view vite dist-tags
+npm view @reatom/core dist-tags
+npm view oxlint dist-tags
+npm view oxfmt dist-tags
+npm view fallow dist-tags
+```
+
+## Step 2 — Install the validate pipeline FIRST
+
+> Set up lint/format/intel **before** writing any production code. This anchors the conventions and catches drift from line one.
+
+```bash
+npm i -D typescript@latest vite@latest @vitejs/plugin-react@latest \
+        oxlint@latest oxfmt@latest fallow@latest \
+        lefthook@latest
+
+npm i @reatom/core@latest
+# Pick one framework adapter:
+npm i @reatom/react@latest    # or @reatom/jsx, @reatom/vue, @reatom/solid-js, @reatom/preact, @reatom/lit
+```
+
+For v1001-only APIs (layout routes, URL codecs, action `(payload, params)` subscribe shape, `withMiddleware('read'|'computed'|'invalidation')`, etc.), install the RC explicitly:
+
+```bash
+npm i @reatom/core@rc @reatom/react@rc
+```
+
+See `../meta/v1001.md` for the full delta.
+
+## Step 3 — `tsconfig.json`
+
+Reatom requires `es2017+` target so `wrap()` keeps native async/await microtask semantics. With TS 6.x the safe minimum is:
+
+```jsonc
+{
+  "compilerOptions": {
+    "target": "es2022",
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "verbatimModuleSyntax": true,
+    "isolatedModules": true,
+    "skipLibCheck": true,
+    "lib": ["es2023", "dom", "dom.iterable"],
+    "jsx": "react-jsx",
+    "types": ["vite/client"]
+  },
+  "include": ["src"]
+}
+```
+
+## Step 4 — `vite.config.ts`
+
+```ts
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+
+export default defineConfig({
+  plugins: [react()],
+  build: {
+    target: 'es2022', // Reatom needs es2017+; align with tsconfig
+  },
+})
+```
+
+If using `@reatom/jsx` instead of React, drop `@vitejs/plugin-react` and configure JSX in `tsconfig.json`:
+
+```jsonc
+{ "compilerOptions": { "jsx": "react-jsx", "jsxImportSource": "@reatom/jsx" } }
+```
+
+## Step 5 — oxlint configuration (`.oxlintrc.json`)
+
+oxlint reads `.oxlintrc.json` (or `oxlint.json`). The `eslint/no-restricted-imports` rule below is the **non-negotiable Reatom default** — it stops React app state from leaking into the codebase. Adjust other rules to taste.
+
+```jsonc
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "categories": {
+    "correctness": "error",
+    "perf": "warn",
+    "suspicious": "warn"
+  },
+  "plugins": ["typescript", "react", "react-hooks", "import"],
+  "rules": {
+    "eslint/no-restricted-imports": [
+      "error",
+      {
+        "paths": [
+          {
+            "name": "react",
+            "importNames": [
+              "useEffect",
+              "useLayoutEffect",
+              "useMemo",
+              "useCallback",
+              "useState",
+              "useRef",
+              "useContext",
+              "useReducer",
+              "useImperativeHandle",
+              "useDebugValue",
+              "memo"
+            ],
+            "message": "Find appropriate solution with reatom or ask user for guidance."
+          }
+        ]
+      }
+    ]
+  },
+  "ignorePatterns": ["dist", "build", "coverage", "node_modules"]
+}
+```
+
+Why these specific names? Each one represents React owning state, effects, memoization, or identity that Reatom should own instead. See `../core/patterns.md` and the **React-owned app state** anti-pattern in `SKILL.md` for the rationale. If you intentionally need one of these for *view-only* concerns (e.g. `useRef` for DOM focus), add a narrow `// oxlint-disable-next-line` with a comment justifying the carve-out.
+
+If the project uses `@reatom/jsx` (no React), replace `"name": "react"` with the relevant target or remove the rule — it's only meaningful when React is on the dependency tree.
+
+## Step 6 — oxfmt configuration
+
+oxfmt currently follows oxc defaults; configuration is minimal at this version. Pin it to the project and run via npm scripts:
+
+```bash
+npx oxfmt --check .   # CI / pre-commit
+npx oxfmt .           # write
+```
+
+Track [oxc-project/oxc](https://github.com/oxc-project/oxc) for upcoming config keys.
+
+## Step 7 — fallow (code intelligence)
+
+fallow finds unused exports, circular imports, code duplication, and complexity hotspots. Keep it in the validate pipeline so dead code does not accumulate.
+
+```bash
+npx fallow init                  # generate fallow.config.json
+npx fallow analyze               # full report
+npx fallow analyze --json | jq   # machine-readable output for CI
+```
+
+A reasonable starter `fallow.config.json`:
+
+```jsonc
+{
+  "include": ["src/**/*.{ts,tsx}"],
+  "exclude": ["**/*.test.{ts,tsx}", "**/*.bench.{ts,tsx}"],
+  "checks": {
+    "unusedExports": "error",
+    "circularDependencies": "error",
+    "duplication": "warn",
+    "complexity": "warn"
+  }
+}
+```
+
+Confirm exact keys with `npx fallow --help` before committing — fallow ships frequently.
+
+## Step 8 — npm scripts (`package.json`)
+
+```jsonc
+{
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+
+    "lint": "oxlint",
+    "lint:fix": "oxlint --fix",
+    "format": "oxfmt .",
+    "format:check": "oxfmt --check .",
+    "intel": "fallow analyze",
+    "typecheck": "tsc -b --noEmit",
+
+    "validate": "npm run typecheck && npm run lint && npm run format:check && npm run intel"
+  }
+}
+```
+
+`npm run validate` is the single entry point CI and pre-commit run. Wire it in before the first feature commit.
+
+## Step 9 — Pre-commit hook (lefthook)
+
+```yaml
+# lefthook.yml
+pre-commit:
+  parallel: true
+  commands:
+    typecheck:
+      run: npm run typecheck
+    lint:
+      run: npx oxlint --fix {staged_files}
+      stage_fixed: true
+      glob: "*.{ts,tsx,js,jsx}"
+    format:
+      run: npx oxfmt {staged_files}
+      stage_fixed: true
+      glob: "*.{ts,tsx,js,jsx,json,md}"
+
+pre-push:
+  commands:
+    intel:
+      run: npm run intel
+```
+
+Install:
+
+```bash
+npx lefthook install
+```
+
+## Step 10 — Reatom app entry (strict context, recommended)
+
+```ts
+// src/setup.ts — import this file BEFORE any atoms or components
+import { clearStack, context } from '@reatom/core'
+
+clearStack()
+export const rootFrame = context.start()
+```
+
+```tsx
+// src/main.tsx
+import './setup'           // must be first
+import { createRoot } from 'react-dom/client'
+import { reatomContext } from '@reatom/react'
+import { rootFrame } from './setup'
+import { App } from './App'
+
+createRoot(document.getElementById('root')!).render(
+  <reatomContext.Provider value={rootFrame}>
+    <App />
+  </reatomContext.Provider>,
+)
+```
+
+See `SKILL.md` → "App Setup — optional clearStack and context.start" for when to use this strict setup vs the default global context.
+
+## Step 11 — First `validate` run
+
+```bash
+npm run validate
+```
+
+Fix any failures **before** writing the first feature. After this, every feature commit must keep `validate` green.
+
+## Reading list for the next steps
+
+After scaffolding, read in order:
+
+1. `../core/patterns.md` — atomization, scoped factories, file organization
+2. `../core/extensions.md` — `withAsyncData`, `withAsync`, `withChangeHook`
+3. The reference matching the next feature you build: `../features/routing.md`, `../features/forms.md`, `../features/persistence.md`
+4. `../integrations/react.md` (or `../integrations/jsx.md`) for the chosen view layer
+5. `../meta/v1001.md` if you targeted the v1001 RC

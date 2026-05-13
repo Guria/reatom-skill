@@ -1,5 +1,18 @@
 # Sampling & Events Reference
 
+## Sources
+
+| API | Source | Tests |
+|---|---|---|
+| `wrap` | [`methods/wrap.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/methods/wrap.ts) | [`wrap.test.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/methods/wrap.test.ts) |
+| `sleep` | [`setTimeout.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/setTimeout.ts) | — |
+| `take` | [`methods/take.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/methods/take.ts) | [`take.test.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/methods/take.test.ts) |
+| `onEvent` | [`web/onEvent.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/web/onEvent.ts) | — |
+| `race` / `all` | [`methods/wrap.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/methods/wrap.ts) | [`wrap.test.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/methods/wrap.test.ts) |
+| `variable` | [`methods/variable.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/methods/variable.ts) | [`variable.test.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/methods/variable.test.ts) |
+| `abortVar` | [`methods/abortVar.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/methods/abortVar.ts) | — |
+| `withAbort` | [`extensions/withAbort.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/extensions/withAbort.ts) | [`withAbort.test.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/extensions/withAbort.test.ts) |
+
 Sampling is a core Reatom pattern: reading state and awaiting events procedurally inside async actions. It replaces debounce/throttle libraries and RxJS-style operators with native async/await.
 
 ## Debounce with wrap(sleep())
