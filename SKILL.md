@@ -52,7 +52,7 @@ references/
 
 | File | Read when |
 |---|---|
-| `references/setup/start-from-scratch.md` | Bootstrapping a new TypeScript + Vite + Reatom project (toolchain, lint/format, validate pipeline) |
+| `references/setup/start-from-scratch.md` | Bootstrapping a new TypeScript + Vite + Reatom project (toolchain, lint/format, validate pipeline, browser smoke test, post-bootstrap pitfall summary) |
 | `references/meta/v1001.md` | Comparing v1001 to v1000, deciding whether an API is v1001-only, migrations from v1000 |
 | `references/meta/packages.md` | Looking up which @reatom/* package to install, checking if a v3 package is deprecated |
 | `references/meta/migration.md` | Migrating code from v3 to v1000+, mapping old APIs to new |

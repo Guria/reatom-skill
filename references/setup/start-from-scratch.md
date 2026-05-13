@@ -403,3 +403,21 @@ This catches the canonical class of strict-context regressions in one assertion:
 - [`../meta/migration.md`](../meta/migration.md) — only when migrating an existing v3 codebase.
 - [`../core/writing-extensions.md`](../core/writing-extensions.md) — only when authoring a custom `.extend(...)` helper for reuse.
 - [`../features/routing/spa-example.md`](../features/routing/spa-example.md) — worked example that wires everything together; useful as a sanity check.
+
+## After bootstrap — report pitfalls back to the user
+
+When you (the agent) finish bootstrapping a project, **produce a short pitfall summary as the final message of the bootstrap turn**. The goal is to surface anything you tripped on so the user can decide whether the skill or its references need updating, and so future runs can avoid the same loop.
+
+Format the summary as a plain Markdown list. Keep it factual and specific to what actually happened during this run — do not pad it with general advice or restate things that worked first try. For each pitfall include:
+
+1. **Symptom** — the exact error message, type-check failure, or unexpected behaviour you observed (one line).
+2. **Root cause** — the reactive-system rule or API contract that was violated (one line).
+3. **Fix applied** — the smallest change that resolved it (one line).
+4. **Where the skill addresses this today**, or **"not in skill yet — candidate for distillation"** if you could not find it referenced anywhere in `SKILL.md` or `references/`.
+
+Close the summary with one of:
+
+- `No pitfalls encountered` — if the bootstrap was clean end-to-end.
+- `Suggested skill updates: <bullet list>` — if any item was marked "not in skill yet".
+
+This turns every greenfield bootstrap into a passive eval of the skill itself. Skipping it loses the only signal we get about which guidance is missing or unclear.
