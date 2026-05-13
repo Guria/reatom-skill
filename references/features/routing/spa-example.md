@@ -2,7 +2,7 @@
 
 > Core routing API in [`./index.md`](./index.md). Loader patterns in [`./loaders.md`](./loaders.md).
 >
-> See full working examples in [`reatom/examples/`](https://github.com/reatom/reatom/tree/v1001/examples), notably [`mantine-dashboard`](https://github.com/reatom/reatom/tree/v1001/examples/mantine-dashboard).
+> See [`reatom/examples/`](https://github.com/reatom/reatom/tree/v1001/examples) for full working SPA examples.
 
 ## Full SPA example
 
