@@ -494,6 +494,7 @@ However, `withConnectHook` *does* support returning a cleanup function for third
 - Paths must NOT start with `/` — Reatom auto-prepends it
 - v1001 routing render semantics changed: use `layout: true` for layout/wrapper routes; page routes are exact-by-default. In v1000 there is no `layout` option: render is match-by-default and `exactRender: true` makes a page route.
 - `route.go()` takes params object or nothing — NOT a path string
+- For route `params`/`search`, default to Standard Schema for inbound URL validation, defaults, and one-way parsing before the loader. Use v1001 codecs only when the route should expose a bidirectional contract: `route.go()` / `.path()` accept decoded domain values, or URL serialization needs explicit encode/decode rules.
 - `urlAtom()` returns a `URL` object, not a string — use `urlAtom().pathname`
 - Never use `urlAtom().startsWith()` — use `route.match()` instead
 - Put route access and redirect decisions in `params()`: return `null` to block the route before its loader runs. This covers private guards and public pages that should redirect once the user is already authenticated. Avoid returning `null` from loaders for auth/redirect control flow because it makes loader data nullable and weakens TypeScript narrowing.

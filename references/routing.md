@@ -577,12 +577,20 @@ Route `search` schemas and `withSearchParams` both sync state to URL query param
 
 - **`withSearchParams`** — standalone atoms that persist to the URL without being tied to a specific route. Use for UI state (filters, tabs, expanded sections, panel sizes) that multiple independent components read/write. See [persistence reference](persistence.md#url-search-params--withsearchparams) for the full API.
 
+For route `params`/`search`, start with a Standard Schema. It is the clearest default for inbound URL validation, defaults, and one-way parsing before the loader runs. Keep the boundary explicit: Standard Schema can give the loader parsed values, while navigation/path-building should remain URL-shaped (strings or omitted query keys) unless you deliberately add a bidirectional contract. When only a few call sites need conveniences like stringifying numbers or omitting defaults, use a small helper that builds URL-shaped params. Reach for a v1001 codec when the route itself should expose a typed outbound contract — `route.go()` / `.path()` accepting decoded domain values — or when URL serialization needs to be centralized and bidirectional.
+
 ```typescript
 // ✅ Route search — affects loader data
 const usersRoute = reatomRoute({
   path: 'users',
-  search: z.object({ q: z.string().optional(), page: z.string().transform(Number).default('1') }),
-  async loader({ q, page }) { /* fetch with q + page */ },
+  search: z.object({
+    q: z.string().default(''),
+    page: z.string().regex(/^\d+$/).transform(Number).default(1),
+  }),
+  async loader({ q, page }) {
+    /* page is a number here */
+    /* fetch with q + page */
+  },
 })
 
 // ✅ withSearchParams — standalone UI state, no loader involvement
@@ -596,7 +604,9 @@ const sidebarCollapsed = atom(false, 'sidebar').extend(
 
 ## URL codecs (v1001+)
 
-v1001 adds bidirectional codecs for route params/search. `decode` reads raw URL strings into typed values; `encode` writes typed values back to URL-safe strings. `route.go()` and `route.path()` accept the decoded/output types.
+v1001 adds bidirectional codecs for route params/search. A codec is a route-level serialization contract: `decode` reads raw URL strings into typed values, `encode` writes typed values back to URL-safe strings, and `route.go()` / `route.path()` accept the decoded/output types.
+
+Use codecs when that bidirectionality is part of the route's public API, not just because a loader wants parsed data. Good fits include numeric IDs that navigation should pass as numbers, structured values encoded into one path segment, dates with a canonical URL format, or search params where many call sites should navigate with domain values while one central encoder controls default omission and serialization. If a Standard Schema can validate/parse the inbound URL and call sites can pass URL-shaped params, keep the simpler Standard Schema form.
 
 ```typescript
 const itemRoute = reatomRoute({
