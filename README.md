@@ -1,0 +1,122 @@
+# Reatom Skill for pi (and other Agent Skills runtimes)
+
+A pi [skill](https://agentskills.io/specification) bundling expert guidance for [Reatom](https://github.com/reatom/reatom) v1000+ state management. It steers an LLM-powered coding agent (pi, Claude Code, etc.) toward production-ready Reatom patterns and away from common footguns.
+
+## What's in here
+
+```
+reatom/
+├── SKILL.md                          # Always-loaded body: core APIs, gotchas, anti-patterns
+└── references/                       # Loaded on demand via the read tool
+    ├── core/
+    │   ├── extensions.md             # withAsyncData, withAbort, withChangeHook, …
+    │   ├── writing-extensions.md     # Authoring custom .extend() helpers
+    │   ├── sampling.md               # debounce/throttle, take, onEvent, race, abortVar
+    │   └── patterns.md               # Atomization, scoped factories, file org
+    ├── features/
+    │   ├── forms.md                  # reatomForm, bindField, validation
+    │   ├── persistence.md            # withLocalStorage, withIndexedDb, withCookie, …
+    │   └── routing/
+    │       ├── index.md              # Routes, layouts, codecs, urlAtom
+    │       ├── loaders.md            # Loader patterns, guards, collisions
+    │       └── spa-example.md        # End-to-end SPA wiring
+    ├── integrations/
+    │   ├── react.md                  # @reatom/react, StrictMode, hooks
+    │   └── jsx.md                    # @reatom/jsx native runtime
+    ├── meta/
+    │   ├── packages.md               # Package index, deprecated v3 list
+    │   ├── migration.md              # v3 → v1000+ API mapping
+    │   └── v1001.md                  # Delta vs v1000 (API gating)
+    └── setup/
+        └── start-from-scratch.md     # Bootstrap a new TS+Vite+Reatom project
+```
+
+Every reference file links back to the canonical source on `github.com/reatom/reatom@v1001` so the agent can verify behavior against the upstream code, not just docs.
+
+## Design principles
+
+1. **Progressive disclosure.** SKILL.md stays under ~600 lines and covers the surface every Reatom task needs; deep topics live in `references/` and are read on demand.
+2. **Validate against source.** Every API claim, default, and gotcha was checked against `github.com/reatom/reatom` at the v1001 branch tip used during authoring.
+3. **Production defaults.** The setup guide picks toolchain that is verifiable today (`oxlint` + `oxfmt` + `fallow`, TS 6, Vite 8, lefthook) and locks in a `no-restricted-imports` rule that prevents React-owned app state from creeping in.
+4. **Version-sensitive.** Routing, action subscription shape, and `reatomComponent` defaults differ between v1000 and v1001; the skill flags every such API explicitly.
+
+## Installation
+
+### As a local pi skill (project-scoped)
+
+```bash
+mkdir -p .pi/skills
+git clone <this-repo> .pi/skills/reatom
+```
+
+### As a global pi skill
+
+```bash
+mkdir -p ~/.pi/agent/skills
+git clone <this-repo> ~/.pi/agent/skills/reatom
+```
+
+### Via pi package manager
+
+If you publish this as an npm or git pi-package:
+
+```bash
+pi install git:github.com/<owner>/reatom-skill
+# or
+pi install npm:@<scope>/reatom-skill
+```
+
+The `package.json` already declares `keywords: ["pi-package"]` and `pi.skills` so it's discoverable.
+
+### Other Agent-Skills-compliant runtimes
+
+Place the directory at any of:
+
+- `~/.agents/skills/reatom/`
+- `.agents/skills/reatom/`
+
+The format follows the [Agent Skills standard](https://agentskills.io/specification) and is portable.
+
+## When the skill triggers
+
+Pi loads the skill based on its `description` field. It triggers on:
+
+- Any file importing from `@reatom/*`
+- Reactive/atom patterns (`atom(...)`, `computed(...)`, `action(...)`)
+- Errors mentioning `ReatomError` or "missing async stack"
+- Direct questions about Reatom, migrating from v3, choosing adapters, etc.
+
+The description is intentionally broad — Reatom's surface area is large enough that under-triggering is the bigger risk.
+
+## Validating / contributing
+
+If you change SKILL.md or any reference, **re-validate against the upstream repo**. The intended workflow:
+
+```bash
+# Clone reatom alongside this skill
+git clone https://github.com/reatom/reatom ../reatom
+cd ../reatom && git checkout v1001
+
+# When editing the skill, grep the upstream source for anything you're claiming
+grep -rn 'export.*<symbol>' packages/core/src
+```
+
+Pin GitHub source links to a specific branch (`v1001`) or commit SHA. Avoid `main`/`master` — Reatom doesn't use those branch names for active development.
+
+## Versioning
+
+This skill targets the `v1001` branch of Reatom. When v1001 ships as the new `latest` on npm:
+
+1. Bump the `compatibility` field in SKILL.md frontmatter.
+2. Move `references/meta/v1001.md` content into the main flow and create a fresh `vNext.md` for the next pre-release.
+3. Re-spot-check all source links against the new branch.
+
+## License
+
+MIT — see `LICENSE`.
+
+## Credits
+
+- [Reatom](https://github.com/reatom/reatom) by [@artalar](https://github.com/artalar) and contributors.
+- [Agent Skills](https://agentskills.io/specification) standard.
+- [pi coding agent](https://github.com/earendil-works/pi-coding-agent) by mariozechner.

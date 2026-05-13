@@ -1,21 +1,13 @@
 # Sampling & Events Reference
 
-## Sources
-
-| API | Source | Tests |
-|---|---|---|
-| `wrap` | [`methods/wrap.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/methods/wrap.ts) | [`wrap.test.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/methods/wrap.test.ts) |
-| `sleep` | [`setTimeout.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/setTimeout.ts) | — |
-| `take` | [`methods/take.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/methods/take.ts) | [`take.test.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/methods/take.test.ts) |
-| `onEvent` | [`web/onEvent.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/web/onEvent.ts) | — |
-| `race` / `all` | [`methods/wrap.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/methods/wrap.ts) | [`wrap.test.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/methods/wrap.test.ts) |
-| `variable` | [`methods/variable.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/methods/variable.ts) | [`variable.test.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/methods/variable.test.ts) |
-| `abortVar` | [`methods/abortVar.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/methods/abortVar.ts) | — |
-| `withAbort` | [`extensions/withAbort.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/extensions/withAbort.ts) | [`withAbort.test.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/extensions/withAbort.test.ts) |
+> Sources: [`packages/core/src/methods`](https://github.com/reatom/reatom/tree/v1001/packages/core/src/methods) and [`packages/core/src/web/onEvent.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/web/onEvent.ts). Per-API source links inline below.
 
 Sampling is a core Reatom pattern: reading state and awaiting events procedurally inside async actions. It replaces debounce/throttle libraries and RxJS-style operators with native async/await.
 
 ## Debounce with wrap(sleep())
+
+[`wrap` source](https://github.com/reatom/reatom/blob/v1001/packages/core/src/methods/wrap.ts) · [`sleep` source](https://github.com/reatom/reatom/blob/v1001/packages/core/src/setTimeout.ts) · [`withAbort` source](https://github.com/reatom/reatom/blob/v1001/packages/core/src/extensions/withAbort.ts)
+
 
 Instead of lodash `debounce`, use `wrap(sleep())` inside an action with `withAbort()`. The abort extension cancels previous executions automatically.
 
@@ -73,6 +65,9 @@ window.addEventListener('resize', handleResize)
 3. After delay, next execution can begin
 
 ## take — await the next state change or action call
+
+[Source: `methods/take.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/methods/take.ts) · [Tests](https://github.com/reatom/reatom/blob/v1001/packages/core/src/methods/take.test.ts)
+
 
 `take` lets you `await` the next update of an atom or the next call of an action. Always use `wrap(take(target))`.
 
@@ -135,6 +130,9 @@ When writing version-agnostic guidance, prefer `take(action)` or `withCallHook` 
 
 ## onEvent — await DOM/external events
 
+[Source: `web/onEvent.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/web/onEvent.ts)
+
+
 `onEvent` lets you await events from DOM elements, WebSockets, or any EventTarget. Respects Reatom's abort context for proper cleanup.
 
 ```typescript
@@ -175,6 +173,9 @@ const processPayment = action(async (orderId: string, amount: number) => {
 ```
 
 ## race — first wins, others abort
+
+Implemented inside [`methods/wrap.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/methods/wrap.ts) · [Tests](https://github.com/reatom/reatom/blob/v1001/packages/core/src/methods/wrap.test.ts)
+
 
 `race` resolves with the first promise to settle and automatically aborts all others.
 
@@ -217,6 +218,9 @@ Key APIs:
 
 ## all — wait for multiple events
 
+Implemented inside [`methods/wrap.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/methods/wrap.ts)
+
+
 ```typescript
 import { action, wrap, all, take } from '@reatom/core'
 
@@ -230,6 +234,9 @@ const [userProfile, userPreferences] = await wrap(
 ```
 
 ## variable — custom async context
+
+[Source: `methods/variable.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/methods/variable.ts) · [Tests](https://github.com/reatom/reatom/blob/v1001/packages/core/src/methods/variable.test.ts)
+
 
 `variable()` emulates TC39 `AsyncContext.Variable`. Create shared data accessible across async boundaries without passing it through every function.
 
@@ -253,6 +260,9 @@ await requestIdVar.run('req-123', async () => {
 ```
 
 ## abortVar — built-in abort context
+
+[Source: `methods/abortVar.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/methods/abortVar.ts)
+
 
 Reatom has a built-in `abortVar` which is automatically tracked by all `wrap` calls. Actions with `withAbort()` automatically manage it.
 

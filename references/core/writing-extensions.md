@@ -1,12 +1,6 @@
 # Writing Reatom Extensions
 
-## Sources
-
-- [`packages/core/src/core/extend.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/core/extend.ts) — `extend()` mechanics
-- [`packages/core/src/extensions/`](https://github.com/reatom/reatom/tree/v1001/packages/core/src/extensions) — reference implementations to copy from
-- [`packages/core/src/core/atom.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/core/atom.ts) — atom internals (`withMiddleware`, `withParams`, `_set`, etc.)
-- Built-in `withMiddleware` example: [`async/withAsync.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/async/withAsync.ts)
-- Type-level extension example: [`extensions/withAbort.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/extensions/withAbort.ts)
+> Source: [`packages/core/src/extensions`](https://github.com/reatom/reatom/tree/v1001/packages/core/src/extensions) for reference implementations · [`core/extend.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/core/extend.ts) for `extend()` mechanics · [`core/atom.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/core/atom.ts) for atom internals (`withMiddleware`, `withParams`, `_set`).
 
 Use this when creating custom `.extend(...)` helpers for Reatom atoms, actions, forms, routes, or third-party integrations. For built-in extension APIs, read `../core/extensions.md` first.
 

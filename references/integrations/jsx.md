@@ -1,17 +1,13 @@
 # Native JSX Reference (`@reatom/jsx`)
 
-## Sources
-
-Package: [`packages/jsx`](https://github.com/reatom/reatom/tree/v1001/packages/jsx)
-
-- Runtime entry: [`packages/jsx/src/index.ts`](https://github.com/reatom/reatom/blob/v1001/packages/jsx/src/index.ts)
-- Type definitions: [`packages/jsx/src/jsx.d.ts`](https://github.com/reatom/reatom/blob/v1001/packages/jsx/src/jsx.d.ts)
-- Utilities (CSS-in-JS, helpers): [`packages/jsx/src/utils.ts`](https://github.com/reatom/reatom/blob/v1001/packages/jsx/src/utils.ts)
-- Tests / examples: [`packages/jsx/src/index.test.tsx`](https://github.com/reatom/reatom/blob/v1001/packages/jsx/src/index.test.tsx), [`linked-list.test.tsx`](https://github.com/reatom/reatom/blob/v1001/packages/jsx/src/linked-list.test.tsx), [`unmount.test.tsx`](https://github.com/reatom/reatom/blob/v1001/packages/jsx/src/unmount.test.tsx)
+> Source: [`packages/jsx`](https://github.com/reatom/reatom/tree/v1001/packages/jsx). Per-section source links inline below.
 
 `@reatom/jsx` is a native JSX runtime (no Virtual DOM) that binds DOM elements to Reatom reactively with zero re-renders. It is an alternative to `@reatom/react` for framework-less applications.
 
 ## Setup
+
+[Runtime entry: `index.ts`](https://github.com/reatom/reatom/blob/v1001/packages/jsx/src/index.ts) · [JSX types: `jsx.d.ts`](https://github.com/reatom/reatom/blob/v1001/packages/jsx/src/jsx.d.ts)
+
 
 **Vite (`vite.config.js`)**:
 ```js
@@ -35,6 +31,9 @@ export default defineConfig({
 ```
 
 ## Mounting
+
+See [`index.ts`](https://github.com/reatom/reatom/blob/v1001/packages/jsx/src/index.ts) · [`unmount.test.tsx`](https://github.com/reatom/reatom/blob/v1001/packages/jsx/src/unmount.test.tsx)
+
 
 ```tsx
 import { context, clearStack } from '@reatom/core'
@@ -131,6 +130,9 @@ const Shared = () => <span>{valueAtom}</span>
 ```
 
 ## Advanced Utilities
+
+[Source: `utils.ts`](https://github.com/reatom/reatom/blob/v1001/packages/jsx/src/utils.ts) · [Tests](https://github.com/reatom/reatom/blob/v1001/packages/jsx/src/utils.test.ts)
+
 
 ### `$spread`
 Declaratively bind multiple props/attributes. Can be reactive.

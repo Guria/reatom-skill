@@ -1,10 +1,6 @@
 # v3 → v1000+ Migration
 
-## Sources
-
-- Current public API: [`packages/core/src/index.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/index.ts)
-- Old v3 packages (now archived inside the monorepo's history): see the v3 branches on GitHub. v1000+ branches: [`v1000`](https://github.com/reatom/reatom/tree/v1000), [`v1001`](https://github.com/reatom/reatom/tree/v1001).
-- React adapter: [`packages/react/src/index.ts`](https://github.com/reatom/reatom/blob/v1001/packages/react/src/index.ts)
+> Source: current public API at [`packages/core/src/index.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/index.ts) and [`packages/react/src/index.ts`](https://github.com/reatom/reatom/blob/v1001/packages/react/src/index.ts). v1000+ branches: [`v1000`](https://github.com/reatom/reatom/tree/v1000), [`v1001`](https://github.com/reatom/reatom/tree/v1001).
 
 > **⚠️ v1000+ only — do not rely on any v3 or earlier packages.** The v3 ecosystem is completely separate and incompatible. v1000+ consolidated everything into `@reatom/core` and `@reatom/react`.
 

@@ -1,24 +1,15 @@
 # Persistence Reference
 
-## Sources
-
-Core persist primitives: [`packages/core/src/persist`](https://github.com/reatom/reatom/tree/v1001/packages/core/src/persist). Web storage adapters: [`packages/core/src/persist/web-storage`](https://github.com/reatom/reatom/tree/v1001/packages/core/src/persist/web-storage).
-
-| API | Source | Tests |
-|---|---|---|
-| `withPersist`, `WithPersistOptions`, `PersistStorage` | [`persist/index.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/persist/index.ts) | [`persist/index.test.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/persist/index.test.ts) |
-| `withLocalStorage`, `withSessionStorage`, `reatomPersistWebStorage` | [`web-storage/localStorage.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/persist/web-storage/localStorage.ts) | [`localStorage.test.browser.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/persist/web-storage/localStorage.test.browser.ts) |
-| `withIndexedDb`, `reatomPersistIndexedDb` | [`web-storage/indexedDb.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/persist/web-storage/indexedDb.ts) | [`indexedDb.test.browser.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/persist/web-storage/indexedDb.test.browser.ts) |
-| `withBroadcastChannel`, `reatomPersistBroadcastChannel` | [`web-storage/broadcastChannel.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/persist/web-storage/broadcastChannel.ts) | [`broadcastChannel.test.browser.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/persist/web-storage/broadcastChannel.test.browser.ts) |
-| `withCookie` | [`web-storage/cookie.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/persist/web-storage/cookie.ts) | [`cookie.test.browser.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/persist/web-storage/cookie.test.browser.ts) |
-| `withCookieStore` | [`web-storage/cookieStore.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/persist/web-storage/cookieStore.ts) | [`cookieStore.test.browser.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/persist/web-storage/cookieStore.test.browser.ts) |
-| `withSearchParams` | [`routing/searchParams.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/routing/searchParams.ts) | — |
+> Source: [`packages/core/src/persist`](https://github.com/reatom/reatom/tree/v1001/packages/core/src/persist) (core) and [`packages/core/src/persist/web-storage`](https://github.com/reatom/reatom/tree/v1001/packages/core/src/persist/web-storage) (adapters). Per-adapter source links inline below.
 
 State persistence allows your application to maintain state across browser sessions, page refreshes, and different tabs. All adapters support the same configuration options and automatically fall back to memory storage when unavailable.
 
 **Check the target codebase's `package.json` to see which storage adapters are already in use and prefer those.**
 
 ## Quick Start
+
+[`withPersist` core](https://github.com/reatom/reatom/blob/v1001/packages/core/src/persist/index.ts) · [Web storage adapters](https://github.com/reatom/reatom/tree/v1001/packages/core/src/persist/web-storage)
+
 
 ```typescript
 import {
@@ -59,6 +50,9 @@ const session = atom('', 'session').extend(withCookieStore()('session-id'))
 ```
 
 ## Configuration Options
+
+Defined by `WithPersistOptions` in [`persist/index.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/persist/index.ts).
+
 
 All adapters accept either a simple key string or a full config object:
 
@@ -161,6 +155,9 @@ const user = atom({ name: '', age: 0 }).extend(
 
 ## URL Search Params — withSearchParams
 
+[Source: `routing/searchParams.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/routing/searchParams.ts) · [Tests](https://github.com/reatom/reatom/blob/v1001/packages/core/src/routing/searchParams.test.browser.ts)
+
+
 `withSearchParams` syncs atom state to the browser's URL search parameters. Unlike storage adapters, this persists state in the URL itself — shareable, bookmarkable, and tied to the current page.
 
 ```typescript
@@ -237,6 +234,9 @@ pageSize.set(50)  // updates URL ?size=50
 - **`withSearchParams`** — for standalone atoms that need URL persistence without being tied to a specific route. Useful for UI state (filters, tabs, expanded sections) shared across independent components.
 
 ## Custom Storage Implementation
+
+The `PersistStorage` interface is exported from [`persist/index.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/persist/index.ts). For reference adapters see [`web-storage/`](https://github.com/reatom/reatom/tree/v1001/packages/core/src/persist/web-storage) (e.g. [`localStorage.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/persist/web-storage/localStorage.ts) is the smallest complete example).
+
 
 ```typescript
 import { PersistStorage, reatomPersist } from '@reatom/core'

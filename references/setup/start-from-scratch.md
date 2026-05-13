@@ -280,10 +280,27 @@ Fix any failures **before** writing the first feature. After this, every feature
 
 ## Reading list for the next steps
 
-After scaffolding, read in order:
+**Must-read before writing the first feature** (in order):
 
-1. `../core/patterns.md` — atomization, scoped factories, file organization
-2. `../core/extensions.md` — `withAsyncData`, `withAsync`, `withChangeHook`
-3. The reference matching the next feature you build: `../features/routing.md`, `../features/forms.md`, `../features/persistence.md`
-4. `../integrations/react.md` (or `../integrations/jsx.md`) for the chosen view layer
-5. `../meta/v1001.md` if you targeted the v1001 RC
+1. [`../core/patterns.md`](../core/patterns.md) — atomization, scoped factories (`reatom*`), file organization, boolean-as-lifecycle-switch. **Skip this and the codebase will drift** toward identity actions, module-level forms, and React-owned state.
+2. The Gotchas + Anti-patterns sections of `SKILL.md` — most production bugs come from violating these.
+3. [`../core/extensions.md`](../core/extensions.md) — `withAsyncData` + `withAsync` are used in almost every feature; `withChangeHook` and `withConnectHook` cover most lifecycle work.
+
+**Read on demand** when you start the relevant feature:
+
+4. [`../features/routing/index.md`](../features/routing/index.md) — routing API. Then [`../features/routing/loaders.md`](../features/routing/loaders.md) when you write the first loader.
+5. [`../features/forms.md`](../features/forms.md) — when adding the first form. Read **before** considering React Hook Form / Formik — `reatomForm` covers both.
+6. [`../features/persistence.md`](../features/persistence.md) — when state needs to survive refresh / cross-tab sync.
+7. [`../integrations/react.md`](../integrations/react.md) (or [`../integrations/jsx.md`](../integrations/jsx.md)) — adapter-specific gotchas, especially the StrictMode and "instant async resolution" notes.
+8. [`../core/sampling.md`](../core/sampling.md) — when you need debounce/throttle, race conditions, or imperative event awaiting.
+
+**Read once before any v1001-only API call:**
+
+9. [`../meta/v1001.md`](../meta/v1001.md) — if you installed the `@reatom/core@rc` (v1001), this lists every API that exists ONLY in v1001. Cite it in PR descriptions when bumping.
+
+**Reference (look up only):**
+
+- [`../meta/packages.md`](../meta/packages.md) — "which package has X?" / "is this v3 package still alive?"
+- [`../meta/migration.md`](../meta/migration.md) — only when migrating an existing v3 codebase.
+- [`../core/writing-extensions.md`](../core/writing-extensions.md) — only when authoring a custom `.extend(...)` helper for reuse.
+- [`../features/routing/spa-example.md`](../features/routing/spa-example.md) — worked example that wires everything together; useful as a sanity check.

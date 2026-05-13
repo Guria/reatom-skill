@@ -1,17 +1,11 @@
 # React Reference
 
-## Sources
-
-Package: [`packages/react`](https://github.com/reatom/reatom/tree/v1001/packages/react)
-
-| API | Source | Tests |
-|---|---|---|
-| `reatomComponent` | [`reatomComponent.ts`](https://github.com/reatom/reatom/blob/v1001/packages/react/src/reatomComponent.ts) | [`reatomComponent.test.tsx`](https://github.com/reatom/reatom/blob/v1001/packages/react/src/reatomComponent.test.tsx) |
-| `useAtom`, `useAction`, `useWrap`, `useUpdate` | [`hooks.ts`](https://github.com/reatom/reatom/blob/v1001/packages/react/src/hooks.ts) | [`hooks.test.tsx`](https://github.com/reatom/reatom/blob/v1001/packages/react/src/hooks.test.tsx) |
-| `bindField` | [`bindField.ts`](https://github.com/reatom/reatom/blob/v1001/packages/react/src/bindField.ts) | — |
-| StrictMode behavior | [`reatomStrictMode.test.tsx`](https://github.com/reatom/reatom/blob/v1001/packages/react/src/reatomStrictMode.test.tsx) | — |
+> Source: [`packages/react`](https://github.com/reatom/reatom/tree/v1001/packages/react). Per-API source links inline below each section.
 
 ## reatomComponent
+
+[Source: `reatomComponent.ts`](https://github.com/reatom/reatom/blob/v1001/packages/react/src/reatomComponent.ts) · [Tests](https://github.com/reatom/reatom/blob/v1001/packages/react/src/reatomComponent.test.tsx)
+
 
 Wrap any React component that reads atom values with `reatomComponent`. This establishes a reactive subscription boundary — the component re-renders when read atoms change.
 
@@ -35,6 +29,9 @@ const LegacyUnmountAbort = reatomComponent(
 ```
 
 ## bindField
+
+[Source: `bindField.ts`](https://github.com/reatom/reatom/blob/v1001/packages/react/src/bindField.ts)
+
 
 `bindField` creates `value`/`onChange`/`onFocus`/`onBlur` props for form field atoms. Works with `<input>` and `<textarea>`, but **NOT** with `<select>`.
 
@@ -62,6 +59,9 @@ const MyForm = reatomComponent(() => {
 ```
 
 ## useAtom and useAction
+
+[Source: `hooks.ts`](https://github.com/reatom/reatom/blob/v1001/packages/react/src/hooks.ts) · [Tests](https://github.com/reatom/reatom/blob/v1001/packages/react/src/hooks.test.tsx)
+
 
 `@reatom/react` exports `useAtom` and `useAction` as hook-based alternatives to `reatomComponent`. They use `useSyncExternalStore` internally and manage their own subscriptions, so the component does **not** need `reatomComponent`.
 
@@ -124,6 +124,9 @@ Conceptual guidance:
 - Avoid “fixing” this with React `useEffect`/`useState`; that mixes runtimes. Prefer changing the Reatom model so the first branch has a synchronous source of truth or an explicit initialization atom.
 
 ## StrictMode caveat
+
+[Test that pins behavior: `reatomStrictMode.test.tsx`](https://github.com/reatom/reatom/blob/v1001/packages/react/src/reatomStrictMode.test.tsx)
+
 
 StrictMode behavior is version-sensitive:
 

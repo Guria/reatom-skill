@@ -1,10 +1,6 @@
 # Patterns Reference
 
-## Sources
-
-- Examples illustrating these patterns: [`examples/`](https://github.com/reatom/reatom/tree/v1001/examples)
-- Core primitives behind the patterns: [`packages/core/src/core/atom.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/core/atom.ts), [`packages/core/src/core/action.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/core/action.ts), [`packages/core/src/methods/variable.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/methods/variable.ts)
-- Atomization & factory examples in dashboard demo: [`examples/mantine-dashboard`](https://github.com/reatom/reatom/tree/v1001/examples/mantine-dashboard)
+> Sources: [`reatom/examples/`](https://github.com/reatom/reatom/tree/v1001/examples) (especially [`mantine-dashboard`](https://github.com/reatom/reatom/tree/v1001/examples/mantine-dashboard)) for end-to-end pattern usage · [`core/atom.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/core/atom.ts), [`core/action.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/core/action.ts), [`methods/variable.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/methods/variable.ts) for the primitives used.
 
 ## Atomization pattern
 

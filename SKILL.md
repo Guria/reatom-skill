@@ -7,6 +7,20 @@ description: Expert guide for Reatom v1000+ state management. Use for any task i
 
 Atom-centric reactive state management. All primitives (actions, computeds, effects) are built on a single core — the atom.
 
+## Quick navigation
+
+In-document sections (read top-to-bottom for orientation, jump for lookup):
+
+- [Version policy (v1000 vs v1001)](#version-policy-v1000-vs-v1001) · [Resources](#resources) · [Reference files](#reference-files--read-on-demand)
+- [Core Primitives](#core-primitives) · [Extensions](#extensions) · [Built-in Primitives](#built-in-primitives)
+- [Routing](#routing) · [Forms](#forms) · [Persistence](#persistence)
+- [React Integration](#react-integration) · [Native JSX (@reatom/jsx)](#native-jsx-reatomjsx)
+- [Patterns & Architecture](#patterns--architecture) · [Sampling & Events](#sampling--events) · [Retrying Computeds](#retrying-computeds--resetting-dependencies)
+- [Lifecycle Queue Priorities](#lifecycle-queue-priorities) · [wrap() Rules](#async-context--wrap-rules) · [App Setup](#app-setup--optional-clearstack-and-contextstart) · [Testing](#testing)
+- [Gotchas](#gotchas) (read before writing any Reatom code) · [Anti-patterns](#anti-patterns) · [Package Index](#package-index)
+
+Reference files are loaded on demand — see the [reference table](#reference-files--read-on-demand) below.
+
 > **⚠️ v1000+ only — do not rely on any v3 or earlier packages.** The v3 ecosystem (`@reatom/lens`, `@reatom/hooks`, `@reatom/effects`, `@reatom/persist-web-storage`, etc.) is completely separate and incompatible. v1000+ consolidated everything into `@reatom/core` and `@reatom/react`. When researching, always target the `v1000+` / `v1001` branches — v3 docs will mislead you.
 
 ## Version policy (v1000 vs v1001)
@@ -46,7 +60,9 @@ references/
 | `references/core/writing-extensions.md` | Writing custom `.extend()` helpers, lifecycle/resource integration, middleware, hooks, type-safe extension APIs |
 | `references/core/sampling.md` | Debounce/throttle, `take()`, `onEvent()`, `race()`, `abortVar`, checkpoint pattern |
 | `references/core/patterns.md` | Architectural decisions: atomization, computed factory/scoped models, standalone atoms vs lenses, file organization |
-| `references/features/routing.md` | Working with `reatomRoute`, nested routes, loaders, layouts, URL params, navigation, protected routes |
+| `references/features/routing/index.md` | Working with `reatomRoute`, nested routes, layouts, URL params, navigation, codecs |
+| `references/features/routing/loaders.md` | Route loaders: data fetching, factory pattern, dynamic collisions, protected routes |
+| `references/features/routing/spa-example.md` | Full end-to-end SPA example combining routing + loaders + components |
 | `references/features/forms.md` | Working with `reatomForm`, `bindField`, field validation, form factories |
 | `references/features/persistence.md` | Using `withLocalStorage`, `withIndexedDb`, `withCookie`, or any storage adapter |
 | `references/integrations/react.md` | Using `@reatom/react`: `reatomComponent`, `bindField`, StrictMode issues |
@@ -152,7 +168,7 @@ priority.set('low')
 
 ## Routing
 
-See [references/features/routing.md](references/features/routing.md) for complete routing API: routes, nested routes, loaders, layout/page routes, protected routes, modal gates, search-only routes, and a full SPA example.
+See [references/features/routing/index.md](references/features/routing/index.md) for complete routing API: routes, nested routes, loaders, layout/page routes, protected routes, modal gates, search-only routes, and a full SPA example.: routes, nested routes, loaders, layout/page routes, protected routes, modal gates, search-only routes, and a full SPA example.
 
 Routing accepts any [Standard Schema](https://github.com/standard-schema/standard-schema) compliant library (Zod, Valibot, ArkType, etc.) for params and search validation.
 
@@ -258,91 +274,30 @@ mount(document.body, <Counter />)
 
 ## Patterns & Architecture
 
-See [references/core/patterns.md](references/core/patterns.md) for atomization, standalone atoms vs lenses, loader-as-SSOT pattern, component patterns, and file organization.
+Full patterns reference — atomization, scoped factories, loader-as-SSOT, file organization — in [`references/core/patterns.md`](references/core/patterns.md). Two pattern reminders that affect day-one decisions:
 
-When authoring reusable factories that create Reatom atom primitives or scoped models, follow the library convention: name the factory `reatom*` (for example `reatomUser`, `reatomSessionForm`, `reatomFeatureFlag`) rather than `create*` / `make*`. This keeps custom primitives visually aligned with built-ins like `reatomBoolean`, `reatomForm`, and `reatomRoute`.
+**Naming convention.** Custom factories that create atom primitives or scoped models use `reatom*` (e.g. `reatomUser`, `reatomSessionForm`), not `create*`/`make*`. Keeps custom primitives visually aligned with built-ins (`reatomBoolean`, `reatomForm`, `reatomRoute`).
 
-### Scoped model factories
+**Scoped model factories.** When a feature has several atoms/computeds/actions/hooks that belong together, prefer a `reatom*` factory returning a model object over exporting many module-level primitives. Each call gets its own atom graph; implementation state stays private; the public API is explicit. Use the `name` parameter to namespace internal names. Exporting a singleton from the factory is fine for app-wide state; route loaders, dialogs, repeated widgets create their own instances.
 
-When a feature has several atoms, computed values, actions, lifecycle hooks, or private implementation details that belong together, prefer a `reatom*` factory returning a model object over exporting many unrelated module-level primitives. A factory gives each instance its own atom graph, keeps implementation state private, and makes the public API explicit.
-
-```typescript
-import { action, atom, computed } from '@reatom/core'
-
-const reatomCounter = (initial = 0, name = 'counter') => {
-  const count = atom(initial, `${name}.count`)
-  const doubled = computed(() => count() * 2, `${name}.doubled`)
-  const reset = action(() => count.set(initial), `${name}.reset`)
-
-  return { count, doubled, reset }
-}
-
-export type CounterModel = ReturnType<typeof reatomCounter>
-export const counter = reatomCounter()
-```
-
-Use the `name` parameter to namespace internal atom/action names, keep derived display values as `computed`s in the model when multiple views need them, and expose only the atoms/actions/computeds callers should depend on. Exporting a singleton from the factory is fine for app-wide state; route loaders, selected-item sessions, dialogs, and repeated widgets can create their own instances.
-
-### Boolean state as a lifecycle switch
-
-When a boolean state controls a lifecycle resource or background process, model the boolean as the source of truth with `reatomBoolean` and attach lifecycle behavior with `withChangeHook`. Expose the boolean atom itself so callers can use `.setTrue()`, `.setFalse()`, or `.toggle()`; only add semantic actions when they enforce extra domain rules or perform non-trivial work.
-
-```typescript
-import { action, reatomBoolean, sleep, withAbort, withChangeHook, wrap } from '@reatom/core'
-
-const enabled = reatomBoolean(false, 'feature.enabled').extend(
-  withChangeHook((isEnabled) => {
-    if (isEnabled) {
-      run()
-    } else {
-      run.abort()
-    }
-  }),
-)
-
-const run = action(async () => {
-  while (enabled()) {
-    await wrap(sleep(1000))
-    // do lifecycle work here
-  }
-}, 'feature.run').extend(withAbort())
-```
-
-This keeps state transitions declarative: setting the flag starts or stops the lifecycle, and cleanup stays next to startup. Remember that change hooks run after atom updates, so make cleanup idempotent and avoid relying on a temporary value of non-atom mutable state that an action mutates again before hooks run.
+**Boolean state as a lifecycle switch.** When a boolean controls a background resource, model it as `reatomBoolean` and attach lifecycle with `withChangeHook(isEnabled => isEnabled ? run() : run.abort())`. Expose the atom itself so callers use `.setTrue()`/`.setFalse()`/`.toggle()`; add semantic actions only when they enforce extra rules. Change hooks run after atom updates — make cleanup idempotent.
 
 ## Retrying Computeds & Resetting Dependencies
 
-`retryComputed` and `reset` from `@reatom/core` handle re-evaluation and invalidation of computed atoms:
+- **`reset(target)`** — clears computed atom dependencies without re-running. Invalidates cached resources/effects so the next read triggers fresh computation.
+- **`retryComputed(target)`** — resets deps AND immediately re-evaluates. Returns the new value. Propagates through downstream computeds.
 
-- **`reset(target)`** — clears all computed atom dependencies without re-running the computation. Useful for invalidating cached resources/effects so the next read triggers a fresh computation.
-- **`retryComputed(target)`** — resets deps AND immediately re-evaluates the computed function. Returns the new value.
-
-Both throw if the target is an action (only reactive atoms are supported).
-
-The primary use case is **retrying failed async loaders** in route `render` — when a loader rejects, show an error UI with a retry button:
+Both throw on actions (atoms only). Primary use: **retry failed async loaders** in route `render`:
 
 ```typescript
-import { retryComputed, wrap } from '@reatom/core'
-
-// In route render:
 render: (self) => {
-  const { isPending, data } = self.loader.status()
+  const status = self.loader.status()
   const error = self.loader.error()
-  if (isPending) return <Loading />
-  if (error) {
-    return (
-      <PageError
-        title="Something went wrong"
-        description={error.message}
-        onRetry={wrap(() => retryComputed(self.loader))}
-      />
-    )
-  }
-  return <Content data={data} />
+  if (status.isPending) return <Loading />
+  if (error) return <PageError onRetry={wrap(() => retryComputed(self.loader))} />
+  return <Content data={status.data} />
 }
 ```
-
-`retryComputed` propagates through the dependency graph — retrying a source computed also recalculates all downstream computeds that depend on it.
 
 ## Sampling & Events
 
@@ -386,49 +341,38 @@ Reatom operates queues to manage updates with different priorities, achieving in
 
 ## Async Context — wrap() Rules
 
-`wrap()` preserves async context for actions, effects, computed async bodies, event handlers, and callbacks that read or write atoms after an async boundary.
-
-Keep pure API/helper modules framework-agnostic. If a module only wraps `fetch`, parses responses, or transforms data and does not read/write atoms, do **not** add `wrap()` there. Wrap the promise/callback in the calling Reatom action/computed/effect.
+`wrap()` preserves async context for actions, effects, computed async bodies, event handlers, and callbacks that read/write atoms across an async boundary. **Keep pure API/helper modules framework-agnostic** — if a module only wraps `fetch`, parses responses, or transforms data without touching atoms, do not add `wrap()`. Wrap the promise/callback in the calling Reatom action/computed/effect.
 
 ```typescript
-// ✅ Good in Reatom code:
+// ✅ Reatom code:
 const fetchUser = action(async (id: string) => {
   const res = await wrap(fetch(`/api/users/${id}`))
   userAtom.set(await wrap(res.json()))
-}, 'fetchUser')
-
+})
 addEventListener('click', wrap(() => doSomethingWithAtoms()))
 
-// ✅ Good in plain helpers (no atoms, no Reatom APIs):
-export async function request<T>(url: string) {
-  const res = await fetch(url)
-  return (await res.json()) as T
-}
+// ✅ Plain helpers (no atoms, no Reatom APIs): leave bare.
+//   export async function request<T>(url: string) { ... }
 
-// ❌ Bad:
+// ❌ Anti-patterns:
 await wrap(fetch(url)).then(res => res.json())  // chain after wrap
 fetch(url).then(res => doSomethingWithAtoms())  // missing wrap around atom work
 ```
 
 ## App Setup — optional clearStack and context.start
 
-Reatom creates a default global reactive context when `@reatom/core` is imported, so `clearStack()` is optional by design. Still, prefer the stricter setup for greenfield production apps: call `clearStack()` then `context.start()` in the earliest app import (before atoms are read or routes are matched). This opts into an explicit app frame and makes accidental work outside that frame fail loudly:
+Reatom creates a default global reactive context when `@reatom/core` is imported, so `clearStack()` is optional. Still, **prefer the stricter setup for greenfield production apps**: call `clearStack()` then `context.start()` in the earliest app import. This opts into an explicit app frame and makes accidental work outside it fail loudly:
 
 ```typescript
-// setup.ts — import this file before others!
+// setup.ts — import before any other module!
 import { clearStack, context } from '@reatom/core'
-
-// Destroys the default global STACK.
-// After this, any atom operation outside a proper context.start() frame
-// will throw "missing async stack" — this enforces correct wrap() usage.
-clearStack()
-
+clearStack()  // any atom operation outside context.start() now throws "missing async stack"
 export const rootFrame = context.start()
 ```
 
-Treat existing setup as intentional. If a codebase already uses `clearStack()`, do not remove it to silence `missing async stack` errors; fix the lifecycle or missing `wrap()` boundary instead. After `clearStack()`, keep module scope declarative: creating atoms, computeds, routes, and registering extensions is fine; reading or writing atoms and creating live subscriptions during module evaluation is not. A top-level `effect()` subscribes immediately, so after `clearStack()` it will hit `missing async stack` unless created inside an active managed context. For app-lifetime reactions, attach behavior to the source (for example `urlAtom.extend(withChangeHook(...))` for URL normalization) or encode access decisions in route `params()` guards. A `start*Effects()` helper whose only job is to wrap module-level effects in `rootFrame.run()` usually hides the lifecycle boundary instead of modeling it.
+**Rules after `clearStack()`:** module scope must stay declarative. Creating atoms, computeds, routes, and registering extensions is fine; reading/writing atoms or creating live subscriptions during module evaluation is not. A top-level `effect()` subscribes immediately and will hit `missing async stack`. For app-lifetime reactions, attach to the source (`urlAtom.extend(withChangeHook(...))`) or use route `params()` guards. A `start*Effects()` helper whose only job is to wrap module effects in `rootFrame.run()` hides the lifecycle boundary instead of modeling it.
 
-If an existing app does not use `clearStack()`, do not introduce it casually in a narrow bug fix because it changes the app's context assumptions. For new apps and planned setup refactors, use `clearStack()` + `context.start()` by default unless the project deliberately wants the default global context.
+**Don't add `clearStack()` casually** in an existing project that doesn't use it — it changes context assumptions. **Don't remove it** from a project that does — fix the missing `wrap()` instead.
 
 In React apps, pass the root frame to `<reatomContext.Provider value={rootFrame}>` so all `reatomComponent` instances share the same isolated context.
 
@@ -478,13 +422,9 @@ These are the most common mistakes. Read before writing any Reatom code.
 
 ### Lifecycle & Automatic Cleanup
 
-Reatom's reactive context tracks and cleans up resources automatically — effects, aborts, subscriptions are disposed when atoms disconnect or computations rerun. Manual unsubscribe/cancel/dispose is rarely needed.
+Reatom's reactive context tracks and disposes effects, aborts, and subscriptions automatically when atoms disconnect or computations rerun. Manual unsubscribe is rarely needed. The context composes across `computed`, `effect`, `withConnectHook`, and `wrap()` — cleanup and abort propagation work across all layers via a single reactive call stack (`abortVar` exposes its abort signal).
 
-The context composes: nesting a `computed` inside an `effect`, an `effect` inside `withConnectHook`, or `wrap()` inside any of them — cleanup and abort propagation works across all layers. There is a single reactive call stack, and `abortVar` gives access to its abort signal from anywhere inside it.
-
-Reatom primitives that create reactive resources (`effect`, `computed`, `action` with `withAbort`/`withAsyncData`) are already tracked by the context — they clean up and abort themselves. There is no need to manually return their unsubscribe handles from `withConnectHook`.
-
-However, `withConnectHook` *does* support returning a cleanup function for third-party resources that the reactive context doesn't manage (DOM listeners, WebSocket connections, library instances). If the callback returns a function, it is called on disconnect. Use this for non-Reatom cleanup. For Reatom-managed resources, just call them — the context handles the rest.
+`withConnectHook` *does* accept a returned cleanup function for non-Reatom resources (DOM listeners, WebSockets, third-party library instances). For Reatom-managed primitives (`effect`, `computed`, `action` with `withAbort`/`withAsyncData`), don't return their unsubscribe handles — the context already owns them.
 
 ### Build & Packages
 
@@ -501,25 +441,26 @@ However, `withConnectHook` *does* support returning a cleanup function for third
 
 ### Routing
 
-- **Use `retryComputed(self.loader)` for error retry buttons** — when a route loader fails, pass `onRetry={wrap(() => retryComputed(self.loader))}` to error UI instead of manually re-calling the loader action
-- `reatomRoute()` with no arguments throws — use `reatomRoute('')` for root
-- Paths must NOT start with `/` — Reatom auto-prepends it
-- v1001 routing render semantics changed: use `layout: true` for layout/wrapper routes; page routes are exact-by-default. In v1000 there is no `layout` option: render is match-by-default and `exactRender: true` makes a page route.
-- `route.go()` takes params object or nothing — NOT a path string
-- For route `params`/`search`, default to Standard Schema for inbound URL validation, defaults, and one-way parsing before the loader. Use v1001 codecs only when the route should expose a bidirectional contract: `route.go()` / `.path()` accept decoded domain values, or URL serialization needs explicit encode/decode rules.
-- `urlAtom()` returns a `URL` object, not a string — use `urlAtom().pathname`
-- Never use `urlAtom().startsWith()` — use `route.match()` instead
-- Put route access and redirect decisions in `params()`: return `null` to block the route before its loader runs. This covers private guards and public pages that should redirect once the user is already authenticated. Avoid returning `null` from loaders for auth/redirect control flow because it makes loader data nullable and weakens TypeScript narrowing.
-- **Separate routes for create vs edit** — don't use `params.id === 'new'` conditional logic
-- **Constrain dynamic params when literal siblings exist** — route patterns like `projects/new` and `projects/:projectId` can both match `/projects/new` unless `:projectId` is validated to reject `new`. Use a Standard Schema on `params` that matches your actual ID format (`z.uuid()`, prefixed regex, etc.). Broad `z.string()` is not enough for IDs next to literal routes.
-- **Do not hide route collisions by taking only the first outlet** — rendering `outlet().at(0)` may mask duplicate matches while the wrong loader still runs. Fix the route match with param schemas or route structure.
-- **Parent route params are merged into child params** — if a guard route returns `{ user }`, child route schemas and `go()` types may need to account for it. For auth guards, return `{}` unless descendants really need injected params; read shared user atoms/resources in loaders/components instead.
-- **Guard index child loaders** — v1001 page `render` is exact-by-default, but loaders follow route matching. A `{ path: '' }` child under a layout can still match descendants and run. Add an exact-path `params()` guard (see `references/features/routing.md`) or restructure routes.
-- **Keep loader payloads concrete** — redirects, auth checks, and feature gates belong in route `params()` or a parent guard route, not as `return null` branches inside the loader. A nullable loader result forces every render/component to handle `null` even when the page model should be guaranteed.
-- **Default redirects are source-attached URL reactions** — register `urlAtom.extend(withChangeHook(...))` at module scope for app-level redirects from `/` or other URL normalization. This is declaration-time extension registration, not a live subscription. Do not replace it with a top-level `effect()` or boot-only `start*Effects()` helper.
-- **Handle loader async states in the route `render(self)`** — prefer `const status = self.loader.status()` in `render`, branch on the discriminated flags there, and pass narrowed `status.data` (or a typed model) to UI components. This keeps components typed and focused instead of passing `loader` props or falling back to `any`.
-- **Use the full status model for UX** — `isFirstPending` is for initial page skeletons; `isPending` with `isEverSettled` is for background refresh with existing data; `isFulfilled` gives narrowed data for normal render; `isRejected` covers errors. With concrete loader payloads (no `undefined` branches), TypeScript narrows `status.data` to the full type in `AnotherPending` — no extra guards needed.
-- **Separate stale-refresh from identity changes** — route loaders cache the last fulfilled `status.data` while pending. Use stale UI for list/search refreshes; for `:id` pages, fetch the entity in a parent layout that blocks `outlet()` while pending and let children derive scoped models from `await wrap(parentRoute.loader())`. Use empty/null child models only when progressive UI is intentional.
+Detailed loader/render patterns are in [`references/features/routing/loaders.md`](references/features/routing/loaders.md). Quick rules:
+
+- **Use `retryComputed(self.loader)` for error retry buttons**: `onRetry={wrap(() => retryComputed(self.loader))}`.
+- `reatomRoute()` with no arguments throws — use `reatomRoute('')` for root.
+- Paths must NOT start with `/` — Reatom auto-prepends it.
+- v1001 render semantics: `layout: true` for layout/wrapper routes; page routes are exact-by-default. v1000 has no `layout`; render is match-by-default and `exactRender: true` makes a page route.
+- `route.go()` takes params object or nothing — NOT a path string.
+- Default to Standard Schema for inbound `params`/`search` validation. Use v1001 codecs only when the route needs a bidirectional contract (`route.go()`/`.path()` accept decoded values, explicit URL encode/decode).
+- `urlAtom()` returns a `URL` object — use `urlAtom().pathname`. Never use `urlAtom().startsWith()` — use `route.match()`.
+- Put route access and redirect decisions in `params()` (return `null` to block before the loader runs). Don't use loader-`null` for auth/redirect control flow — it makes loader data nullable and weakens narrowing.
+- **Separate routes for create vs edit** — don't use `params.id === 'new'` conditionals.
+- **Constrain dynamic params next to literal siblings** — `projects/new` and `projects/:projectId` collide unless `:projectId` is validated to reject `new`. Use UUID/numeric/prefixed-ID schemas, not broad `z.string()`.
+- Don't hide route collisions by taking `outlet().at(0)` — fix the match instead; the wrong loader still runs.
+- Parent route params merge into child params. For auth guards, return `{}` and read shared user atoms in loaders/components instead of injecting params.
+- **Guard index child loaders** — v1001 page `render` is exact-by-default but loaders follow route matching. A `{ path: '' }` child under a layout can match descendants and run.
+- **Keep loader payloads concrete** — redirects, auth, feature gates belong in route `params()` / parent guards, not in `return null` branches inside the loader.
+- **Default redirects are source-attached URL reactions** — register `urlAtom.extend(withChangeHook(...))` at module scope. This is declaration-time extension registration, not a live subscription — do not replace it with a top-level `effect()` or boot-only `start*Effects()` helper.
+- **Handle loader async states in route `render(self)`** — read `self.loader.status()`, branch on the discriminated flags, pass narrowed `status.data` (or a typed model) to UI. Don't pass loader props.
+- **Use the full status model**: `isFirstPending` for first-load skeletons, `isPending && isEverSettled` for stale-while-refresh, `isFulfilled` for narrowed fulfilled data, `isRejected` for errors.
+- **Separate stale-refresh from identity changes** — list/search refreshes can show stale UI; for `:id` pages, fetch the entity in a parent layout that blocks `outlet()` while pending and let children derive scoped models from `await wrap(parentRoute.loader())`.
 
 ### Forms
 
@@ -531,14 +472,15 @@ However, `withConnectHook` *does* support returning a cleanup function for third
 
 ### React
 
-- Treat React as a rendering adapter, not a second state/runtime layer. **React-owned state/effects are a red flag in a Reatom app** when they hold domain state, mirror atoms, run Reatom side effects, or coordinate app flow. Put app state and transitions in atoms, actions, computeds, route loaders, and Reatom lifecycle hooks.
-- React built-in hooks are acceptable for view-only integration glue: refs/focus/measurement, imperative widgets, third-party UI hooks, memoizing expensive view calculations, stable DOM callbacks, or purely local DOM affordances. This warning is about React owning or synchronizing application state; it is not a ban on `@reatom/react` adapter APIs such as `reatomComponent`, `useAtom`, or `useWrap` when a codebase intentionally uses the hook-style integration.
-- **`reatomComponent` is the preferred way to consume atoms in React**, but `useAtom` / `useAction` hooks are also valid — especially in codebases that prefer hook-style composition. `reatomComponent` automatically subscribes to any atom getter called inside it; `useAtom(anAtom)` does the same per-atom but with a hooks API (returns `[state, setter, atom, frame]`). Before choosing a style, check existing components in the project to see which pattern is already established. If the codebase consistently uses one approach, follow it. If there's no clear pattern or the project is new, default to `reatomComponent`. If uncertain, ask the user and offer to record the preference in `AGENTS.md` or `CLAUDE.md` for future consistency.
-- Do not use React `useEffect`/`useState` to synchronize Reatom state — use atoms, actions, computeds.
-- Components that call atom getters must be `reatomComponent` — including child components. If using `useAtom` instead, the component does not need `reatomComponent` since `useAtom` manages its own subscription via `useSyncExternalStore`.
-- **Initial React render + instant async completion gotcha**: `reatomComponent` subscribes after React commits; an async computed/`withAsyncData` that resolves immediately (for example a cached/no-token branch returning `null`) can settle before the subscription is mounted. Do not gate first-render app boot/auth purely on `.ready()` from an instantly resolving async atom inside a React component. Prefer a synchronous source of truth for initial branching (persisted token atom, URL state, route params, explicit init atom), and use async `.data()`/`.ready()` for work with a real async boundary or after the relevant component is already mounted.
-- **Passing atoms as props is perfectly valid** — unlike Redux where passing state is discouraged, Reatom atoms are first-class primitives. Passing them as props (e.g. `<CheckboxField field={form.fields.rememberMe} />`) is the standard way to build abstract, reusable components.
-- **React StrictMode is version-sensitive** — in v1000 it can cause `AbortError: Component unmount`; disable StrictMode or ensure proper app setup with `clearStack()` + `context.start()`. In v1001, `reatomComponent` defaults `abortOnUnmount: false`, which avoids the old abort-on-unmount behavior; set `{ abortOnUnmount: true }` only when you intentionally need v1000-style cancellation on unmount.
+Deeper React notes (StrictMode, instant-async resolution, choosing `reatomComponent` vs hooks) live in [`references/integrations/react.md`](references/integrations/react.md).
+
+- Treat React as a rendering adapter, not a second state/runtime layer. **React-owned state/effects are a red flag** when they hold domain state, mirror atoms, run Reatom side effects, or coordinate app flow.
+- React built-in hooks are fine for view-only glue: refs/focus/measurement, imperative widgets, third-party UI hooks, expensive view memoization, stable DOM callbacks. The warning is about *application state ownership*, not about banning `@reatom/react` adapter APIs.
+- **`reatomComponent` is the preferred way to consume atoms in React.** `useAtom` / `useAction` hooks are also valid in hook-style codebases. Match the existing project convention; if uncertain, ask the user and record the choice in `AGENTS.md` / `CLAUDE.md`.
+- Components that call atom getters must be `reatomComponent` (including children). `useAtom`-based components don't need it — `useAtom` manages its own subscription via `useSyncExternalStore`.
+- **Initial-render + instant-async-completion**: `reatomComponent` subscribes after React commits. An async computed that resolves immediately (cached / no-token branch returning `null`) can settle before subscription mounts. Don't gate first-render boot/auth purely on `.ready()` from an instantly resolving async atom — use a synchronous source (persisted token, URL, route params, explicit init atom) for initial branching.
+- **Passing atoms as props is valid and recommended** — unlike Redux, atoms are first-class primitives. `<CheckboxField field={form.fields.rememberMe} />` is the standard reusable-component pattern.
+- **React StrictMode is version-sensitive**: v1000 can throw `AbortError: Component unmount`; disable StrictMode or use `clearStack()` + `context.start()`. v1001 defaults `abortOnUnmount: false` on `reatomComponent` — set `{ abortOnUnmount: true }` only for v1000-style cancellation.
 
 ### TypeScript
 
@@ -553,42 +495,30 @@ However, `withConnectHook` *does* support returning a cleanup function for third
 
 ## Package Index
 
-| Package | Purpose |
-|---|---|
-| `@reatom/core` | Core primitives, extensions, forms, routing, persistence, built-in methods |
-| `@reatom/react` | React adapter: `reatomComponent`, `bindField` |
-| `@reatom/preact` | Preact adapter |
-| `@reatom/vue` | Vue adapter |
-| `@reatom/solid-js` | Solid adapter |
-| `@reatom/lit` | Lit adapter |
-| `@reatom/jsx` | Native JSX runtime (no VDOM) — alternative to `@reatom/react` |
-| `@reatom/zod` | Zod v4 integration |
-| `@reatom/eslint-plugin` | ESLint rules |
-| `@reatom/admin` | Admin dashboard |
+Full table, deprecation list, and `jsrepo` reusables system in [`references/meta/packages.md`](references/meta/packages.md). The most common installs are `@reatom/core` plus one adapter (`@reatom/react`, `@reatom/jsx`, `@reatom/vue`, `@reatom/solid-js`, `@reatom/preact`, or `@reatom/lit`).
 
-Reatom provides a `shadcn`-like code delivery system via `jsrepo` at [github.com/reatom/reusables](https://github.com/reatom/reusables). Copy-paste abstract, pre-built Reatom components and hooks directly into your project.
-
-### Deprecated v3 packages — DO NOT USE in v1000+ codebases
-
-`@reatom/hooks`, `@reatom/async`, `@reatom/persist`, `@reatom/persist-*`, `@reatom/form`, `@reatom/url`, `@reatom/timer`, `@reatom/lens`, `@reatom/undo`, `@reatom/primitives`, `@reatom/npm-react`, `@reatom/npm-vue`, `@reatom/devtools` — all merged into `@reatom/core` or obsoleted.
+> **Do not install** any v3 package (`@reatom/hooks`, `@reatom/async`, `@reatom/persist*`, `@reatom/form`, `@reatom/url`, `@reatom/timer`, `@reatom/lens`, `@reatom/undo`, `@reatom/primitives`, `@reatom/npm-react`, `@reatom/npm-vue`, `@reatom/devtools`) — all merged into `@reatom/core` or obsoleted.
 
 ## Anti-patterns
 
-- **Manual data fetching** — use `computed` + `withAsyncData` instead of `effect` + `action`
-- **Identity actions** — don't create actions that just forward to `atom.set()`. Expose the atom, or use primitives like `reatomBoolean` so callers can use `.setTrue()`, `.setFalse()`, and `.toggle()`. Keep actions for semantic operations that validate, coordinate multiple atoms, or perform effects.
-- **Route component checks** — don't do `if (!route.match()) return null`. Use `render` option
-- **Passing route loaders into page components** — route render should read `self.loader.status()`, choose loading/error/fulfilled UI, and pass typed data/model props to components. Passing a loader prop spreads routing/async concerns into view components and often leads to `any`.
-- **Nullable loader payloads for redirects** — don't return `null` from a loader just to redirect or block a page. Put that decision in route `params()` / parent guard routes so loader data stays concrete and TypeScript can narrow `status.data` cleanly.
-- **Using `.ready()` as the only loading branch** — `.ready()` hides the difference between first load, background refresh, fulfilled, rejected, and aborted states. Use `.status()` for route loaders and async data when UI quality matters.
-- **`isFulfilled` goes `false` during background refresh** — when a route's search params change (e.g. typing in a search input), the loader re-runs. During this refresh `isPending` becomes `true` and `isFulfilled` becomes `false`, but `status.data` still holds the previous result. Guarding only with `if (!status.isFulfilled) return <></>` unmounts the entire page, destroying input focus and flashing blank UI. Instead, check `status.isPending && status.isEverSettled` to keep the page mounted with its existing data.
-- **Treating refresh status as universal** — `isPending && isEverSettled` is the stale-while-refresh branch for the same page identity. On identity changes it can expose the previous loader payload. Prefer a parent identity loader that blocks its outlet while pending, plus child scoped models seeded from `await wrap(parentRoute.loader())`; if you cannot reshape the route tree yet, render a loader until `status.data` matches the current params.
-- **Module-level forms** — create inside route loaders for lifecycle management
-- **Single route for create/edit** — use separate routes with separate loaders
-- **Broad dynamic routes next to literal routes** — `:id` with `z.string()` beside `new`, `create`, `settings`, etc. lets literal pages also match the detail route. Use domain-shaped IDs (UUID, numeric, prefixed IDs, slugs with reserved-word exclusion) as a Standard Schema on the dynamic route.
-- **Actions in model files** — create route-specific actions inside route loaders
-- **Syncing atoms with change hooks** — use `computed` / `withComputed` for derived state. `withChangeHook` is appropriate for lifecycle/effect boundaries, not copying one atom's value into another.
-- **Boot-only effect helpers** — avoid `start*Effects()` functions whose only purpose is to instantiate module-level `effect()` subscriptions after `clearStack()`. Put stable reactions on the source with `withChangeHook` / `withCallHook`, and put scoped work in route loaders, scoped model factories, `withConnectHook`, or semantic actions.
-- **Atom + effect bridge for one-shot commands** — avoid `latestEventAtom` plus an `effect()` when the only goal is to call an imperative API. If the value is not rendered, persisted, or otherwise part of app state, call the API from the semantic action. If the last value is genuine state, keep it as an atom and attach `withChangeHook` to that source.
-- **Avoiding atom props** — thinking that passing atoms to children components is an anti-pattern. It is the recommended way to decouple models from views!
-- **Misnaming atom factories** — custom factories that create atom primitives/scoped models should use the `reatom*` convention, not generic `create*` / `make*` names.
-- **React-owned app state** — using `useState`/`useReducer`/context to own domain state, duplicate atom values, drive routing/data loading, or coordinate effects. In Reatom apps this mixes two reactive systems and is a strong architecture smell; keep app logic in Reatom and leave React built-in hooks for isolated UI/DOM integration or view-only memoization/callbacks.
+Full rationale for each item is in the corresponding reference (linked where deeper context exists).
+
+- **Manual data fetching** — use `computed` + `withAsyncData`, not `effect` + `action`.
+- **Identity actions** — don't wrap `atom.set()` in an action that adds nothing. Expose the atom directly, or use `reatomBoolean`/`reatomEnum` so callers get `.setTrue()`/`.toggle()`/etc. Reserve actions for semantic operations (validation, multi-atom coordination, side effects).
+- **Route component checks** — don't `if (!route.match()) return null`; use the `render` option.
+- **Passing route loaders into page components** — read `self.loader.status()` in route `render`, branch there, pass typed data/model props down. Loader-as-prop spreads routing/async concerns and tends toward `any`.
+- **Nullable loader payloads for redirects** — redirect/auth/feature-gate decisions belong in route `params()` / parent guards, not as `return null` from the loader.
+- **Using `.ready()` as the only loading branch** — `.ready()` collapses first-load, refresh, fulfilled, rejected, aborted into one bit. Use `.status()` for route loaders and any UX-sensitive async.
+- **Unmounting on background refresh** — search-param changes re-run the loader; `isFulfilled` goes `false` while `status.data` still holds the previous result. Guarding with `!status.isFulfilled` destroys input focus and flashes blank UI. Use `status.isPending && status.isEverSettled` to keep the page mounted with stale data.
+- **Treating refresh status as universal** — stale-while-refresh applies to same-identity reloads. On identity changes (`:id` switch) it exposes the previous payload. Block the outlet at a parent identity loader; let children derive scoped models from `await wrap(parentRoute.loader())`.
+- **Module-level forms** — create `reatomForm` inside route loaders for proper lifecycle.
+- **Single route for create/edit** — separate routes with separate loaders.
+- **Broad dynamic routes next to literal routes** — `:id` with `z.string()` beside `new`/`create`/`settings` collides. Use domain-shaped IDs (UUID, numeric, prefixed, slug with reserved-word exclusion) as the params schema.
+- **Actions in model files** — create route-specific actions inside route loaders.
+- **Syncing atoms with `withChangeHook`** — use `computed` / `withComputed` for derived state. `withChangeHook` is for lifecycle/effect boundaries, not copying one atom's value into another.
+- **Boot-only effect helpers** — avoid `start*Effects()` whose only job is to instantiate module-level `effect()` after `clearStack()`. Attach stable reactions to the source with `withChangeHook` / `withCallHook`; put scoped work in route loaders, scoped factories, `withConnectHook`, or semantic actions.
+- **Atom + effect bridge for one-shot commands** — don't pair `latestEventAtom` with an `effect()` just to call an imperative API. If the value isn't rendered/persisted/state, call the API from the action. If it is state, keep the atom and use `withChangeHook` on it.
+- **Avoiding atom props** — passing atoms to children is the *recommended* decoupling pattern, not an anti-pattern (Redux intuitions don't apply).
+- **Misnaming atom factories** — use `reatom*`, not `create*` / `make*`, to align with built-in primitives.
+- **React-owned app state** — `useState`/`useReducer`/context owning domain state, mirroring atoms, driving routing/data loading, or coordinating effects mixes two reactive systems. Keep app logic in Reatom; leave React built-in hooks for isolated UI/DOM glue and view-only memoization. (The recommended `oxlint` `no-restricted-imports` rule in `references/setup/start-from-scratch.md` enforces this at the linter level.)
+

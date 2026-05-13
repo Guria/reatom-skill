@@ -1,23 +1,6 @@
 # Extensions Reference
 
-## Sources
-
-All extensions live in [`packages/core/src/extensions`](https://github.com/reatom/reatom/tree/v1001/packages/core/src/extensions) and async helpers in [`packages/core/src/async`](https://github.com/reatom/reatom/tree/v1001/packages/core/src/async).
-
-| Extension | Source | Tests |
-|---|---|---|
-| `withAsyncData` | [`async/withAsyncData.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/async/withAsyncData.ts) | [`withAsyncData.test.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/async/withAsyncData.test.ts) |
-| `withAsync` | [`async/withAsync.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/async/withAsync.ts) | [`withAsync.test.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/async/withAsync.test.ts) |
-| `withAsyncStatus` | [`async/withAsyncStatus.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/async/withAsyncStatus.ts) | [`withAsyncStatus.test.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/async/withAsyncStatus.test.ts) |
-| `withAbort` | [`extensions/withAbort.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/extensions/withAbort.ts) | [`withAbort.test.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/extensions/withAbort.test.ts) |
-| `withChangeHook` | [`extensions/withChangeHook.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/extensions/withChangeHook.ts) | [`withChangeHook.test.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/extensions/withChangeHook.test.ts) |
-| `withConnectHook` | [`extensions/withConnectHook.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/extensions/withConnectHook.ts) | [`withConnectHook.test.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/extensions/withConnectHook.test.ts) |
-| `withComputed` | [`extensions/withComputed.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/extensions/withComputed.ts) | [`withComputed.test.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/extensions/withComputed.test.ts) |
-| `withSuspense` | [`extensions/withSuspense.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/extensions/withSuspense.ts) | [`withSuspense.test.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/extensions/withSuspense.test.ts) |
-| `withInit` | [`extensions/withInit.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/extensions/withInit.ts) | [`withInit.test.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/extensions/withInit.test.ts) |
-| `withMemo` | [`extensions/withMemo.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/extensions/withMemo.ts) | [`withMemo.test.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/extensions/withMemo.test.ts) |
-| `withTransaction` / rollback | [`methods/transaction.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/methods/transaction.ts) | [`transaction.test.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/methods/transaction.test.ts) |
-| `framePromise` | [`methods/framePromise.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/methods/framePromise.ts) | [`framePromise.test.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/methods/framePromise.test.ts) |
+> Source: [`packages/core/src/extensions`](https://github.com/reatom/reatom/tree/v1001/packages/core/src/extensions) and [`packages/core/src/async`](https://github.com/reatom/reatom/tree/v1001/packages/core/src/async). Per-API source links are inline below each section heading.
 
 ## Contents
 
@@ -33,6 +16,9 @@ All extensions live in [`packages/core/src/extensions`](https://github.com/reato
 - [framePromise — Error handling without try/catch](#framepromise--error-handling-without-trycatch)
 
 ## withAsyncData — async data fetching (recommended pattern)
+
+[Source: `async/withAsyncData.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/async/withAsyncData.ts) · [Tests](https://github.com/reatom/reatom/blob/v1001/packages/core/src/async/withAsyncData.test.ts)
+
 
 ```typescript
 import { atom, computed, withAsyncData, wrap } from '@reatom/core'
@@ -78,6 +64,9 @@ status.reset()          // reset to initial state, clearing history flags
 
 ## withAbort — race condition prevention
 
+[Source: `extensions/withAbort.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/extensions/withAbort.ts) · [Tests](https://github.com/reatom/reatom/blob/v1001/packages/core/src/extensions/withAbort.test.ts)
+
+
 ```typescript
 import { action, withAbort, wrap } from '@reatom/core'
 
@@ -92,6 +81,9 @@ fetchUser(3)  // wins — previous calls cancelled
 
 ## withChangeHook — react to state changes
 
+[Source: `extensions/withChangeHook.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/extensions/withChangeHook.ts) · [Tests](https://github.com/reatom/reatom/blob/v1001/packages/core/src/extensions/withChangeHook.test.ts)
+
+
 Use `withChangeHook` when an atom's state is the source of truth and a stable side effect should follow its changes. The hook is attached to the source and runs in Reatom's hook phase after updates, so it fits app-lifetime bridges such as URL normalization, persistence-facing side effects, analytics, or starting/stopping a lifecycle resource from a boolean switch. For action calls, prefer `withCallHook`.
 
 ```typescript
@@ -105,6 +97,9 @@ const name = atom('John', 'name').extend(
 Prefer this source-attached pattern over a top-level `effect()` plus a boot-time `startEffects()` function. `effect()` subscribes immediately and needs an active reactive frame after `clearStack()`; `withChangeHook` records the reaction as part of the atom model and does not require a separate activation step. If a side effect is just the result of a command and no code reads the intermediate value, call the imperative API directly from the semantic action instead of creating an atom solely to trigger a hook.
 
 ## withConnectHook — lazy-start on first subscriber
+
+[Source: `extensions/withConnectHook.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/extensions/withConnectHook.ts) · [Tests](https://github.com/reatom/reatom/blob/v1001/packages/core/src/extensions/withConnectHook.test.ts)
+
 
 ```typescript
 import { computed, withAsyncData, withConnectHook, wrap } from '@reatom/core'
@@ -125,6 +120,9 @@ const data = computed(async () => {
 
 ## withComputed — writable computed
 
+[Source: `extensions/withComputed.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/extensions/withComputed.ts) · [Tests](https://github.com/reatom/reatom/blob/v1001/packages/core/src/extensions/withComputed.test.ts)
+
+
 ```typescript
 import { atom, withComputed } from '@reatom/core'
 
@@ -135,6 +133,9 @@ const currentTab = atom<Tab | null>(null, 'currentTab').extend(
 ```
 
 ## withAsync — async mutations
+
+[Source: `async/withAsync.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/async/withAsync.ts) · [Tests](https://github.com/reatom/reatom/blob/v1001/packages/core/src/async/withAsync.test.ts)
+
 
 ```typescript
 import { action, withAsync, wrap } from '@reatom/core'
@@ -197,6 +198,9 @@ const MyComponent = reatomComponent(() => {
 
 ## Rich async status for high-quality UX
 
+[Source: `async/withAsyncStatus.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/async/withAsyncStatus.ts) · [Types](https://github.com/reatom/reatom/blob/v1001/packages/core/src/async/withAsyncStatus.types.ts)
+
+
 Prefer `.status()` over a single `.ready()` check whenever the UI has more than one possible async state. The status flags are intentionally richer than “loading/not loading”:
 
 - `isFirstPending`: initial request; show skeletons/full-page loading.
@@ -208,6 +212,9 @@ Prefer `.status()` over a single `.ready()` check whenever the UI has more than 
 For route loaders, put these branches in `route.render(self)` so TypeScript can narrow `self.loader.status().data` before it reaches the page component. Passing loaders into components spreads async policy through the view tree and often causes `any` or redundant null checks.
 
 ## Suspense — global state initialization
+
+[Source: `extensions/withSuspense.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/extensions/withSuspense.ts) · [Tests](https://github.com/reatom/reatom/blob/v1001/packages/core/src/extensions/withSuspense.test.ts)
+
 
 ⚠️ **Suspense is recommended only for global states** (user data, settings, feature flags, locale) that load once at app startup. For dynamic data fetching and page-specific content, use `withAsync` / `withAsyncData` instead.
 
@@ -303,6 +310,9 @@ const maybeValue = settled(promise)          // undefined while pending
 
 ## withRollback / withTransaction — optimistic updates
 
+[Source: `methods/transaction.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/methods/transaction.ts) · [Tests](https://github.com/reatom/reatom/blob/v1001/packages/core/src/methods/transaction.test.ts)
+
+
 ```typescript
 import { action, atom, withAsync, withRollback, withTransaction, wrap } from '@reatom/core'
 
@@ -337,6 +347,9 @@ const save = action(async () => {
 ```
 
 ## framePromise — Error handling without try/catch
+
+[Source: `methods/framePromise.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/methods/framePromise.ts) · [Tests](https://github.com/reatom/reatom/blob/v1001/packages/core/src/methods/framePromise.test.ts)
+
 
 `framePromise()` returns a promise that resolves to the current frame's state (action payload or atom state). Call `.catch()` on it at the top of an async action to capture errors from all subsequent `await wrap()` calls — no try/catch needed.
 

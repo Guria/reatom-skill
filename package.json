@@ -1,0 +1,30 @@
+{
+  "name": "reatom-skill",
+  "version": "0.1.0",
+  "description": "Pi/Agent-Skills skill: production-ready Reatom v1000+ guidance with on-demand reference loading and verified GitHub source links.",
+  "keywords": [
+    "pi-package",
+    "agent-skill",
+    "reatom",
+    "state-management"
+  ],
+  "license": "MIT",
+  "files": [
+    "SKILL.md",
+    "references/",
+    "README.md",
+    "LICENSE"
+  ],
+  "pi": {
+    "skills": [
+      "."
+    ]
+  },
+  "agentSkills": [
+    "."
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://gitlab.com/workhuman/reatom-skill.git"
+  }
+}
