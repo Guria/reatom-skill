@@ -280,6 +280,103 @@ npm run validate
 
 Fix any failures **before** writing the first feature. After this, every feature commit must keep `validate` green.
 
+## Step 12 — Smoke test for runtime boot errors (browser test runner)
+
+The `validate` pipeline catches type, lint, and format problems but cannot catch runtime errors that only surface once the app actually mounts in a browser — most notably the `missing async stack` error from missing `wrap()` boundaries under `clearStack()`. Add a single browser-level smoke test that boots the app and asserts no such error reaches the console. Two reasonable runners:
+
+- **Vitest browser mode** — lower ceremony, runs your Vite app in a real browser through Playwright/WebDriverIO under the hood, integrates with `npm run test`. Good default for greenfield apps.
+- **Playwright** standalone — heavier setup but better for full end-to-end flows beyond smoke tests; pick this if you already plan to write E2E coverage.
+
+Verify versions before installing (`npm view <pkg> dist-tags`).
+
+### Vitest browser mode (recommended default)
+
+```bash
+npm i -D vitest@latest @vitest/browser@latest playwright@latest
+npx playwright install chromium
+```
+
+`vitest.config.ts`:
+
+```ts
+import { defineConfig } from 'vitest/config'
+import react from '@vitejs/plugin-react'
+
+export default defineConfig({
+  plugins: [react()],
+  test: {
+    browser: {
+      enabled: true,
+      provider: 'playwright',
+      headless: true,
+      instances: [{ browser: 'chromium' }],
+    },
+  },
+})
+```
+
+`src/__tests__/boot.smoke.browser.test.tsx`:
+
+```tsx
+import { expect, test, vi } from 'vitest'
+
+test('app boots without missing-async-stack errors', async () => {
+  const errors: string[] = []
+  const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation((...args) => {
+    errors.push(args.map(String).join(' '))
+  })
+
+  // Importing main mounts the app into the test page (createRoot called once).
+  await import('../main')
+
+  // Let the first reactive frame settle and any post-commit subscribe run.
+  await new Promise((resolve) => setTimeout(resolve, 50))
+
+  consoleErrorSpy.mockRestore()
+
+  const fatalBootErrors = errors.filter((e) =>
+    /missing async stack|ReatomError/.test(e),
+  )
+  expect(fatalBootErrors, fatalBootErrors.join('\n')).toEqual([])
+})
+```
+
+Add to `package.json` scripts and to `validate`:
+
+```jsonc
+{
+  "scripts": {
+    "test": "vitest run",
+    "validate": "npm run typecheck && npm run lint && npm run format:check && npm run intel && npm run test"
+  }
+}
+```
+
+### Playwright standalone
+
+If you prefer Playwright directly, the equivalent smoke test runs the dev server and asserts no console error matches the pattern:
+
+```ts
+// e2e/boot.smoke.spec.ts
+import { expect, test } from '@playwright/test'
+
+test('app boots without missing-async-stack errors', async ({ page }) => {
+  const errors: string[] = []
+  page.on('console', (msg) => {
+    if (msg.type() === 'error') errors.push(msg.text())
+  })
+  await page.goto('/')
+  await page.waitForLoadState('networkidle')
+
+  const fatalBootErrors = errors.filter((e) =>
+    /missing async stack|ReatomError/.test(e),
+  )
+  expect(fatalBootErrors, fatalBootErrors.join('\n')).toEqual([])
+})
+```
+
+This catches the canonical class of strict-context regressions in one assertion: any handler (or module-level live observer) authored without a wrapping frame will surface during the initial render and fail the test. Expand coverage from there as features land.
+
 ## Reading list for the next steps
 
 **Must-read before writing the first feature** (in order):
