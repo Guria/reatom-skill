@@ -30,6 +30,11 @@ Adjust freely if the user requested:
 mkdir my-app && cd my-app
 npm init -y
 
+# Initialize a git repo if the parent isn't already one. Greenfield bootstraps
+# almost always need this — without it, lefthook can't install hooks and the
+# baseline commit (recommended after Step 11) has nowhere to land.
+git rev-parse --is-inside-work-tree >/dev/null 2>&1 || git init -b main
+
 # Verify versions BEFORE installing
 npm view typescript dist-tags
 npm view vite dist-tags
@@ -38,6 +43,8 @@ npm view oxlint dist-tags
 npm view oxfmt dist-tags
 npm view fallow dist-tags
 ```
+
+If the agent is bootstrapping inside an existing monorepo, the `git rev-parse` check is satisfied by the outer repo and no `git init` happens. If it's a brand-new directory, the check fails and a fresh repo is initialized on `main`. Either way, run a baseline commit after Step 11 so the bootstrap state is captured before feature work begins.
 
 ## Step 2 — Install the validate pipeline FIRST
 
@@ -206,7 +213,7 @@ Confirm exact keys with `npx fallow --help` before committing — fallow ships f
     "intel": "fallow analyze",
     "typecheck": "tsc -b --noEmit",
 
-    "validate": "npm run typecheck && npm run lint && npm run format:check && npm run intel"
+    "validate": "npm run typecheck && npm run lint && npm run format:check && npm run intel && echo '\u23f5  validate green. If this run is part of a bootstrap, end your turn with the pitfall summary described in references/setup/start-from-scratch.md → \"After bootstrap\".'"
   }
 }
 ```
@@ -347,7 +354,7 @@ Add to `package.json` scripts and to `validate`:
 {
   "scripts": {
     "test": "vitest run",
-    "validate": "npm run typecheck && npm run lint && npm run format:check && npm run intel && npm run test"
+    "validate": "npm run typecheck && npm run lint && npm run format:check && npm run intel && npm run test && echo '\u23f5  validate green. If this run is part of a bootstrap, end your turn with the pitfall summary described in references/setup/start-from-scratch.md → \"After bootstrap\".'"
   }
 }
 ```
