@@ -114,14 +114,20 @@ submit.retry()  // retry last submission
 
 ## Form gotchas
 
-- `validation().errors` is `FieldSetFieldError[]` — each has `.field` and `.message`
+- `validation()` returns `{ error, errors, ... }`. **`error` is the aggregated single-string message** (`string | undefined`) suitable for direct binding to one-line UI inputs; **`errors` is the structured list** (`FieldSetFieldError[]`, each with `.field` and `.message`) for full reporting. Use `error` for single-line input components; use `errors` when you need to render or filter the full list. Don't synthesize the string yourself when `error` already exists.
 - `submit.error` is an **ATOM** — call it: `submit.error()` not `submit.error`
-- `fields.name.value()` — get the current value
-- `fields.name.set(value)` — set the value
-- `bindField` does NOT work with `<select>` — handle `value`/`onChange` manually
+- **`fields.name.value()` is the user-facing value**; `fields.name.set(value)` and `fields.name.change(value)` write it. The bare `field()` returns the underlying state, which may differ from `value` when `fromState`/`toState` transformers are used. Default to `value` and `change` in UI code.
+- `bindField` does NOT work with controls whose `onChange` receives a raw value instead of a DOM event (most third-party `<Select>` and `<Combobox>` components). Wire `value`/`onChange`/`onBlur`/`onFocus` manually using `field.change(v)` / `field.focus.in()` / `field.focus.out()`. After `clearStack()` those manual handlers must be `wrap()`-ed; `bindField`'s returned handlers are pre-wrapped.
 - `form()` is the field set atom (returns values), not `form.getValues()`
 - `form.reset()` resets to initial values, not to empty state
 - `form.init({ ... })` updates initial values (affects reset)
 - **Forms in loaders, not models** — never define `reatomForm` at module scope. Create forms inside route loaders for automatic lifecycle management.
+- **`form.submit()` returns whatever your `onSubmit` callback returns.** This is the canonical replacement for `action.subscribe(cb)` (which is forbidden at module scope under `clearStack()`). Chain post-submit side-effects inline:
+  ```typescript
+  onClick={wrap(async () => {
+    const saved = await wrap(form.submit())
+    if (saved) detailRoute.go({ id: saved.id })
+  })}
+  ```
 - **Don't use `ifChanged` on atoms** — `ifChanged` is not available on atoms. Read atom values directly in loaders or use `computed` for derived state.
 - **Validation error `.field` is the atom reference, not a name string** — compare by reference: `e.field === form.fields.email`

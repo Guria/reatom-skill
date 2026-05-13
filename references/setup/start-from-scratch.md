@@ -270,6 +270,8 @@ createRoot(document.getElementById('root')!).render(
 
 See `SKILL.md` → "App Setup — optional clearStack and context.start" for when to use this strict setup vs the default global context.
 
+**Cost of the strict setup**: with `clearStack()` in place, every UI event handler that touches an atom (action call, atom write, route navigation) must be wrapped with `wrap()` — they fire as separate microtasks outside any active frame. Adapter helpers that produce handlers for you (form binders, link generators) wrap internally; manual handlers do not. If you find yourself wrapping every single `onClick` and would prefer to keep handlers terse, drop `clearStack()` and use the default global context: you trade strictness (and the early failure mode for missing `wrap()` boundaries) for ergonomics. Keep the strict setup for greenfield apps where the discipline pays off; consider the lenient setup for prototypes or for apps with a heavy event-handler surface.
+
 ## Step 11 — First `validate` run
 
 ```bash

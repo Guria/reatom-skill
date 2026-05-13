@@ -13,6 +13,8 @@ Route loaders are async computeds with `withAsyncData` built-in. They run when r
 
 Loader API (same as `withAsyncData`): **route.loader.data()**, **.ready()**, **.error()**, **.retry()**, **.status()**.
 
+**The loader takes ONE argument**: `loader: async (paramsAndSearch) => ...`. Reatom merges the route's `params` schema and `search` schema into a single `Plain<Params & Search>` object — do not write `(params, search) => ...`. The second argument is silently `undefined` and the type system reports the loader as taking too few arguments. For routes with both schemas, destructure the keys you need from the merged object.
+
 Prefer handling loader state in the route `render(self)` instead of inside the page component. `status()` is a discriminated union; checking its flags in `render` lets TypeScript narrow `status.data` before you pass it to typed UI components. It also gives better UX than a single `.ready()` check:
 
 - `isFirstPending` - first load only; use for page skeletons/full loading states.

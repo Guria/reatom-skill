@@ -68,7 +68,12 @@ usersRoute.exact() // false (child is active)
 [`layout` option in `route.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/routing/route.ts#L237) · [Type docs in `route.types.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/routing/route.types.ts#L222)
 
 
-Routes define `render` for framework-agnostic component composition. `render(self)` receives the route: `self()` for params (non-null inside render), `self.loader` for loader data.
+Routes define `render` for framework-agnostic component composition. `render(self)` receives the route: `self()` for params (non-null inside render), `self.loader` for loader data, `self.outlet()` for matched child output.
+
+**Important shape rules:**
+- `render` is a route **option**, not a settable property. Pass it inside `reatomRoute({ render: (self) => ... })`. After construction, `route.render` is a `Computed<RouteChild | null>` that returns the rendered output — it is not a function slot you can assign to. If you need to keep components in different files, co-locate the route definition with its render or thread the component through a closure passed to a route factory.
+- `self.outlet()` returns `RouteChild[]` (an array, possibly empty), not a single child. Render via `<>{self.outlet()}</>`, `self.outlet().map(...)`, or your framework's spread equivalent.
+- `RouteChild` is an empty interface intended for declaration merging; declare it once per app to your framework's element type. See the corresponding integration reference for the exact pattern.
 
 Two kinds of routes in **v1001+**:
 - **Layout routes** (`layout: true`) - render on any match, use `self.outlet()` to wrap child content. Use for shells, sidebars, protection layers.

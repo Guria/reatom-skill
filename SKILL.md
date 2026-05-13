@@ -370,7 +370,11 @@ clearStack()  // any atom operation outside context.start() now throws "missing 
 export const rootFrame = context.start()
 ```
 
-**Rules after `clearStack()`:** module scope must stay declarative. Creating atoms, computeds, routes, and registering extensions is fine; reading/writing atoms or creating live subscriptions during module evaluation is not. A top-level `effect()` subscribes immediately and will hit `missing async stack`. For app-lifetime reactions, attach to the source (`urlAtom.extend(withChangeHook(...))`) or use route `params()` guards. A `start*Effects()` helper whose only job is to wrap module effects in `rootFrame.run()` hides the lifecycle boundary instead of modeling it.
+**Rules after `clearStack()`:** module scope must stay declarative. Creating atoms, computeds, routes, and registering extensions is fine; reading/writing atoms or creating live subscriptions during module evaluation is not. A top-level `effect()` subscribes immediately and will hit `missing async stack`; the same applies to module-level `someAction.subscribe(cb)` or `someAtom.subscribe(cb)` — these install a live subscription at evaluation time. For app-lifetime reactions, attach to the source (`urlAtom.extend(withChangeHook(...))`) or use route `params()` guards. A `start*Effects()` helper whose only job is to wrap module effects in `rootFrame.run()` hides the lifecycle boundary instead of modeling it.
+
+**Event handlers that touch atoms also need a frame.** Every UI callback that calls an action, sets an atom, or reads one across an async boundary runs as a separate microtask outside the original render frame. After `clearStack()` such handlers throw `missing async stack` unless wrapped: `onClick={wrap(() => count.set(c => c + 1))}`, `onChange={wrap(e => field.change(e.currentTarget.value))}`, `addEventListener('click', wrap(...))`. Framework adapter helpers that produce these handlers for you (form binders, router link generators) typically wrap internally; manual handlers do not. Same rule applies to `setTimeout`, `requestAnimationFrame`, and any third-party callback that crosses into Reatom land.
+
+If you need a one-shot side-effect after a successful action (navigate after create, toast after save, focus after open), prefer one of: (a) chain it inline in the call site with `await wrap(action(...))` then act on the returned value, (b) put it in the action body itself, or (c) attach `withCallHook(action, ...)` at declaration time. All three keep the side-effect inside an active frame and avoid the module-level subscribe trap.
 
 **Don't add `clearStack()` casually** in an existing project that doesn't use it — it changes context assumptions. **Don't remove it** from a project that does — fix the missing `wrap()` instead.
 
@@ -410,6 +414,7 @@ These are the most common mistakes. Read before writing any Reatom code.
 - `status.isPending` is a property, not a function — `status.isPending` not `status.isLoading()`
 - `.data()`, `.ready()`, `.error()` are atom getters — **call them!** `atom.data()` ✅ not `atom().data()` ❌
 - Do NOT destructure: `const { data, ready } = list` breaks reactivity
+- **`withAsyncData` has overloaded signatures — do not pass an explicit generic type parameter when you also want `initState`.** Writing `withAsyncData<MyType>({ initState: x })` selects the no-`initState` overload and TypeScript reports `'initState' does not exist in type 'AsyncOptions<...>'`. Either drop the explicit generic and let TS infer from `initState` (`withAsyncData({ initState: null as MyType | null, status: true })`), or annotate the value (`initState: [] as Item[]`). Same trap exists for any extension with multiple overloads where one branch adds option keys.
 - Reference atoms directly in action closures — do NOT pass atoms as action parameters:
   ```typescript
   // ❌ Don't pass atoms as action params
@@ -443,6 +448,10 @@ Reatom's reactive context tracks and disposes effects, aborts, and subscriptions
 
 Detailed loader/render patterns are in [`references/features/routing/loaders.md`](references/features/routing/loaders.md). Quick rules:
 
+- **`render` is a route OPTION, not assignable post-hoc.** It must be passed in `reatomRoute({ render: (self) => ... })`. After construction `route.render` is a `Computed<RouteChild | null>` (the rendered output), not a setter. If you need component definitions in a separate file from route definitions, either co-locate them or accept that one circular reference is unavoidable; do not try `route.render = fn`.
+- **`RouteChild` is an empty interface waiting for a framework declaration merge.** Without `declare module '@reatom/core' { interface RouteChild extends FrameworkElement {} }` (where `FrameworkElement` is the renderable type for your view layer), `self.outlet()` and `route.render()` return values that the type system can't compose with framework JSX. Do this declaration once in a `*.d.ts` next to your app entry.
+- **Loader takes ONE merged argument**: `loader: async (paramsAndSearch) => ...`. Reatom merges the `params` schema and `search` schema into a single `Plain<Params & Search>` payload — do not write `(params, search) => ...`, the second argument is silently `undefined` and TypeScript will complain about the wrong arity.
+- **`outlet()` returns an array of `RouteChild`.** Render it via `<>{self.outlet()}</>` (spread / map), not as a single node.
 - **Use `retryComputed(self.loader)` for error retry buttons**: `onRetry={wrap(() => retryComputed(self.loader))}`.
 - `reatomRoute()` with no arguments throws — use `reatomRoute('')` for root.
 - Paths must NOT start with `/` — Reatom auto-prepends it.
@@ -465,10 +474,13 @@ Detailed loader/render patterns are in [`references/features/routing/loaders.md`
 ### Forms
 
 - `submit.error` is an **ATOM** — call it: `submit.error()` not `submit.error`
-- `bindField` does NOT work with `<select>` — handle `value`/`onChange` manually
+- `bindField` does NOT work with `<select>` (or any control whose `onChange` receives a raw value instead of a DOM event) — wire `value`/`onChange`/`onBlur`/`onFocus` manually using `field.change(value)` / `field.focus.in()` / `field.focus.out()`. After `clearStack()` those manual handlers must be `wrap()`-ed; `bindField`'s returned handlers are pre-wrapped for you.
 - `form()` returns field values — not `form.getValues()`
 - **Forms in loaders, not models** — never define `reatomForm` at module scope
 - `ifChanged` is not available on atoms — use `computed` / `withComputed` for derived state
+- **`field.validation()` returns `{ error, errors, ... }`**: the aggregated single-string message is `error` (singular, `string | undefined`), suitable for direct binding to UI input components. The full structured list is `errors`. Don't write `field.validation().errors[0].message` when the input only shows one line; use `error`.
+- **`field.value()` is the user-facing value**, not `field()`. The bare atom call returns the underlying State; transformers (`fromState` / `toState`) make `value` differ from `state`. When in doubt, prefer `field.value()` for reads and `field.change(v)` for writes.
+- **Form `onSubmit`'s return value flows through `form.submit()`.** Use this for chaining a one-shot side-effect after a successful submit (navigate, toast, focus): `const saved = await wrap(form.submit()); if (saved) detailRoute.go({ id: saved.id })`. This avoids the module-level `action.subscribe(cb)` trap (forbidden under `clearStack()`) for one of the most common cases.
 
 ### React
 

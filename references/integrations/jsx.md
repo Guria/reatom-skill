@@ -8,6 +8,8 @@
 
 [Runtime entry: `index.ts`](https://github.com/reatom/reatom/blob/v1001/packages/jsx/src/index.ts) · [JSX types: `jsx.d.ts`](https://github.com/reatom/reatom/blob/v1001/packages/jsx/src/jsx.d.ts)
 
+If you also use Reatom routing, declare `RouteChild` once so `route.render()` and `self.outlet()` compose with the JSX runtime's element type. Add a `*.d.ts` next to the app entry pointing at the renderable element type (`JSX.Element` for `@reatom/jsx`, `VNode`, `TemplateResult`, etc. for other adapters).
+
 
 **Vite (`vite.config.js`)**:
 ```js

@@ -102,6 +102,37 @@ Both are valid. `reatomComponent` is more concise when reading many atoms; `useA
 
 ## React-specific rules
 
+### Declare `RouteChild` for the framework once
+
+When using routing with React (or any other framework), the `RouteChild` interface from `@reatom/core` is empty by design — it is a declaration-merge slot for the host framework. Without declaring it, `route.render()` and `self.outlet()` return values the type system can't compose with framework JSX, and props typed as `RouteChild | RouteChild[]` won't accept your elements.
+
+Add a single `*.d.ts` file (next to the app entry) once per project:
+
+```typescript
+import type { ReactElement } from 'react'
+
+declare module '@reatom/core' {
+  interface RouteChild extends ReactElement {}
+}
+
+export {}
+```
+
+For other framework adapters substitute the renderable element type (`VNode`, `TemplateResult`, etc.).
+
+### Wrap event handlers that touch atoms
+
+React event handlers fire as separate microtasks outside whatever frame rendered the component. After `clearStack()` any handler that calls an atom setter, action, or `route.go()` throws `missing async stack` unless wrapped:
+
+```tsx
+// ❌ onClick={() => count.set(c => c + 1)}
+// ✅ onClick={wrap(() => count.set(c => c + 1))}
+// ❌ onChange={(e) => field.change(e.currentTarget.value)}
+// ✅ onChange={wrap((e) => field.change(e.currentTarget.value))}
+```
+
+`bindField`'s returned handlers are pre-wrapped — you only need `wrap()` for handlers you write by hand (Mantine `<Select>`-style controls that hand you a raw value, custom buttons, link-style anchors that perform navigation, etc.). The same rule applies to `setTimeout`/`requestAnimationFrame`/third-party callbacks: any time a Reatom-aware function leaves the current synchronous frame and returns later, wrap the boundary.
+
 ### React is only the view adapter
 
 In a Reatom app, React should render and bind atoms; it should not own model invariants. Treat React-owned state/effects as a **red flag** whenever they hold domain state, mirror atom values, trigger Reatom side effects, coordinate navigation/data loading, or decide app lifecycle. Those responsibilities belong in atoms, actions, computeds, route loaders, and Reatom lifecycle extensions.
