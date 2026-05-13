@@ -8,6 +8,7 @@
 - [Protected routes - auth guard](#protected-routes--auth-guard)
 - [Dynamic route collisions with literal siblings](#dynamic-route-collisions-with-literal-siblings)
 - [Route loaders - data fetching](#route-loaders--data-fetching)
+  - [Identity-changing routes and clean scoped state](#identity-changing-routes-and-clean-scoped-state)
 - [Route loaders - factory pattern (forms + actions)](#route-loaders--factory-pattern-forms--actions)
 - [Modal gate - state in memory, no URL](#modal-gate--state-in-memory-no-url)
 - [Search-only routes](#search-only-routes)
@@ -309,7 +310,79 @@ const UserPage = reatomComponent(({
 })
 ```
 
-For list/search routes, avoid replacing the whole page on every search-param change. With a concrete loader model, `isPending` after `isEverSettled` means "refreshing" — keep previous data rendered with a subtle pending indicator.
+For list/search routes, avoid replacing the whole page on every search-param change. With a concrete loader model, `isPending` after `isEverSettled` means "refreshing" — keep previous data rendered with a subtle pending indicator. For routes where params identify a different entity, use the clean-scope pattern below instead of preserving the previous entity model.
+
+### Identity-changing routes and clean scoped state
+
+`status.data` deliberately keeps the last fulfilled loader payload while a new loader run is pending. That is helpful for list/search refreshes because it preserves focus and stale results, but it can briefly show the previous entity on detail/edit pages while a new `:id` loads.
+
+When a route param represents a new identity and the UI should start clean immediately, have the loader return a fresh scoped model before awaiting remote data. The model owns the data request and starts from `null` or another empty state; the page renders the model's loading/error state rather than the route loader's stale payload.
+
+```typescript
+const reatomItemDetailModel = (itemId: string, name = `itemDetail#${itemId}`) => {
+  const item = atom<Item | null>(null, `${name}.item`)
+
+  const load = action(async () => {
+    const next = await wrap(api.getItem(itemId))
+    item.set(next)
+    return next
+  }, `${name}.load`).extend(
+    withAsync({ status: true, cacheParams: true }),
+    withAbort(),
+  )
+
+  const save = action(async () => {
+    const current = item()
+    if (!current) throw new Error('Item is still loading')
+    const saved = await wrap(api.saveItem(current))
+    item.set(saved)
+    return saved
+  }, `${name}.save`).extend(withAsync({ status: true }))
+
+  return { itemId, item, load, save }
+}
+
+type ItemDetailModel = ReturnType<typeof reatomItemDetailModel>
+
+const itemDetailRoute = itemsRoute.reatomRoute({
+  path: ':itemId',
+  params: z.object({ itemId: z.string().regex(/^item_/) }),
+  async loader({ itemId }) {
+    const model = reatomItemDetailModel(itemId)
+
+    // Start the scoped request in the route scope, but do not await it. The
+    // loader resolves to a fresh model immediately; the model owns data loading.
+    void model.load().catch(() => undefined)
+
+    return model
+  },
+  render(self) {
+    const status = self.loader.status()
+    if (status.isFirstPending) return <PageSkeleton />
+    if (status.isFulfilled) return <ItemDetailPage model={status.data} />
+    if (status.isRejected) return <PageError error={self.loader.error() ?? new Error('Failed to create page model')} />
+    return <PageSkeleton />
+  },
+})
+
+const ItemDetailPage = reatomComponent(({ model }: { model: ItemDetailModel }) => {
+  const item = model.item()
+  const loadStatus = model.load.status()
+  const loadError = model.load.error()
+
+  if (!item) {
+    return loadError ? (
+      <InlineError error={loadError} onRetry={wrap(() => model.load.retry())} />
+    ) : (
+      <InlineLoader pending={loadStatus.isPending} />
+    )
+  }
+
+  return <ItemEditor item={item} save={model.save} />
+})
+```
+
+Use this pattern for details, edit sessions, selected-row panels, and any page where showing the previous identity would be misleading. Use the ordinary loader-data pattern for list/search pages where stale-while-refresh is the desired UX.
 
 ## Route loaders - factory pattern (forms + actions)
 

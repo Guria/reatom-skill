@@ -132,6 +132,8 @@ Guidelines:
 
 Route loaders should be the source of route-specific forms/actions/data, while the route `render(self)` should own loader status branching. Page components should receive a typed, concrete model/data prop, not a `loader` prop. This keeps routing and async lifecycle concerns at the route boundary and avoids `any` creeping into form/model props. With concrete loader return types (no `undefined` branches), TypeScript narrows `status.data` to the full type in the refresh branch — no extra guards needed.
 
+That refresh branch is for the same page identity: list filters, search params, or other refreshes where stale content is useful. If route params describe a different entity, create a fresh scoped model for the new params before awaiting remote data. The model can start from empty/null atoms and own its load status, avoiding the confusing moment where route-loader `status.data` still contains the previous identity.
+
 ```tsx
 // ❌ Bad — imports route-specific form/actions from model files or passes loader
 import { userForm, saveUserAction } from '../usersModel'
@@ -185,7 +187,7 @@ const UserFormPage = reatomComponent(({
 })
 ```
 
-Keep model files for shared app-wide state. If a form/action exists only for a route instance, create it in that route loader and expose its type with `ReturnType` from a `reatom*` factory or from the loader model shape.
+Keep model files for shared app-wide state. If a form/action exists only for a route instance, create it in that route loader and expose its type with `ReturnType` from a `reatom*` factory or from the loader model shape. For identity-keyed pages, the scoped model can include `entityAtom = atom<Entity | null>(null)`, a `load` action with `withAsync({ status: true, cacheParams: true })` plus `withAbort()` (or a computed resource with `withAsyncData()`), and domain actions that guard against `null` until the entity loads. This gives each identity clean atoms before the data request resolves.
 
 ## Computed factory / scoped model pattern
 
