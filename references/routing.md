@@ -665,16 +665,17 @@ Key details:
 
 ## Full SPA example
 
-Setup logging system:
+App entry (must be imported before route/model files):
 
 ```ts
 // setup.ts - import this file before others in the repo root!
-import { connectLogger, log } from '@reatom/core'
-if (import.meta.env.MODE === 'development') connectLogger()
-declare global {
-  var LOG: typeof log
-}
-globalThis.LOG = log
+import { clearStack, context } from '@reatom/core'
+
+clearStack()                    // destroy default global frame
+export const rootFrame = context.start()  // create isolated app frame
+
+// Optional: dev logging
+// if (import.meta.env.MODE === 'development') rootFrame.run(connectLogger)
 ```
 
 Routes:

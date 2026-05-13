@@ -85,6 +85,43 @@ Both patterns eliminate identity actions. Choose based on whether you want granu
 - Duplicate structure depth in names: `users.paging.current`
 - Name reusable factories that create atom primitives/scoped models with the `reatom*` convention: `reatomUser(userDto, 'users' + userDto.id)`, `reatomSessionForm(...)`, `reatomFeatureFlag(...)`. Prefer this over generic `create*` / `make*` names so custom factories look like Reatom primitives.
 
+## Model factory pattern
+
+When a feature grows from one atom into a small state machine or cohesive model, extract it into a `reatom*` factory that creates and returns the atoms, computeds, actions, and lifecycle hooks for one instance. This is the scalable form of the module-level atom pattern: the module may still export a singleton for global state, but the implementation is reusable, testable, and namespaced.
+
+```typescript
+import { action, atom, computed, reatomBoolean, withChangeHook } from '@reatom/core'
+
+const reatomProcess = (initialValue = 0, name = 'process') => {
+  const value = atom(initialValue, `${name}.value`)
+  const enabled = reatomBoolean(false, `${name}.enabled`).extend(
+    withChangeHook((isEnabled) => {
+      if (isEnabled) {
+        // start resource or background work
+      } else {
+        // stop/cleanup resource or background work
+      }
+    }),
+  )
+  const label = computed(() => String(value()), `${name}.label`)
+  const reset = action(() => value.set(initialValue), `${name}.reset`)
+
+  return { value, enabled, label, reset }
+}
+
+export type ProcessModel = ReturnType<typeof reatomProcess>
+export const process = reatomProcess()
+```
+
+Guidelines:
+
+- Accept a `name` parameter and build all internal names from it, especially for repeated instances.
+- Keep private implementation details inside the closure; expose a deliberate model API object.
+- Put shared derived values in `computed`s instead of duplicating formatting or projection logic in views.
+- Prefer exposing atom primitives directly when their setters are the real API; avoid actions that only forward to `.set()`.
+- Use semantic actions when they validate input, coordinate multiple atoms, or represent domain operations.
+- Export `ReturnType<typeof reatomX>` for component props and loader/model boundaries if needed.
+
 ## Component pattern — route render narrows, components receive models
 
 Route loaders should be the source of route-specific forms/actions/data, while the route `render(self)` should own loader status branching. Page components should receive a typed, concrete model/data prop, not a `loader` prop. This keeps routing and async lifecycle concerns at the route boundary and avoids `any` creeping into form/model props. With concrete loader return types (no `undefined` branches), TypeScript narrows `status.data` to the full type in the refresh branch — no extra guards needed.

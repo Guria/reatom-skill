@@ -127,6 +127,9 @@ isModalOpen.setTrue()
 isModalOpen.setFalse()
 isModalOpen.toggle()
 
+// Boolean primitives are good public controls for simple on/off state.
+// Prefer these helpers over custom actions that only forward to `.set(true/false)`.
+
 const priority = reatomEnum(['low', 'medium', 'high'], 'priority')
 priority.setHigh()
 priority()  // 'high'
@@ -247,6 +250,54 @@ See [references/patterns.md](references/patterns.md) for atomization, standalone
 
 When authoring reusable factories that create Reatom atom primitives or scoped models, follow the library convention: name the factory `reatom*` (for example `reatomUser`, `reatomSessionForm`, `reatomFeatureFlag`) rather than `create*` / `make*`. This keeps custom primitives visually aligned with built-ins like `reatomBoolean`, `reatomForm`, and `reatomRoute`.
 
+### Scoped model factories
+
+When a feature has several atoms, computed values, actions, lifecycle hooks, or private implementation details that belong together, prefer a `reatom*` factory returning a model object over exporting many unrelated module-level primitives. A factory gives each instance its own atom graph, keeps implementation state private, and makes the public API explicit.
+
+```typescript
+import { action, atom, computed } from '@reatom/core'
+
+const reatomCounter = (initial = 0, name = 'counter') => {
+  const count = atom(initial, `${name}.count`)
+  const doubled = computed(() => count() * 2, `${name}.doubled`)
+  const reset = action(() => count.set(initial), `${name}.reset`)
+
+  return { count, doubled, reset }
+}
+
+export type CounterModel = ReturnType<typeof reatomCounter>
+export const counter = reatomCounter()
+```
+
+Use the `name` parameter to namespace internal atom/action names, keep derived display values as `computed`s in the model when multiple views need them, and expose only the atoms/actions/computeds callers should depend on. Exporting a singleton from the factory is fine for app-wide state; route loaders, selected-item sessions, dialogs, and repeated widgets can create their own instances.
+
+### Boolean state as a lifecycle switch
+
+When a boolean state controls a lifecycle resource or background process, model the boolean as the source of truth with `reatomBoolean` and attach lifecycle behavior with `withChangeHook`. Expose the boolean atom itself so callers can use `.setTrue()`, `.setFalse()`, or `.toggle()`; only add semantic actions when they enforce extra domain rules or perform non-trivial work.
+
+```typescript
+import { action, reatomBoolean, sleep, withAbort, withChangeHook, wrap } from '@reatom/core'
+
+const enabled = reatomBoolean(false, 'feature.enabled').extend(
+  withChangeHook((isEnabled) => {
+    if (isEnabled) {
+      run()
+    } else {
+      run.abort()
+    }
+  }),
+)
+
+const run = action(async () => {
+  while (enabled()) {
+    await wrap(sleep(1000))
+    // do lifecycle work here
+  }
+}, 'feature.run').extend(withAbort())
+```
+
+This keeps state transitions declarative: setting the flag starts or stops the lifecycle, and cleanup stays next to startup. Remember that change hooks run after atom updates, so make cleanup idempotent and avoid relying on a temporary value of non-atom mutable state that an action mutates again before hooks run.
+
 ## Retrying Computeds & Resetting Dependencies
 
 `retryComputed` and `reset` from `@reatom/core` handle re-evaluation and invalidation of computed atoms:
@@ -347,10 +398,33 @@ await wrap(fetch(url)).then(res => res.json())  // chain after wrap
 fetch(url).then(res => doSomethingWithAtoms())  // missing wrap around atom work
 ```
 
+## App Setup — clearStack and context.start
+
+Reatom initializes a global reactive context when `@reatom/core` is imported. In production apps, call `clearStack()` then `context.start()` at the earliest import (before any atoms are read or routes are matched) to destroy the default global frame and create a fresh isolated one:
+
+```typescript
+// setup.ts — import this file before others!
+import { clearStack, context } from '@reatom/core'
+
+// Destroys the default global STACK.
+// After this, any atom operation outside a proper context.start() frame
+// will throw "missing async stack" — this enforces correct wrap() usage.
+clearStack()
+
+export const rootFrame = context.start()
+```
+
+**Do not remove `clearStack()` from app setup.** It ensures no leaked state from module initialization bleeds into the app context and enforces strict `wrap()` discipline. Without it, atom operations that happen during module evaluation (top-level `computed`, route definitions, etc.) run in the default global frame instead of your controlled one.
+
+In React apps, pass the root frame to `<reatomContext.Provider value={rootFrame}>` so all `reatomComponent` instances share the same isolated context.
+
 ## Testing
 
 ```typescript
-import { context, mock } from '@reatom/core'
+import { context, mock, clearStack } from '@reatom/core'
+
+// Strict isolation: clearStack() + context.start() per test
+clearStack()
 
 beforeEach(() => context.reset())
 
@@ -364,6 +438,8 @@ const unsub = mock(targetAtom, () => 'mocked-value')
 // ... test code ...
 unsub()  // restore original
 ```
+
+`context.reset()` is the simpler option — it resets state within the existing context. `clearStack()` + `context.start()` is stricter — it forces all atom operations to run inside an explicit frame, catching missing `wrap()` calls via "missing async stack" errors. Most test files use `clearStack()` at module level to enforce this.
 
 ## Gotchas
 
@@ -444,7 +520,7 @@ However, `withConnectHook` *does* support returning a cleanup function for third
 - Components that call atom getters must be `reatomComponent` — including child components. If using `useAtom` instead, the component does not need `reatomComponent` since `useAtom` manages its own subscription via `useSyncExternalStore`.
 - **Initial React render + instant async completion gotcha**: `reatomComponent` subscribes after React commits; an async computed/`withAsyncData` that resolves immediately (for example a cached/no-token branch returning `null`) can settle before the subscription is mounted. Do not gate first-render app boot/auth purely on `.ready()` from an instantly resolving async atom inside a React component. Prefer a synchronous source of truth for initial branching (persisted token atom, URL state, route params, explicit init atom), and use async `.data()`/`.ready()` for work with a real async boundary or after the relevant component is already mounted.
 - **Passing atoms as props is perfectly valid** — unlike Redux where passing state is discouraged, Reatom atoms are first-class primitives. Passing them as props (e.g. `<CheckboxField field={form.fields.rememberMe} />`) is the standard way to build abstract, reusable components.
-- **React StrictMode is version-sensitive** — in v1000 it can cause `AbortError: Component unmount`; disable StrictMode or use `clearStack()`. In v1001, `reatomComponent` defaults `abortOnUnmount: false`, which avoids the old abort-on-unmount behavior; set `{ abortOnUnmount: true }` only when you intentionally need v1000-style cancellation on unmount.
+- **React StrictMode is version-sensitive** — in v1000 it can cause `AbortError: Component unmount`; disable StrictMode or ensure proper app setup with `clearStack()` + `context.start()`. In v1001, `reatomComponent` defaults `abortOnUnmount: false`, which avoids the old abort-on-unmount behavior; set `{ abortOnUnmount: true }` only when you intentionally need v1000-style cancellation on unmount.
 
 ### TypeScript
 
@@ -481,7 +557,7 @@ Reatom provides a `shadcn`-like code delivery system via `jsrepo` at [github.com
 ## Anti-patterns
 
 - **Manual data fetching** — use `computed` + `withAsyncData` instead of `effect` + `action`
-- **Identity actions** — don't create actions that just forward to `atom.set()`
+- **Identity actions** — don't create actions that just forward to `atom.set()`. Expose the atom, or use primitives like `reatomBoolean` so callers can use `.setTrue()`, `.setFalse()`, and `.toggle()`. Keep actions for semantic operations that validate, coordinate multiple atoms, or perform effects.
 - **Route component checks** — don't do `if (!route.match()) return null`. Use `render` option
 - **Passing route loaders into page components** — route render should read `self.loader.status()`, choose loading/error/fulfilled UI, and pass typed data/model props to components. Passing a loader prop spreads routing/async concerns into view components and often leads to `any`.
 - **Nullable loader payloads for redirects** — don't return `null` from a loader just to redirect or block a page. Put that decision in route `params()` / parent guard routes so loader data stays concrete and TypeScript can narrow `status.data` cleanly.
@@ -491,7 +567,7 @@ Reatom provides a `shadcn`-like code delivery system via `jsrepo` at [github.com
 - **Single route for create/edit** — use separate routes with separate loaders
 - **Broad dynamic routes next to literal routes** — `:id` with `z.string()` beside `new`, `create`, `settings`, etc. lets literal pages also match the detail route. Use domain-shaped IDs (UUID, numeric, prefixed IDs, slugs with reserved-word exclusion) as a Standard Schema on the dynamic route.
 - **Actions in model files** — create route-specific actions inside route loaders
-- **Syncing atoms with change hooks** — use `computed` / `withComputed` instead
+- **Syncing atoms with change hooks** — use `computed` / `withComputed` for derived state. `withChangeHook` is appropriate for lifecycle/effect boundaries, not copying one atom's value into another.
 - **Avoiding atom props** — thinking that passing atoms to children components is an anti-pattern. It is the recommended way to decouple models from views!
 - **Misnaming atom factories** — custom factories that create atom primitives/scoped models should use the `reatom*` convention, not generic `create*` / `make*` names.
 - **React-owned app state** — using `useState`/`useReducer`/context to own domain state, duplicate atom values, drive routing/data loading, or coordinate effects. In Reatom apps this mixes two reactive systems and is a strong architecture smell; keep app logic in Reatom and leave React built-in hooks for isolated UI/DOM integration or view-only memoization/callbacks.
