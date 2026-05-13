@@ -1,6 +1,6 @@
 ---
 name: reatom
-description: Expert guide for Reatom v1000+ state management. Use for any task involving @reatom/* packages — reactive state, atoms, actions, computeds, effects, forms, routing, async data, persistence, framework adapters (@reatom/react, @reatom/vue, @reatom/solid-js, @reatom/preact, @reatom/lit, @reatom/jsx), testing, or migrating from v3. Triggers on files importing from @reatom/*, reactive/atom patterns, or any Reatom question.
+description: Expert guide for Reatom v1000+ state management. Use for any task involving @reatom/* packages — reactive state, atoms, actions, computeds, effects, forms, routing, async data, persistence, framework adapters (@reatom/react, @reatom/vue, @reatom/solid-js, @reatom/preact, @reatom/lit, @reatom/jsx), testing, or migrating from v3. Triggers on files importing from @reatom/*, reactive/atom patterns, any Reatom question, or any error mentioning ReatomError, missing async stack, or Reatom runtime exceptions.
 ---
 
 # Reatom v1000+
