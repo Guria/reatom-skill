@@ -1,0 +1,12 @@
+{
+  "name": "reatom-eval-v3-codebase",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Pre-migration v3 fixture used by reatom-skill eval #7 — agent should rewrite to v1000+.",
+  "dependencies": {
+    "@reatom/async": "^3.13.0",
+    "@reatom/core": "^3.10.0",
+    "@reatom/hooks": "^3.10.0",
+    "@reatom/persist-web-storage": "^3.5.0"
+  }
+}

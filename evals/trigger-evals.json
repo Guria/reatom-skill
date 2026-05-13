@@ -1,0 +1,102 @@
+[
+  {
+    "query": "How do I make this useEffect not fire twice in StrictMode? import { useEffect, useState } from 'react'",
+    "should_trigger": false,
+    "rationale": "Plain React StrictMode question with no Reatom signals."
+  },
+  {
+    "query": "How do I make this useEffect not fire twice? It's coordinating my @reatom/react components.",
+    "should_trigger": true,
+    "rationale": "Mentions @reatom/react adapter — the React-owned-state guidance applies."
+  },
+  {
+    "query": "Migrate from @reatom/hooks to the new core API",
+    "should_trigger": true,
+    "rationale": "Direct v3 → v1000+ migration request; references/meta/migration.md is the right resource."
+  },
+  {
+    "query": "ReatomError: missing async stack — what does this mean?",
+    "should_trigger": true,
+    "rationale": "Distinctive Reatom error explicitly listed in the description triggers."
+  },
+  {
+    "query": "Set up Zustand for a new React app",
+    "should_trigger": false,
+    "rationale": "Different state management library; no Reatom involvement."
+  },
+  {
+    "query": "Bootstrap a new React + Reatom project from scratch with TS + Vite",
+    "should_trigger": true,
+    "rationale": "Setup request matching references/setup/start-from-scratch.md."
+  },
+  {
+    "query": "Best way to debounce a search input",
+    "should_trigger": false,
+    "rationale": "Generic question with no codebase context — likely vanilla JS / lodash answer expected."
+  },
+  {
+    "query": "Best way to debounce a search input in a Reatom action",
+    "should_trigger": true,
+    "rationale": "Reatom-specific debounce — references/core/sampling.md is canonical."
+  },
+  {
+    "query": "Persist atom value to localStorage",
+    "should_trigger": true,
+    "rationale": "Uses 'atom' terminology; references/features/persistence.md covers withLocalStorage."
+  },
+  {
+    "query": "Persist Redux state to localStorage",
+    "should_trigger": false,
+    "rationale": "Different state library; should not pull Reatom skill."
+  },
+  {
+    "query": "Why does my reatomComponent re-render too often?",
+    "should_trigger": true,
+    "rationale": "Direct API mention triggers; React integration reference covers subscription semantics."
+  },
+  {
+    "query": "Should I use useState or useReducer here?",
+    "should_trigger": false,
+    "rationale": "Pure React hooks question; no Reatom signals in the prompt."
+  },
+  {
+    "query": "Add a route loader that fetches user data and shows a skeleton while loading",
+    "should_trigger": true,
+    "rationale": "'Route loader' + skeleton UX is the exact pattern in references/features/routing/loaders.md."
+  },
+  {
+    "query": "Add a TanStack Router route with a loader",
+    "should_trigger": false,
+    "rationale": "Different router (TanStack); should not trigger Reatom-specific routing guidance."
+  },
+  {
+    "query": "How do I write a custom .extend() helper for an atom?",
+    "should_trigger": true,
+    "rationale": ".extend() is a Reatom-specific API; references/core/writing-extensions.md is the canonical doc."
+  },
+  {
+    "query": "I'm getting AbortError: Component unmount in my React app, the app uses @reatom/react",
+    "should_trigger": true,
+    "rationale": "Specific Reatom v1000 StrictMode symptom; references/integrations/react.md covers it."
+  },
+  {
+    "query": "Convert this Redux slice to use @reatom/core instead",
+    "should_trigger": true,
+    "rationale": "Cross-library migration TO Reatom; needs SKILL.md + patterns + migration references."
+  },
+  {
+    "query": "What's the difference between effect() and computed()?",
+    "should_trigger": true,
+    "rationale": "Core Reatom API distinction; SKILL.md Core Primitives covers both."
+  },
+  {
+    "query": "Refactor this useState into something cleaner",
+    "should_trigger": false,
+    "rationale": "Generic React refactor with no Reatom mention; should not pre-emptively push Reatom."
+  },
+  {
+    "query": "I want to use Standard Schema validation in my form, the project already uses @reatom/core",
+    "should_trigger": true,
+    "rationale": "Form + Standard Schema + Reatom core; reatomForm reference is the right path."
+  }
+]

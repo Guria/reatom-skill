@@ -1,0 +1,17 @@
+{
+  "name": "reatom-eval-react-app",
+  "version": "0.0.0",
+  "type": "module",
+  "private": true,
+  "dependencies": {
+    "@reatom/core": "latest",
+    "@reatom/react": "latest",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^6.0.0",
+    "vite": "^8.0.0",
+    "@vitejs/plugin-react": "^6.0.0"
+  }
+}

@@ -31,6 +31,8 @@ reatom/
         └── start-from-scratch.md     # Bootstrap a new TS+Vite+Reatom project
 ```
 
+Plus an `evals/` directory with [outcome](evals/evals.json) and [trigger](evals/trigger-evals.json) eval sets, fixtures, and a [run guide](evals/README.md) for benchmarking the skill via [`pi-skill-creator`](https://github.com/S1M0N38/pi-skill-creator).
+
 Every reference file links back to the canonical source on `github.com/reatom/reatom@v1001` so the agent can verify behavior against the upstream code, not just docs.
 
 ## Design principles

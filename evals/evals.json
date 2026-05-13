@@ -1,0 +1,132 @@
+{
+  "skill_name": "reatom",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "I have a search input bound to `searchQuery` atom. Add a debounced version that fetches `/api/search?q=...` 500ms after the user stops typing, cancels the previous request, and exposes loading + results state. Use Reatom only — no lodash, no AbortController boilerplate.",
+      "expected_output": "An action or computed using `wrap(sleep(500))` for debounce, `withAbort` (or equivalent) for cancellation, and `withAsyncData`/`withAsync` for status/results. No `setTimeout`, no manual `AbortController`, no `useEffect`.",
+      "files": ["evals/fixtures/react-app/src/search.ts"],
+      "expectations": [
+        "The output uses `wrap(sleep(...))` for the debounce delay",
+        "The output uses `withAbort` (or `abortVar`) so a new keystroke cancels the in-flight fetch",
+        "The output uses `withAsyncData` or `withAsync` rather than `effect()` + manual atom writes",
+        "The output does NOT import `setTimeout`/`clearTimeout` directly for debouncing",
+        "The output does NOT import `useEffect`, `useState`, or `useRef` from 'react'",
+        "All `fetch(...)` calls inside Reatom code are wrapped with `wrap(...)`"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Write src/users/list.ts: a Reatom data source that fetches `GET /api/users` once and exposes `data`, loading, and error. The component will read from it via `reatomComponent`.",
+      "expected_output": "A `computed` async body extended with `withAsyncData`, returning the parsed JSON. Component uses `.data()`, `.ready()`, and the action's `.error()` getter (or `.status()` if explicitly enabled).",
+      "files": ["evals/fixtures/react-app/"],
+      "expectations": [
+        "The output defines a `computed(async () => ...)` extended with `withAsyncData`",
+        "The output uses `wrap(fetch(...))` and `wrap(res.json())`",
+        "The output exposes `data`, `ready`, and `error` as atom getters (called like `list.data()`, not `list.data`)",
+        "If `.status()` is used, the output explicitly passes `{ status: true }` in the extension options",
+        "The output does NOT use `effect()` + manual `atom.set()` to load data"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Add a login form at /login with `email` and `password` fields, validated by Zod (email format, password min 8). On submit POST to /api/login. Use the route loader pattern.",
+      "expected_output": "A `reatomRoute('login', { loader: ... })` whose loader creates `reatomForm` with a Zod schema. React component uses `bindField` for inputs. Form is NOT defined at module scope.",
+      "files": ["evals/fixtures/react-app/"],
+      "expectations": [
+        "`reatomForm(...)` is created inside the route's `loader` function, NOT at module scope",
+        "The form uses a Zod (or any Standard Schema) `schema` for validation",
+        "The form's submit action contains `wrap(fetch(...))` for the POST",
+        "React inputs are bound using `bindField(form.fields.email)` / `bindField(form.fields.password)`",
+        "`submit.error` is invoked as a function (`submit.error()`), not accessed as a property"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Add a `/users/:userId` route with a loader that fetches the user. The path `/users/new` must NOT match this route — it has its own create page. Render the user page with proper loading/error/fulfilled UI.",
+      "expected_output": "Two separate routes: `users/new` (literal) and `users/:userId` with a `params` Standard Schema that rejects the literal `'new'`. Render branches on `self.loader.status()` flags.",
+      "expectations": [
+        "There are TWO routes: one for `users/new` and one for `users/:userId`",
+        "The dynamic `:userId` route has a `params` Standard Schema (Zod/Valibot/etc.) constraining the id format",
+        "The `params` schema rejects the literal string `'new'` (e.g. UUID/numeric/regex/refinement)",
+        "The render function reads `self.loader.status()` and branches on `isFirstPending` / `isPending` / `isFulfilled` / `isRejected` (or the equivalent flags)",
+        "The render does NOT do `if (!route.match()) return null` — it uses the `render` route option",
+        "The route uses `reatomRoute('users/:userId', ...)` without a leading slash"
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "Add a `theme` atom that persists across page reloads. Default 'light'. Should sync across tabs.",
+      "expected_output": "An `atom('light', 'theme').extend(withLocalStorage('theme'))`, optionally with `withBroadcastChannel` for cross-tab sync. No manual localStorage code.",
+      "expectations": [
+        "The output uses `withLocalStorage` from `@reatom/core`",
+        "If cross-tab sync is implemented, it uses `withBroadcastChannel` (not a manual `storage` event listener)",
+        "The output does NOT manually call `localStorage.getItem`/`setItem`",
+        "The output does NOT use `useEffect` + `localStorage` from React",
+        "The persistence extension is applied via `.extend(...)` chaining on the atom"
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "Add an `/admin` route that requires `currentUser` to be present (otherwise redirect to `/login`). Don't make the loader payload nullable.",
+      "expected_output": "Redirect logic in the route's `params()` returning `null`, OR a parent guard route. Loader returns concrete (non-nullable) payload.",
+      "expectations": [
+        "Auth/redirect logic is in the route's `params()` (return `null`) or in a parent guard route — NOT inside the `loader`",
+        "The loader return type is concrete (no `| null` / `| undefined` for redirect/auth purposes)",
+        "Redirect is performed via `userRoute.go()` or similar typed navigation, not `window.location` or string-based history"
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "Migrate this file from v3 Reatom (`@reatom/hooks`, `@reatom/async`, `@reatom/persist-web-storage`) to the v1000+ API.",
+      "expected_output": "Imports collapsed to `@reatom/core`. Removed `onUpdate`/`onConnect` from `@reatom/hooks` in favour of `withChangeHook`/`withConnectHook`. `reatomAsync` replaced with `computed` + `withAsyncData` or `action` + `withAsync`. `withLocalStorage` from `@reatom/core` instead of `@reatom/persist-web-storage`.",
+      "files": ["evals/fixtures/v3-codebase/src/store/cart.ts"],
+      "expectations": [
+        "No remaining imports from `@reatom/hooks`, `@reatom/async`, or `@reatom/persist*`",
+        "`@reatom/core` is the primary import for atoms, extensions, and persistence",
+        "`onUpdate(...)` calls are replaced with `.extend(withChangeHook(...))`",
+        "`onConnect(...)` calls are replaced with `.extend(withConnectHook(...))`",
+        "`reatomAsync(...)` is replaced with `computed(async () => ...).extend(withAsyncData(...))` or `action(async () => ...).extend(withAsync(...))`",
+        "Persistence uses `withLocalStorage`/`withSessionStorage` from `@reatom/core`"
+      ]
+    },
+    {
+      "id": 8,
+      "prompt": "Users report that the search results page goes blank for a flash whenever they type. The route loader re-fetches on URL change. Here's the render code: `if (!status.isFulfilled) return <Skeleton />; return <Results data={status.data} />`. Fix it.",
+      "expected_output": "Replace the `!isFulfilled` guard with a stale-while-refresh pattern: render `Results` whenever `status.isEverSettled` is true (using cached `status.data`), and overlay a subtle loading indicator when `status.isPending`. Skeleton only on `isFirstPending`.",
+      "expectations": [
+        "The fix uses `status.isFirstPending` (or equivalent) for the initial skeleton branch",
+        "The fix keeps the page mounted during background refresh (uses `status.isPending && status.isEverSettled` or equivalent)",
+        "The fix does NOT unmount/remount the results component on refresh",
+        "The explanation references that `isFulfilled` flips to `false` during refresh while `status.data` remains populated"
+      ]
+    },
+    {
+      "id": 9,
+      "prompt": "Bootstrap a brand new React + Reatom project from scratch. I want strict linting and a validate pipeline that runs in CI before any feature work begins.",
+      "expected_output": "Follows the `references/setup/start-from-scratch.md` flow: Vite + TS + oxlint + oxfmt + fallow + lefthook + the `no-restricted-imports` rule blocking React state hooks. `npm run validate` script wired up. Strict `clearStack()` + `context.start()` setup.",
+      "expectations": [
+        "Versions are verified via `npm view <pkg> dist-tags` (or equivalent) before pinning",
+        "`oxlint`, `oxfmt`, and `fallow` are all installed and configured",
+        "The `eslint/no-restricted-imports` rule blocks `useEffect`/`useState`/`useMemo`/`useCallback`/`useRef`/`useContext`/`useReducer`/`useImperativeHandle`/`useDebugValue`/`useLayoutEffect`/`memo` from `react`",
+        "A `validate` npm script chains typecheck + lint + format:check + intel",
+        "A pre-commit hook (lefthook or equivalent) is set up that runs lint+format on staged files",
+        "`tsconfig.json` `target` is at least `es2017` (preferably `es2022`)",
+        "`src/setup.ts` performs `clearStack()` then exports `rootFrame = context.start()`, imported before other modules"
+      ]
+    },
+    {
+      "id": 10,
+      "prompt": "Add a `streamingMode` feature toggle. When ON, start a background WebSocket connection that pushes events into the app. When OFF, close it. The toggle must be controllable from a checkbox in settings UI.",
+      "expected_output": "A `reatomBoolean('streamingMode')` extended with `withChangeHook` that opens/closes the WebSocket. Component reads/sets via `.setTrue()`/`.setFalse()`/`.toggle()`. No identity action wrapper.",
+      "expectations": [
+        "The toggle is a `reatomBoolean(...)`, not a plain `atom(false, ...)`",
+        "Lifecycle (open/close WebSocket) is attached via `.extend(withChangeHook(...))`",
+        "The boolean atom is exposed directly so the UI uses `.setTrue()`/`.setFalse()`/`.toggle()`",
+        "There is NO identity action like `enable()` / `disable()` that just forwards to `.set(true/false)`",
+        "WebSocket cleanup is idempotent (handles repeated false→false, etc.)",
+        "The implementation uses `withConnectHook` for the WebSocket OR returns a cleanup function from the change-hook callback for non-Reatom resource disposal"
+      ]
+    }
+  ]
+}
