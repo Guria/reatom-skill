@@ -73,6 +73,8 @@ fetchUser(3)  // wins — previous calls cancelled
 
 ## withChangeHook — react to state changes
 
+Use `withChangeHook` when an atom's state is the source of truth and a stable side effect should follow its changes. The hook is attached to the source and runs in Reatom's hook phase after updates, so it fits app-lifetime bridges such as URL normalization, persistence-facing side effects, analytics, or starting/stopping a lifecycle resource from a boolean switch. For action calls, prefer `withCallHook`.
+
 ```typescript
 import { atom, withChangeHook } from '@reatom/core'
 
@@ -80,6 +82,8 @@ const name = atom('John', 'name').extend(
   withChangeHook((next) => api.updateName(next))
 )
 ```
+
+Prefer this source-attached pattern over a top-level `effect()` plus a boot-time `startEffects()` function. `effect()` subscribes immediately and needs an active reactive frame after `clearStack()`; `withChangeHook` records the reaction as part of the atom model and does not require a separate activation step. If a side effect is just the result of a command and no code reads the intermediate value, call the imperative API directly from the semantic action instead of creating an atom solely to trigger a hook.
 
 ## withConnectHook — lazy-start on first subscriber
 

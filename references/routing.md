@@ -135,7 +135,7 @@ Typical app structure: root layout → optional auth/protection layers (also lay
 
 ## Protected routes - auth guard
 
-Protected routes use `params()` callback returning `null` to block the route and all descendants. Reactive: re-runs when read atoms change - use for auth, roles, feature flags, wizards.
+Protected routes use a `params()` callback that returns `null` to block the route and all descendants. The callback is reactive (it reruns when read atoms change), so it fits auth, roles, feature flags, and wizards. Use the same guard pattern for public pages that should be unavailable in a given state, such as redirecting away from sign-in when a session already exists; keeping the redirect in `params()` keeps loaders concrete.
 
 ```typescript
 // The `params` function enables protected routes:
@@ -658,20 +658,23 @@ urlAtom.extend(
 ```
 
 Key details:
-- `urlAtom.extend(...)` at module scope is a **deliberate side effect** — it runs once when the module loads and persists for the app lifetime. This is idiomatic for app-level routing setup.
+- `urlAtom.extend(...)` at module scope is a **deliberate declaration-time side effect** — it attaches middleware once when the module loads and persists for the app lifetime. The middleware does not run until `urlAtom` changes, which makes it appropriate for app-level routing setup.
 - Use `.go(undefined, true)` (replace) so the redirect doesn't create a history entry — the back button skips the root and goes to whatever was before.
 - `rootRoute.exact()` checks for a bare `/` match without children — this avoids redirecting when any sub-route is active.
-- This same pattern works for other global URL reactions (analytics, scroll restoration, storybook URL isolation).
+- Do not replace this with a top-level `effect()` or a `start*Effects()` boot helper. `effect()` subscribes immediately and needs an active reactive frame after `clearStack()`; a source-attached `withChangeHook` models the app-lifetime URL reaction without a separate activation step.
+- This same pattern works for other URL-source reactions such as navigation analytics or scroll restoration. Keep purely imperative one-shot work in the action that causes it; only store an event in an atom when other code actually reads that state.
 
 ## Full SPA example
 
-App entry (must be imported before route/model files):
+Recommended greenfield app entry (import before route/model files):
 
 ```ts
-// setup.ts - import this file before others in the repo root!
+// setup.ts - import this file before other app modules in the repo root.
+// clearStack() is optional by design, but recommended for new apps that want
+// explicit context isolation and loud failures for work outside the app frame.
 import { clearStack, context } from '@reatom/core'
 
-clearStack()                    // destroy default global frame
+clearStack()                    // opt into strict explicit context
 export const rootFrame = context.start()  // create isolated app frame
 
 // Optional: dev logging

@@ -29,6 +29,12 @@ const users = atom<UserModel[]>([], 'users').extend((target) => ({
 }))
 ```
 
+## Commands, state, and side-effect boundaries
+
+Some events are commands, not state. If a semantic action performs a command and no component, computed, persistence layer, or later action needs to read the latest payload, call the imperative boundary directly inside that action. A `latestEventAtom` observed only by an `effect()` records non-domain state and creates a subscription lifecycle for no benefit.
+
+When the last value is meaningful state, keep it as an atom and attach the side effect to that source with `withChangeHook`. When the side effect follows a route, form, selected item, or mounted resource, create it inside the loader/model factory or use `withConnectHook` so the lifecycle follows the scope. Boot helpers whose only job is to instantiate top-level effects usually signal that the reaction belongs on a source atom/action hook or in a scoped model instead.
+
 ## Individual atoms vs. lenses
 
 When a grouped object has fields that are set or toggled independently, you have two patterns — both avoid identity actions.

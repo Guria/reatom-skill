@@ -398,9 +398,9 @@ await wrap(fetch(url)).then(res => res.json())  // chain after wrap
 fetch(url).then(res => doSomethingWithAtoms())  // missing wrap around atom work
 ```
 
-## App Setup — clearStack and context.start
+## App Setup — optional clearStack and context.start
 
-Reatom initializes a global reactive context when `@reatom/core` is imported. In production apps, call `clearStack()` then `context.start()` at the earliest import (before any atoms are read or routes are matched) to destroy the default global frame and create a fresh isolated one:
+Reatom creates a default global reactive context when `@reatom/core` is imported, so `clearStack()` is optional by design. Still, prefer the stricter setup for greenfield production apps: call `clearStack()` then `context.start()` in the earliest app import (before atoms are read or routes are matched). This opts into an explicit app frame and makes accidental work outside that frame fail loudly:
 
 ```typescript
 // setup.ts — import this file before others!
@@ -414,7 +414,9 @@ clearStack()
 export const rootFrame = context.start()
 ```
 
-**Do not remove `clearStack()` from app setup.** It ensures no leaked state from module initialization bleeds into the app context and enforces strict `wrap()` discipline. Without it, atom operations that happen during module evaluation (top-level `computed`, route definitions, etc.) run in the default global frame instead of your controlled one.
+Treat existing setup as intentional. If a codebase already uses `clearStack()`, do not remove it to silence `missing async stack` errors; fix the lifecycle or missing `wrap()` boundary instead. After `clearStack()`, keep module scope declarative: creating atoms, computeds, routes, and registering extensions is fine; reading or writing atoms and creating live subscriptions during module evaluation is not. A top-level `effect()` subscribes immediately, so after `clearStack()` it will hit `missing async stack` unless created inside an active managed context. For app-lifetime reactions, attach behavior to the source (for example `urlAtom.extend(withChangeHook(...))` for URL normalization) or encode access decisions in route `params()` guards. A `start*Effects()` helper whose only job is to wrap module-level effects in `rootFrame.run()` usually hides the lifecycle boundary instead of modeling it.
+
+If an existing app does not use `clearStack()`, do not introduce it casually in a narrow bug fix because it changes the app's context assumptions. For new apps and planned setup refactors, use `clearStack()` + `context.start()` by default unless the project deliberately wants the default global context.
 
 In React apps, pass the root frame to `<reatomContext.Provider value={rootFrame}>` so all `reatomComponent` instances share the same isolated context.
 
@@ -439,7 +441,7 @@ const unsub = mock(targetAtom, () => 'mocked-value')
 unsub()  // restore original
 ```
 
-`context.reset()` is the simpler option — it resets state within the existing context. `clearStack()` + `context.start()` is stricter — it forces all atom operations to run inside an explicit frame, catching missing `wrap()` calls via "missing async stack" errors. Most test files use `clearStack()` at module level to enforce this.
+`context.reset()` is the simpler option — it resets state within the existing context. `clearStack()` + `context.start()` is stricter — it opts tests into an explicit frame, catching missing `wrap()` calls via "missing async stack" errors. Use the stricter pattern for new tests when it matches the app setup; otherwise follow the test suite's existing context strategy.
 
 ## Gotchas
 
@@ -494,12 +496,13 @@ However, `withConnectHook` *does* support returning a cleanup function for third
 - `route.go()` takes params object or nothing — NOT a path string
 - `urlAtom()` returns a `URL` object, not a string — use `urlAtom().pathname`
 - Never use `urlAtom().startsWith()` — use `route.match()` instead
-- Use `params()` returning `null` to block/redirect a route before its loader runs. Avoid returning `null` from loaders for auth/redirect control flow because it makes loader data nullable and weakens TypeScript narrowing.
+- Put route access and redirect decisions in `params()`: return `null` to block the route before its loader runs. This covers private guards and public pages that should redirect once the user is already authenticated. Avoid returning `null` from loaders for auth/redirect control flow because it makes loader data nullable and weakens TypeScript narrowing.
 - **Separate routes for create vs edit** — don't use `params.id === 'new'` conditional logic
 - **Constrain dynamic params when literal siblings exist** — route patterns like `projects/new` and `projects/:projectId` can both match `/projects/new` unless `:projectId` is validated to reject `new`. Use a Standard Schema on `params` that matches your actual ID format (`z.uuid()`, prefixed regex, etc.). Broad `z.string()` is not enough for IDs next to literal routes.
 - **Do not hide route collisions by taking only the first outlet** — rendering `outlet().at(0)` may mask duplicate matches while the wrong loader still runs. Fix the route match with param schemas or route structure.
 - **Parent route params are merged into child params** — if a guard route returns `{ user }`, child route schemas and `go()` types may need to account for it. For auth guards, return `{}` unless descendants really need injected params; read shared user atoms/resources in loaders/components instead.
 - **Keep loader payloads concrete** — redirects, auth checks, and feature gates belong in route `params()` or a parent guard route, not as `return null` branches inside the loader. A nullable loader result forces every render/component to handle `null` even when the page model should be guaranteed.
+- **Default redirects are source-attached URL reactions** — register `urlAtom.extend(withChangeHook(...))` at module scope for app-level redirects from `/` or other URL normalization. This is declaration-time extension registration, not a live subscription. Do not replace it with a top-level `effect()` or boot-only `start*Effects()` helper.
 - **Handle loader async states in the route `render(self)`** — prefer `const status = self.loader.status()` in `render`, branch on the discriminated flags there, and pass narrowed `status.data` (or a typed model) to UI components. This keeps components typed and focused instead of passing `loader` props or falling back to `any`.
 - **Use the full status model for UX** — `isFirstPending` is for initial page skeletons; `isPending` with `isEverSettled` is for background refresh with existing data; `isFulfilled` gives narrowed data for normal render; `isRejected` covers errors. With concrete loader payloads (no `undefined` branches), TypeScript narrows `status.data` to the full type in `AnotherPending` — no extra guards needed.
 
@@ -568,6 +571,8 @@ Reatom provides a `shadcn`-like code delivery system via `jsrepo` at [github.com
 - **Broad dynamic routes next to literal routes** — `:id` with `z.string()` beside `new`, `create`, `settings`, etc. lets literal pages also match the detail route. Use domain-shaped IDs (UUID, numeric, prefixed IDs, slugs with reserved-word exclusion) as a Standard Schema on the dynamic route.
 - **Actions in model files** — create route-specific actions inside route loaders
 - **Syncing atoms with change hooks** — use `computed` / `withComputed` for derived state. `withChangeHook` is appropriate for lifecycle/effect boundaries, not copying one atom's value into another.
+- **Boot-only effect helpers** — avoid `start*Effects()` functions whose only purpose is to instantiate module-level `effect()` subscriptions after `clearStack()`. Put stable reactions on the source with `withChangeHook` / `withCallHook`, and put scoped work in route loaders, scoped model factories, `withConnectHook`, or semantic actions.
+- **Atom + effect bridge for one-shot commands** — avoid `latestEventAtom` plus an `effect()` when the only goal is to call an imperative API. If the value is not rendered, persisted, or otherwise part of app state, call the API from the semantic action. If the last value is genuine state, keep it as an atom and attach `withChangeHook` to that source.
 - **Avoiding atom props** — thinking that passing atoms to children components is an anti-pattern. It is the recommended way to decouple models from views!
 - **Misnaming atom factories** — custom factories that create atom primitives/scoped models should use the `reatom*` convention, not generic `create*` / `make*` names.
 - **React-owned app state** — using `useState`/`useReducer`/context to own domain state, duplicate atom values, drive routing/data loading, or coordinate effects. In Reatom apps this mixes two reactive systems and is a strong architecture smell; keep app logic in Reatom and leave React built-in hooks for isolated UI/DOM integration or view-only memoization/callbacks.
