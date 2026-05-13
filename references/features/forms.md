@@ -122,12 +122,13 @@ submit.retry()  // retry last submission
 - `form.reset()` resets to initial values, not to empty state
 - `form.init({ ... })` updates initial values (affects reset)
 - **Forms in loaders, not models** — never define `reatomForm` at module scope. Create forms inside route loaders for automatic lifecycle management.
-- **`form.submit()` returns whatever your `onSubmit` callback returns.** This is the canonical replacement for `action.subscribe(cb)` (which is forbidden at module scope under `clearStack()`). Chain post-submit side-effects inline:
+- **`form.submit()` returns whatever your `onSubmit` callback returns.** This is the canonical way to chain a one-shot side-effect after a successful submit (navigate, toast, focus) without registering a live observer at module scope:
   ```typescript
   onClick={wrap(async () => {
     const saved = await wrap(form.submit())
     if (saved) detailRoute.go({ id: saved.id })
   })}
   ```
+  Reach for the inline-await pattern (or the action's body, or a declaration-time hook on the source) before any module-level observer registration — those don't run under the strict `clearStack()` setup.
 - **Don't use `ifChanged` on atoms** — `ifChanged` is not available on atoms. Read atom values directly in loaders or use `computed` for derived state.
 - **Validation error `.field` is the atom reference, not a name string** — compare by reference: `e.field === form.fields.email`

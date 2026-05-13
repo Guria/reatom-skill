@@ -120,18 +120,18 @@ export {}
 
 For other framework adapters substitute the renderable element type (`VNode`, `TemplateResult`, etc.).
 
-### Wrap event handlers that touch atoms
+### Wrap callbacks that cross back into Reatom
 
-React event handlers fire as separate microtasks outside whatever frame rendered the component. After `clearStack()` any handler that calls an atom setter, action, or `route.go()` throws `missing async stack` unless wrapped:
+UI event handlers, timers, and any host-scheduled callback run in a fresh execution context with no active reactive frame. Under `clearStack()` the first atom read or write inside such a callback throws `missing async stack`; wrapping the callback boundary with `wrap()` re-enters the reactive system. The principle is independent of which framework or which event names are involved — it applies wherever a function leaves the current synchronous frame and is later re-invoked by the host.
 
 ```tsx
-// ❌ onClick={() => count.set(c => c + 1)}
-// ✅ onClick={wrap(() => count.set(c => c + 1))}
-// ❌ onChange={(e) => field.change(e.currentTarget.value)}
-// ✅ onChange={wrap((e) => field.change(e.currentTarget.value))}
+// ❌ handler runs outside any frame after the host calls it back
+<Button onClick={() => count.set(c => c + 1)} />
+// ✅ wrap re-enters a frame so atom writes succeed
+<Button onClick={wrap(() => count.set(c => c + 1))} />
 ```
 
-`bindField`'s returned handlers are pre-wrapped — you only need `wrap()` for handlers you write by hand (Mantine `<Select>`-style controls that hand you a raw value, custom buttons, link-style anchors that perform navigation, etc.). The same rule applies to `setTimeout`/`requestAnimationFrame`/third-party callbacks: any time a Reatom-aware function leaves the current synchronous frame and returns later, wrap the boundary.
+Adapter helpers that *produce* callbacks for you (form binders, link/navigation generators, async sampling primitives like `take`/`onEvent`) wrap internally so you don't double-wrap. Callbacks you write by hand — third-party UI controls whose `onChange` hands you a raw value, custom buttons, link-style anchors, `setTimeout`, `requestAnimationFrame`, observers, message-port handlers — do not. The rule of thumb: if the callback was constructed by you and reads or writes a Reatom primitive, it needs `wrap()`.
 
 ### React is only the view adapter
 

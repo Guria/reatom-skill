@@ -270,7 +270,7 @@ createRoot(document.getElementById('root')!).render(
 
 See `SKILL.md` → "App Setup — optional clearStack and context.start" for when to use this strict setup vs the default global context.
 
-**Cost of the strict setup**: with `clearStack()` in place, every UI event handler that touches an atom (action call, atom write, route navigation) must be wrapped with `wrap()` — they fire as separate microtasks outside any active frame. Adapter helpers that produce handlers for you (form binders, link generators) wrap internally; manual handlers do not. If you find yourself wrapping every single `onClick` and would prefer to keep handlers terse, drop `clearStack()` and use the default global context: you trade strictness (and the early failure mode for missing `wrap()` boundaries) for ergonomics. Keep the strict setup for greenfield apps where the discipline pays off; consider the lenient setup for prototypes or for apps with a heavy event-handler surface.
+**Cost of the strict setup**: with `clearStack()` in place, every host-scheduled callback that touches Reatom (UI event handlers, timers, third-party listeners, etc.) must be wrapped with `wrap()` so it re-enters a reactive frame. Adapter helpers that produce callbacks for you wrap internally; ones you author by hand do not. If the discipline is too heavy for an exploratory codebase or one with a large hand-written event surface, drop `clearStack()` and use the default global context: you trade strict early-failure mode for ergonomics. Keep the strict setup for greenfield apps where the explicit boundary pays off; the lenient setup is reasonable for prototypes.
 
 ## Step 11 — First `validate` run
 
