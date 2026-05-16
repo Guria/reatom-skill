@@ -21,6 +21,8 @@ In-document sections (read top-to-bottom for orientation, jump for lookup):
 
 Reference files are loaded on demand — see the [reference table](#reference-files--read-on-demand) below.
 
+> **🚀 Greenfield / bootstrap rule:** if the user is starting a new app, asking how to set up Reatom, choosing packages/tooling, creating a Vite/React project, configuring TypeScript/lint/format/tests, or requesting a production-ready project skeleton, **read [`references/setup/start-from-scratch.md`](references/setup/start-from-scratch.md) first** and follow its checklist before writing code.
+
 > **⚠️ v1000+ only — do not rely on any v3 or earlier packages.** The v3 ecosystem (`@reatom/lens`, `@reatom/hooks`, `@reatom/effects`, `@reatom/persist-web-storage`, etc.) is completely separate and incompatible. v1000+ consolidated everything into `@reatom/core` and `@reatom/react`. When researching, always target the `v1000+` / `v1001` branches — v3 docs will mislead you.
 
 ## Version policy (v1000 vs v1001)
@@ -52,7 +54,7 @@ references/
 
 | File | Read when |
 |---|---|
-| `references/setup/start-from-scratch.md` | Bootstrapping a new TypeScript + Vite + Reatom project (toolchain, lint/format, validate pipeline, browser smoke test, post-bootstrap pitfall summary) |
+| `references/setup/start-from-scratch.md` | **Read first for any greenfield/bootstrap/setup task**: new TypeScript + Vite + Reatom project, package selection, lint/format/test pipeline, browser smoke test, production defaults, post-bootstrap pitfall summary |
 | `references/meta/v1001.md` | Comparing v1001 to v1000, deciding whether an API is v1001-only, migrations from v1000 |
 | `references/meta/packages.md` | Looking up which @reatom/* package to install, checking if a v3 package is deprecated |
 | `references/meta/reusables.md` | Browsing the [reatom/reusables](https://github.com/reatom/reusables) jsrepo catalog — form helpers, history/undo, logger, test harness, tweakpane integration, etc. |

@@ -32,6 +32,8 @@ reatom/
         └── start-from-scratch.md     # Bootstrap a new TS+Vite+Reatom project
 ```
 
+**High-priority reference:** `references/setup/start-from-scratch.md` should be read first for any greenfield app, project bootstrap, package/tooling choice, TS/Vite setup, lint/format/test pipeline, or production skeleton request.
+
 Every reference file links back to the canonical source on `github.com/reatom/reatom@v1001` so the agent can verify behavior against the upstream code, not just docs.
 
 ## Design principles
