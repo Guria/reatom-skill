@@ -9,12 +9,22 @@ Use this when bootstrapping a brand-new project around Reatom. The default stack
 | Layer | Package | Verified latest at writing time |
 |---|---|---|
 | Language | `typescript` | `6.0.3` (`latest` dist-tag) |
-| Bundler / dev server | `vite` | `8.0.12` (`latest` dist-tag, requires Node `^20.19.0 \|\| >=22.12.0`) |
-| State | `@reatom/core` | `1000.15.2` (stable). `1001.0.0-rc.1` available on `rc` dist-tag |
-| Linter | `oxlint` | `1.64.0` ([oxc-project/oxc](https://github.com/oxc-project/oxc)) |
-| Formatter | `oxfmt` | `0.49.0` (`oxc-project/oxc` formatter; alpha — track upstream) |
-| Code intelligence | `fallow` | `2.73.0` ([fallow-rs/fallow](https://github.com/fallow-rs/fallow)) |
+| Bundler / dev server | `vite` | `8.0.13` (`latest` dist-tag, requires Node `^20.19.0 \|\| >=22.12.0`) |
+| React plugin | `@vitejs/plugin-react` | `6.0.2` (`latest` dist-tag) |
+| State | `@reatom/core` | `1001.0.0` (`latest` dist-tag) |
+| React adapter | `@reatom/react` | `1001.0.0` (`latest` dist-tag) |
+| Native JSX adapter | `@reatom/jsx` | `1000.1.0` (`latest` dist-tag) |
+| Vue adapter | `@reatom/vue` | `1000.0.0-alpha.2` (`latest` dist-tag) |
+| Solid adapter | `@reatom/solid-js` | not published on npm |
+| Preact adapter | `@reatom/preact` | `1000.0.0` (`latest` dist-tag) |
+| Lit adapter | `@reatom/lit` | `1000.0.0-alpha.4` (`latest` dist-tag) |
+| Linter | `oxlint` | `1.65.0` ([oxc-project/oxc](https://github.com/oxc-project/oxc)) |
+| Formatter | `oxfmt` | `0.50.0` (`oxc-project/oxc` formatter; alpha — track upstream) |
+| Code intelligence | `fallow` | `2.75.0` ([fallow-rs/fallow](https://github.com/fallow-rs/fallow)) |
+| Git hooks | `lefthook` | `2.1.6` (`latest` dist-tag) |
 | Schema (optional) | `zod` | `4.4.3` (Reatom forms/routing accept any [Standard Schema](https://github.com/standard-schema/standard-schema)) |
+| Schema (optional) | `valibot` | `1.4.0` (`latest` dist-tag) |
+| Schema (optional) | `arktype` | `2.2.0` (`latest` dist-tag) |
 
 Adjust freely if the user requested:
 
@@ -60,13 +70,7 @@ npm i @reatom/core@latest
 npm i @reatom/react@latest    # or @reatom/jsx, @reatom/vue, @reatom/solid-js, @reatom/preact, @reatom/lit
 ```
 
-For v1001-only APIs (layout routes, URL codecs, action `(payload, params)` subscribe shape, `withMiddleware('read'|'computed'|'invalidation')`, etc.), install the RC explicitly:
-
-```bash
-npm i @reatom/core@rc @reatom/react@rc
-```
-
-See `../meta/v1001.md` for the full delta.
+For v1001-only APIs (layout routes, URL codecs, action `(payload, params)` subscribe shape, `withMiddleware('read'|'computed'|'invalidation')`, etc.), install `@reatom/core@latest` and the matching adapter version. See `../meta/v1001.md` for the full delta.
 
 ## Step 3 — `tsconfig.json`
 
@@ -404,7 +408,7 @@ This catches the canonical class of strict-context regressions in one assertion:
 
 **Read once before any v1001-only API call:**
 
-9. [`../meta/v1001.md`](../meta/v1001.md) — if you installed the `@reatom/core@rc` (v1001), this lists every API that exists ONLY in v1001. Cite it in PR descriptions when bumping.
+9. [`../meta/v1001.md`](../meta/v1001.md) — if you installed `@reatom/core@1001.x`, this lists every API that exists ONLY in v1001. Cite it in PR descriptions when bumping.
 
 **Reference (look up only):**
 

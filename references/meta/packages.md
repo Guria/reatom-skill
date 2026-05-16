@@ -4,18 +4,18 @@
 
 ## Active Packages
 
-| Package | Purpose |
-|---|---|
-| `@reatom/core` | Core primitives, extensions, forms, routing, persistence, methods |
-| `@reatom/react` | React adapter: `reatomComponent`, `bindField` |
-| `@reatom/preact` | Preact adapter |
-| `@reatom/vue` | Vue adapter |
-| `@reatom/solid-js` | Solid adapter |
-| `@reatom/lit` | Lit adapter |
-| `@reatom/jsx` | Native JSX runtime (no VDOM) — zero re-renders, direct DOM updates, built-in CSS-in-JS |
-| `@reatom/zod` | Zod v4 integration |
-| `@reatom/eslint-plugin` | ESLint rules |
-| `@reatom/admin` | Admin dashboard |
+| Package | Current npm version | Purpose |
+|---|---:|---|
+| `@reatom/core` | `1001.0.0` | Core primitives, extensions, forms, routing, persistence, methods |
+| `@reatom/react` | `1001.0.0` | React adapter: `reatomComponent`, `bindField` |
+| `@reatom/preact` | `1000.0.0` | Preact adapter |
+| `@reatom/vue` | `1000.0.0-alpha.2` | Vue adapter |
+| `@reatom/solid-js` | not published on npm | Solid adapter |
+| `@reatom/lit` | `1000.0.0-alpha.4` | Lit adapter |
+| `@reatom/jsx` | `1000.1.0` | Native JSX runtime (no VDOM) — zero re-renders, direct DOM updates, built-in CSS-in-JS |
+| `@reatom/zod` | `1000.0.0-alpha.1` | Zod v4 integration |
+| `@reatom/eslint-plugin` | `3.4.3` | ESLint rules |
+| `@reatom/admin` | not published on npm | Admin dashboard |
 
 ## @reatom/core Exports
 
