@@ -11,7 +11,7 @@ Atom-centric reactive state management. All primitives (actions, computeds, effe
 
 In-document sections (read top-to-bottom for orientation, jump for lookup):
 
-- [Version policy (v1000 vs v1001)](#version-policy-v1000-vs-v1001) · [Resources](#resources) · [Reference files](#reference-files--read-on-demand)
+- [Version policy](#version-policy) · [Resources](#resources) · [Reference files](#reference-files--read-on-demand)
 - [Core Primitives](#core-primitives) · [Extensions](#extensions) · [Built-in Primitives](#built-in-primitives)
 - [Routing](#routing) · [Forms](#forms) · [Persistence](#persistence)
 - [React Integration](#react-integration) · [Native JSX (@reatom/jsx)](#native-jsx-reatomjsx)
@@ -25,13 +25,15 @@ Reference files are loaded on demand — see the [reference table](#reference-fi
 
 > **⚠️ v1000+ only — do not rely on any v3 or earlier packages.** The v3 ecosystem (`@reatom/lens`, `@reatom/hooks`, `@reatom/effects`, `@reatom/persist-web-storage`, etc.) is completely separate and incompatible. v1000+ consolidated everything into `@reatom/core` and `@reatom/react`. When researching, always target the `v1000+` / `v1001` branches — v3 docs will mislead you.
 
-## Version policy (v1000 vs v1001)
+## Version policy
 
-When editing an existing project, inspect `package.json` / lockfile and match its installed `@reatom/*` version. Do not apply v1001-only APIs to a v1000.x codebase unless you also upgrade packages.
+- **Greenfield projects:** default to the released v1001 line (`@reatom/core@latest`, currently `1001.0.0`) and a matching adapter where one is available.
+- **Existing projects:** inspect `package.json` / lockfile and match the installed `@reatom/*` versions. Do not apply v1001-only APIs to a v1000.x codebase unless you also upgrade packages.
+- **Version-sensitive work:** read `references/meta/v1001.md` before changing routing, React adapter behavior, action subscriptions, middleware, transactions, observables, or package versions.
 
 **Appeared in v1001 — mark these explicitly in answers and migrations:** routing `layout: true` with page routes exact-by-default, URL codecs for `params`/`search`, `route.go.relative()`, React `reatomComponent({ abortOnUnmount })` with default `false`, new `reatomObservable` / `withObservable` producer API, action subscription callbacks `(payload, params)`, `withMiddleware(..., 'read' | 'computed' | 'invalidation')`, `withTransaction({ shouldRollback })`, `fromEntries`, `framePromise()` removed queue arg (v1000 accepts `QueueKind` with default `'effect'`, calling with no args works in both), and `reatomEnum.set` accepting arbitrary strings (runtime-validated).
 
-The **computed factory / scoped model pattern** (`computed` returning scoped atoms/forms/actions, extended with `withAbort()`) works in both v1000 and v1001. Only the surrounding routing syntax is version-sensitive: v1001 uses `layout: true` + default-exact pages, v1000 uses `exactRender: true`. See `references/meta/v1001.md` before version-sensitive work.
+The **computed factory / scoped model pattern** (`computed` returning scoped atoms/forms/actions, extended with `withAbort()`) works in both v1000 and v1001. Only the surrounding routing syntax is version-sensitive: v1001 uses `layout: true` + default-exact pages, v1000 uses `exactRender: true`.
 
 ## Resources
 
