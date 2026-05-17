@@ -70,6 +70,7 @@ references/
 | `references/meta/packages.md` | Looking up which @reatom/* package to install, checking if a v3 package is deprecated |
 | `references/meta/reusables.md` | Browsing the [reatom/reusables](https://github.com/reatom/reusables) jsrepo catalog — form helpers, history/undo, logger, test harness, tweakpane integration, etc. |
 | `references/meta/migration.md` | Migrating code from v3 to v1000+, mapping old APIs to new |
+| `references/meta/feedback-loop.md` | User follow-up/steering suggests this skill led the agent in a wrong Reatom direction |
 | `references/core/extensions.md` | Using built-in extensions: `withAsyncData`, `withAbort`, `withChangeHook`, `withConnectHook`, `withComputed`, `withSuspense`, `withRollback`, `withTransaction`, `framePromise` |
 | `references/core/writing-extensions.md` | Writing custom `.extend()` helpers, lifecycle/resource integration, middleware, hooks, type-safe extension APIs |
 | `references/core/sampling.md` | Debounce/throttle, `take()`, `onEvent()`, `race()`, `abortVar`, checkpoint pattern |
@@ -399,6 +400,8 @@ Read [`references/core/testing.md`](references/core/testing.md) for source-backe
 - Use `mock(target, cb)` inside an active frame and always call the returned unsubscribe.
 
 ## High-priority Gotchas
+
+If user follow-up reveals wrong Reatom guidance, read `references/meta/feedback-loop.md` after fixing the task.
 
 Keep this section as the always-loaded warning list. For detail, read the linked reference before implementing that area.
 
