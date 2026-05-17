@@ -2,7 +2,7 @@
 
 Use this when bootstrapping a brand-new project around Reatom. The default stack below is opinionated for production use; **adjust any layer if the user already specified a preference**. If the user has not, **use this default and verify the current latest versions with the available tooling before pinning** (`npm view <pkg> dist-tags`).
 
-> Always run `npm view <pkg> version` (or `dist-tags`) right before scaffolding. Versions in this file are verified examples, not pins.
+> Use `npm create vite@latest` for the scaffold itself. For packages installed after scaffolding, run `npm view <pkg> version` (or `dist-tags`) first. Versions in this file are verified examples, not pins.
 
 ## Table of contents
 
@@ -55,35 +55,40 @@ Adjust freely if the user requested:
 
 ## Step 1 — Scaffold
 
+Use the official latest Vite CLI with a TypeScript template. For the default React stack:
+
 ```bash
-# Create an empty project
-mkdir my-app && cd my-app
-npm init -y
+npm create vite@latest my-app -- --template react-ts
+cd my-app
+npm install
+```
 
-# Initialize a git repo if the parent isn't already one. Greenfield bootstraps
-# almost always need this — without it, lefthook can't install hooks and the
-# baseline commit (recommended after Step 11) has nowhere to land.
+For other adapters, pick the closest TypeScript template (`vanilla-ts`, `vue-ts`, `preact-ts`, etc.) and then install the matching `@reatom/*` adapter in Step 2. Vite's current docs list `npm create vite@latest` as the scaffold command and note that modern Vite requires Node `20.19+` or `22.12+`; upgrade Node first if the CLI warns.
+
+If the project should have its own git repo and the parent is not already one, initialize it after scaffolding:
+
+```bash
 git rev-parse --is-inside-work-tree >/dev/null 2>&1 || git init -b main
+```
 
-# Verify versions BEFORE installing
-npm view typescript dist-tags
-npm view vite dist-tags
+Do not stage or commit unless the user explicitly asks. If they do want a baseline commit, do it after Step 11 so the bootstrap state is captured before feature work begins.
+
+Verify non-template packages right before installing them:
+
+```bash
 npm view @reatom/core dist-tags
 npm view oxlint dist-tags
 npm view oxfmt dist-tags
 npm view fallow dist-tags
 ```
 
-If the agent is bootstrapping inside an existing monorepo, the `git rev-parse` check is satisfied by the outer repo and no `git init` happens. If it's a brand-new directory, the check fails and a fresh repo is initialized on `main`. Either way, run a baseline commit after Step 11 so the bootstrap state is captured before feature work begins.
-
 ## Step 2 — Install the validate pipeline FIRST
 
 > Set up lint/format/intel **before** writing any production code. This anchors the conventions and catches drift from line one.
 
 ```bash
-npm i -D typescript@latest vite@latest @vitejs/plugin-react@latest \
-        oxlint@latest oxfmt@latest fallow@latest \
-        lefthook@latest
+# Vite's TypeScript template already installs vite/typescript and the framework plugin.
+npm i -D oxlint@latest oxfmt@latest fallow@latest lefthook@latest
 
 npm i @reatom/core@latest
 # Pick one framework adapter:
