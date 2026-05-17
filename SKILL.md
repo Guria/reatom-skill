@@ -1,6 +1,13 @@
 ---
 name: reatom
-description: Expert guide for Reatom v1000+ state management. Use for tasks involving @reatom/* imports or explicit Reatom APIs: atom/computed/action from @reatom/core, reatomComponent/useAtom/useAction, reatomRoute, reatomForm, withAsyncData/withAsync/withAbort/withChangeHook, wrap() async context, adapters (@reatom/react, @reatom/vue, @reatom/solid-js, @reatom/preact, @reatom/lit, @reatom/jsx), testing, v3 migration, or errors mentioning ReatomError, missing async stack, or Reatom runtime exceptions.
+description: >
+  Expert guide for Reatom v1000+ state management. Use for tasks involving
+  @reatom/* imports or explicit Reatom APIs: atom/computed/action from
+  @reatom/core, reatomComponent/useAtom/useAction, reatomRoute, reatomForm,
+  withAsyncData/withAsync/withAbort/withChangeHook, wrap() async context,
+  adapters (@reatom/react, @reatom/vue, @reatom/solid-js, @reatom/preact,
+  @reatom/lit, @reatom/jsx), testing, v3 migration, or errors mentioning
+  ReatomError, missing async stack, or Reatom runtime exceptions.
 allowed-tools: read Bash
 ---
 
