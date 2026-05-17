@@ -98,6 +98,7 @@ Routes define `render` for framework-agnostic component composition. `render(sel
 
 **Important shape rules:**
 - `render` is a route **option**, not a settable property. Pass it inside `reatomRoute({ render: (self) => ... })`. After construction, `route.render` is a `Computed<RouteChild | null>` that returns the rendered output — it is not a function slot you can assign to. If you need to keep components in different files, co-locate the route definition with its render or thread the component through a closure passed to a route factory.
+- If a route module contains JSX in `render`, give that file a JSX-capable extension (`.tsx` / `.jsx`). A plain `.ts` / `.js` route file is only appropriate when `render` stays non-JSX or delegates to imported components without inline JSX syntax.
 - `self.outlet()` returns `RouteChild[]` (an array, possibly empty), not a single child. Render via `<>{self.outlet()}</>`, `self.outlet().map(...)`, or your framework's spread equivalent.
 - The root element returned from every route `render` should have a **static key** (for example `key="users-page"`). Parent routes render children as an outlet array, so framework reconcilers need a stable per-route identity. Do not derive this key from params/search unless you intentionally want remount-on-identity-change behavior.
 - `RouteChild` is an empty interface intended for declaration merging; declare it once per app to your framework's element type. See the corresponding integration reference for the exact pattern.

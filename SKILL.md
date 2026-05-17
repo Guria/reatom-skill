@@ -422,7 +422,7 @@ Keep this section as the always-loaded warning list. For detail, read the linked
 
 Read [`references/features/routing/routes.md`](references/features/routing/routes.md) and [`references/features/routing/loaders.md`](references/features/routing/loaders.md) before changing routes or loaders.
 
-- `render` is a route option; after construction `route.render` is a computed output, not an assignable callback.
+- `render` is a route option; after construction `route.render` is a computed output, not an assignable callback. If the route module writes JSX inline inside `render`, the file should use a JSX-capable extension (`.tsx` / `.jsx`).
 - `RouteChild` needs one framework declaration merge, and `outlet()` returns `RouteChild[]`.
 - The root element returned from each route `render` should have a static `key` because parent routes render child outputs as an outlet array. Keep it stable per route; only use params/search in the key when an intentional remount is desired.
 - Route paths have no leading `/`; use `reatomRoute('')` for root; `route.go()` takes params (or nothing), not a path string.
