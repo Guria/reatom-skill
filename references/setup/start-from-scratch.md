@@ -19,7 +19,8 @@ For greenfield work, treat this as the default sequence: scaffold, install the v
 - [Step 8 — npm scripts (`package.json`)](#step-8--npm-scripts-packagejson)
 - [Step 9 — Reatom app entry (strict context + dev logger, recommended)](#step-9--reatom-app-entry-strict-context--dev-logger-recommended)
 - [Step 10 — Vitest browser smoke test](#step-10--vitest-browser-smoke-test)
-- [Step 11 — Final validation run](#step-11--final-validation-run)
+- [Step 11 — Storybook](#step-11--storybook)
+- [Step 12 — Final validation run](#step-12--final-validation-run)
 - [Reading list for the next steps](#reading-list-for-the-next-steps)
 - [After bootstrap — report pitfalls back to the user](#after-bootstrap--report-pitfalls-back-to-the-user)
 
@@ -54,7 +55,7 @@ Keep validation proportional, but do not silently drop quality gates just becaus
 
 ## Step 1 — Scaffold
 
-Use the official latest Vite CLI with a TypeScript template when it fits the task. It bakes in current Vite defaults and reduces hand-written config mistakes. Manual file-by-file scaffolding is acceptable in constrained environments (for example, embedding a standalone example in an existing repository), but say why and verify the result with the same install/typecheck/lint/test/build pipeline before treating it as equivalent to the CLI output.
+Use the official latest Vite CLI with a TypeScript template when it fits the task. It bakes in current Vite defaults and reduces hand-written config mistakes. Manual file-by-file scaffolding is acceptable if the user explicitly requests it or has a strong opinion on how to scaffold the app — in that case, say why you're deviating and verify the result with the same install/typecheck/lint/test/build pipeline before treating it as equivalent to the CLI output.
 
 For the default React stack:
 
@@ -72,7 +73,7 @@ If the project should have its own git repo and the parent is not already one, i
 git rev-parse --is-inside-work-tree >/dev/null 2>&1 || git init -b main
 ```
 
-Do not stage or commit unless the user explicitly asks. If they do want a baseline commit, do it after Step 11 so the validated bootstrap state is captured before feature work begins.
+Do not stage or commit unless the user explicitly asks. If they do want a baseline commit, do it after Step 12 so the validated bootstrap state is captured before feature work begins.
 
 Verify non-template packages right before installing them:
 
@@ -378,12 +379,56 @@ test('renders the initial page at root', async () => {
 
 Replace `My App` with the actual stable text for the generated landing page. If the project plans to write meaningful Reatom unit tests beyond this browser smoke check, also pull the `test` utility from the reusables registry (`npx jsrepo add test` after initializing jsrepo against [reatom/reusables](https://github.com/reatom/reusables)). It bundles a Vitest wrapper with automatic Reatom context lifecycle and mock-subscription helpers. See [`../meta/reusables.md`](../meta/reusables.md) for the wider catalog.
 
-## Step 11 — Final validation run
+## Step 11 — Storybook
+
+For this bootstrap flow, Storybook is part of the runtime validation harness, not just a design convenience. The point is to prove the generated app actually renders and survives interaction in a realistic browser environment on the first run. After the app is verified and the user wants a leaner surface area, offer to clean Storybook back out deliberately.
+
+**Read [`../integrations/storybook.md`](../integrations/storybook.md) in full before starting this step.** It covers the Reatom-specific parts that matter here: fresh frame per story, routed story URL ownership, optional MSW setup, browser-test integration, and pitfalls.
+
+### Install Storybook packages
+
+```bash
+npm i -D storybook@latest @storybook/react-vite@latest \
+  @storybook/addon-vitest@latest @storybook/addon-a11y@latest @storybook/addon-docs@latest
+
+# Optional — only if stories need to mock network requests:
+# npm i -D msw@latest msw-storybook-addon@latest
+# npx msw init public/ --save
+```
+
+Verify versions right before installing:
+
+```bash
+npm view storybook dist-tags
+# Only if using request mocking:
+# npm view msw dist-tags
+```
+
+### Follow the reference
+
+Set up the Storybook files your project actually needs (typically `main.ts`, `preview.tsx`, optional routed-story helpers, optional viewport helpers, and `vitest.config.ts`) by following [`../integrations/storybook.md`](../integrations/storybook.md). Then add the scripts to `package.json`:
+
+```jsonc
+{
+  "scripts": {
+    "storybook": "storybook dev",
+    "build:storybook": "storybook build"
+  }
+}
+```
+
+## Step 12 — Final validation run
 
 Do not report bootstrap completion until the validation pipeline is green. At minimum, lint, tests, and format-check must pass; keep typecheck and fallow in the same command so CI has one entry point:
 
 ```bash
 npm run validate
+```
+
+Also verify Storybook starts and renders the first story:
+
+```bash
+npx storybook dev --smoke-test
 ```
 
 If it fails, fix the reported issue and rerun `npm run validate`. Only after a passing run should you give the final bootstrap response and the pitfall summary below.
@@ -407,6 +452,10 @@ If it fails, fix the reported issue and rerun `npm run validate`. Only after a p
 **Read once before any v1001-only API call:**
 
 9. [`../meta/v1001.md`](../meta/v1001.md) — if you installed `@reatom/core@1001.x`, this lists every API that exists ONLY in v1001. Cite it in PR descriptions when bumping.
+
+**Read when setting up Storybook (Step 11):**
+
+10. [`../integrations/storybook.md`](../integrations/storybook.md) — Storybook + Reatom integration patterns: fresh frame per story, routed story setup, optional MSW, browser-test integration, and common pitfalls.
 
 **Reference (look up only):**
 

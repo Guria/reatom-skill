@@ -22,7 +22,7 @@ In-document sections (read top-to-bottom for orientation, jump for lookup):
 - [Version policy](#version-policy) · [Resources](#resources) · [Reference files](#reference-files--read-on-demand)
 - [Core Primitives](#core-primitives) · [Extensions](#extensions) · [Built-in Primitives](#built-in-primitives)
 - [Routing](#routing) · [Forms](#forms) · [Persistence](#persistence)
-- [React Integration](#react-integration) · [Native JSX (@reatom/jsx)](#native-jsx-reatomjsx)
+- [React Integration](#react-integration) · [Native JSX (@reatom/jsx)](#native-jsx-reatomjsx) · [Storybook](#storybook)
 - [Patterns & Architecture](#patterns--architecture) · [Sampling & Events](#sampling--events) · [Retrying Computeds](#retrying-computeds--resetting-dependencies)
 - [Lifecycle Queue Priorities](#lifecycle-queue-priorities) · [wrap() Rules](#async-context--wrap-rules) · [App Setup](#app-setup--context-options) · [Testing](#testing)
 - [High-priority Gotchas](#high-priority-gotchas) · [Package Index](#package-index) · [Architectural Smells](#architectural-smells)
@@ -58,7 +58,7 @@ References are grouped into subfolders for fast scanning:
 references/
 ├── core/         core primitives, extensions, sampling, architectural patterns
 ├── features/     forms, routing, persistence (built into @reatom/core)
-├── integrations/ framework adapters: React, native JSX runtime
+├── integrations/ framework adapters: React, native JSX runtime, Storybook
 ├── meta/         package index, version delta, migration
 └── setup/        starting a new project from scratch
 ```
@@ -83,6 +83,7 @@ references/
 | `references/features/persistence.md` | Using `withLocalStorage`, `withIndexedDb`, `withCookie`, or any storage adapter |
 | `references/integrations/react.md` | Using `@reatom/react`: `reatomComponent`, `bindField`, StrictMode issues |
 | `references/integrations/jsx.md` | Using `@reatom/jsx` native JSX runtime, CSS-in-JS, direct DOM bindings |
+| `references/integrations/storybook.md` | **Storybook + Reatom**: fresh frame per story, routed story setup, optional request mocking, browser-test integration, and pitfalls |
 
 ## Core Primitives
 
@@ -468,6 +469,19 @@ Read [`references/integrations/react.md`](references/integrations/react.md) for 
 - v1001 `reatomComponent` defaults `abortOnUnmount: false`; v1000 can throw `AbortError: Component unmount` in React StrictMode, so either disable StrictMode for v1000 or use strict context setup. Set `{ abortOnUnmount: true }` only when v1000-style cancellation is wanted.
 - Capture atom getter results once for TypeScript narrowing; repeated calls break narrowing.
 - `Action` type does not include extension-added `.status()`; define a local extended interface when needed. `ReatomForm` is not exported; type forms inline from the returned value.
+
+### Storybook
+
+Read [`references/integrations/storybook.md`](references/integrations/storybook.md) when the user wants isolated component work, routed story scenarios, visual review, or browser-driven interaction tests.
+
+- For from-scratch app bootstraps, treat Storybook as part of the runtime validation harness, not as optional decoration. After the app is verified, it is reasonable to offer cleanup if the user wants a leaner setup.
+- Every story should get a fresh Reatom frame via `context.start()` so atoms, route registrations, subscriptions, and async work do not leak between stories.
+- If the project uses strict context setup, load that setup before story modules that create atoms.
+- Routed stories need explicit URL ownership. Storybook owns the iframe URL, so routed story harnesses should usually keep Reatom routing internal to the story frame and stub outward sync with `urlAtom.sync.set(() => noop)`.
+- MSW is optional. Use it only for stories that actually perform requests, and prefer stable default handlers with small per-story overrides.
+- Keep component stories small and focused; use integration stories only when routing, loaders, or larger app flows are the thing being tested.
+- If stories run as browser tests, keep viewport and setup hooks aligned so the visible canvas and CI run exercise the same scenario.
+- If using MSW, regenerate `mockServiceWorker.js` after `msw` version bumps.
 
 ## Package Index
 
