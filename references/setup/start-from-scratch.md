@@ -17,10 +17,8 @@ Use this when bootstrapping a brand-new project around Reatom. The default stack
 - [Step 8 — npm scripts (`package.json`)](#step-8--npm-scripts-packagejson)
 - [Step 9 — Pre-commit hook (lefthook)](#step-9--pre-commit-hook-lefthook)
 - [Step 10 — Reatom app entry (strict context, recommended)](#step-10--reatom-app-entry-strict-context-recommended)
-- [Step 11 — First `validate` run](#step-11--first-validate-run)
-- [Step 12 — Smoke test for runtime boot errors (browser test runner)](#step-12--smoke-test-for-runtime-boot-errors-browser-test-runner)
-  - [Vitest browser mode (recommended default)](#vitest-browser-mode-recommended-default)
-  - [Playwright standalone](#playwright-standalone)
+- [Step 11 — Vitest browser smoke test](#step-11--vitest-browser-smoke-test)
+- [Step 12 — Final validation run](#step-12--final-validation-run)
 - [Reading list for the next steps](#reading-list-for-the-next-steps)
 - [After bootstrap — report pitfalls back to the user](#after-bootstrap--report-pitfalls-back-to-the-user)
 
@@ -41,6 +39,8 @@ Use this when bootstrapping a brand-new project around Reatom. The default stack
 | Linter | `oxlint` | `1.65.0` ([oxc-project/oxc](https://github.com/oxc-project/oxc)) |
 | Formatter | `oxfmt` | `0.50.0` (`oxc-project/oxc` formatter; alpha — track upstream) |
 | Code intelligence | `fallow` | `2.75.0` ([fallow-rs/fallow](https://github.com/fallow-rs/fallow)) |
+| Test runner | `vitest` / `@vitest/browser` / `@vitest/browser-playwright` | verify npm dist-tags before install |
+| Browser provider | `playwright` | verify npm dist-tags before install |
 | Git hooks | `lefthook` | `2.1.6` (`latest` dist-tag) |
 | Schema (optional) | `zod` | `4.4.3` (Reatom forms/routing accept any [Standard Schema](https://github.com/standard-schema/standard-schema)) |
 | Schema (optional) | `valibot` | `1.4.0` (`latest` dist-tag) |
@@ -71,7 +71,7 @@ If the project should have its own git repo and the parent is not already one, i
 git rev-parse --is-inside-work-tree >/dev/null 2>&1 || git init -b main
 ```
 
-Do not stage or commit unless the user explicitly asks. If they do want a baseline commit, do it after Step 11 so the bootstrap state is captured before feature work begins.
+Do not stage or commit unless the user explicitly asks. If they do want a baseline commit, do it after Step 12 so the validated bootstrap state is captured before feature work begins.
 
 Verify non-template packages right before installing them:
 
@@ -80,6 +80,10 @@ npm view @reatom/core dist-tags
 npm view oxlint dist-tags
 npm view oxfmt dist-tags
 npm view fallow dist-tags
+npm view vitest dist-tags
+npm view @vitest/browser dist-tags
+npm view @vitest/browser-playwright dist-tags
+npm view playwright dist-tags
 ```
 
 ## Step 2 — Install the validate pipeline FIRST
@@ -88,7 +92,10 @@ npm view fallow dist-tags
 
 ```bash
 # Vite's TypeScript template already installs vite/typescript and the framework plugin.
-npm i -D oxlint@latest oxfmt@latest fallow@latest lefthook@latest
+npm i -D oxlint@latest oxfmt@latest fallow@latest lefthook@latest \
+        vitest@latest @vitest/browser@latest @vitest/browser-playwright@latest \
+        playwright@latest
+npx playwright install chromium
 
 npm i @reatom/core@latest
 # Pick one framework adapter:
@@ -114,13 +121,22 @@ Keep the rest of the scaffold's TypeScript settings unless the project has a sep
 ## Step 4 — `vite.config.ts`
 
 ```ts
-import { defineConfig } from 'vite'
+import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
+import { playwright } from '@vitest/browser-playwright'
 
 export default defineConfig({
   plugins: [react()],
   build: {
     target: 'es2022', // Reatom needs es2017+; align with tsconfig
+  },
+  test: {
+    browser: {
+      enabled: true,
+      provider: playwright(),
+      headless: true,
+      instances: [{ browser: 'chromium' }],
+    },
   },
 })
 ```
@@ -231,13 +247,14 @@ Confirm exact keys with `npx fallow --help` before committing — fallow ships f
     "format:check": "oxfmt --check .",
     "intel": "fallow analyze",
     "typecheck": "tsc -b --noEmit",
+    "test": "vitest run",
 
-    "validate": "npm run typecheck && npm run lint && npm run format:check && npm run intel && echo '\u23f5  validate green. If this run is part of a bootstrap, end your turn with the pitfall summary described in references/setup/start-from-scratch.md → \"After bootstrap\".'"
+    "validate": "npm run typecheck && npm run lint && npm run test && npm run format:check && npm run intel && echo '\u23f5  validate green. If this run is part of a bootstrap, end your turn with the pitfall summary described in references/setup/start-from-scratch.md → \"After bootstrap\".'"
   }
 }
 ```
 
-`npm run validate` is the single entry point CI and pre-commit run. Wire it in before the first feature commit.
+`npm run validate` is the single entry point for CI and pre-push checks. Pre-commit can run faster staged lint/format plus tests, but the bootstrap is not complete until the full validate command passes.
 
 ## Step 9 — Pre-commit hook (lefthook)
 
@@ -252,6 +269,8 @@ pre-commit:
       run: npx oxlint --fix {staged_files}
       stage_fixed: true
       glob: "*.{ts,tsx,js,jsx}"
+    test:
+      run: npm run test
     format:
       run: npx oxfmt {staged_files}
       stage_fixed: true
@@ -259,8 +278,8 @@ pre-commit:
 
 pre-push:
   commands:
-    intel:
-      run: npm run intel
+    validate:
+      run: npm run validate
 ```
 
 Install:
@@ -298,112 +317,62 @@ See `SKILL.md` → "App Setup — optional clearStack and context.start" for whe
 
 **Cost of the strict setup**: with `clearStack()` in place, every host-scheduled callback that touches Reatom (UI event handlers, timers, third-party listeners, etc.) must be wrapped with `wrap()` so it re-enters a reactive frame. Adapter helpers that produce callbacks for you wrap internally; ones you author by hand do not. If the discipline is too heavy for an exploratory codebase or one with a large hand-written event surface, drop `clearStack()` and use the default global context: you trade strict early-failure mode for ergonomics. Keep the strict setup for greenfield apps where the explicit boundary pays off; the lenient setup is reasonable for prototypes.
 
-## Step 11 — First `validate` run
+## Step 11 — Vitest browser smoke test
+
+The validation pipeline should include one real-browser test from the start. Keep it intentionally small: render the app at `/` and assert the initial page appears. This catches both broken Vite/browser setup and the canonical strict-context runtime failures that only surface once the app mounts.
+
+Give the initial page a stable heading or text marker, for example:
+
+```tsx
+// src/App.tsx
+export function App() {
+  return (
+    <main>
+      <h1>My App</h1>
+    </main>
+  )
+}
+```
+
+`src/__tests__/root.browser.test.tsx`:
+
+```tsx
+import { expect, test, vi } from 'vitest'
+
+test('renders the initial page at root', async () => {
+  window.history.replaceState({}, '', '/')
+  document.body.innerHTML = '<div id="root"></div>'
+
+  const errors: string[] = []
+  const consoleErrorSpy = vi
+    .spyOn(console, 'error')
+    .mockImplementation((...args) => {
+      errors.push(args.map(String).join(' '))
+    })
+
+  await import('../main')
+  await new Promise((resolve) => requestAnimationFrame(resolve))
+
+  consoleErrorSpy.mockRestore()
+
+  expect(document.getElementById('root')?.textContent).toContain('My App')
+  expect(
+    errors.filter((e) => /missing async stack|ReatomError/.test(e)),
+  ).toEqual([])
+})
+```
+
+Replace `My App` with the actual stable text for the generated landing page. If the project plans to write meaningful Reatom unit tests beyond this browser smoke check, also pull the `test` utility from the reusables registry (`npx jsrepo add test` after initializing jsrepo against [reatom/reusables](https://github.com/reatom/reusables)). It bundles a Vitest wrapper with automatic Reatom context lifecycle and mock-subscription helpers. See [`../meta/reusables.md`](../meta/reusables.md) for the wider catalog.
+
+## Step 12 — Final validation run
+
+Do not report bootstrap completion until the validation pipeline is green. At minimum, lint, tests, and format-check must pass; keep typecheck and fallow in the same command so CI has one entry point:
 
 ```bash
 npm run validate
 ```
 
-Fix any failures **before** writing the first feature. After this, every feature commit must keep `validate` green.
-
-## Step 12 — Smoke test for runtime boot errors (browser test runner)
-
-The `validate` pipeline catches type, lint, and format problems but cannot catch runtime errors that only surface once the app actually mounts in a browser — most notably the `missing async stack` error from missing `wrap()` boundaries under `clearStack()`. Add a single browser-level smoke test that boots the app and asserts no such error reaches the console. Two reasonable runners:
-
-- **Vitest browser mode** — lower ceremony, runs your Vite app in a real browser through Playwright/WebDriverIO under the hood, integrates with `npm run test`. Good default for greenfield apps.
-- **Playwright** standalone — heavier setup but better for full end-to-end flows beyond smoke tests; pick this if you already plan to write E2E coverage.
-
-If the project plans to write meaningful Reatom unit tests beyond a single boot smoke check, also pull the `test` utility from the reusables registry (`npx jsrepo add test` after initializing jsrepo against [reatom/reusables](https://github.com/reatom/reusables)). It bundles a Vitest wrapper with automatic Reatom context lifecycle and mock-subscription helpers, replacing the hand-rolled spy below. See [`../meta/reusables.md`](../meta/reusables.md) for the wider catalog.
-
-Verify versions before installing (`npm view <pkg> dist-tags`).
-
-### Vitest browser mode (recommended default)
-
-```bash
-npm i -D vitest@latest @vitest/browser@latest playwright@latest
-npx playwright install chromium
-```
-
-`vitest.config.ts`:
-
-```ts
-import { defineConfig } from 'vitest/config'
-import react from '@vitejs/plugin-react'
-
-export default defineConfig({
-  plugins: [react()],
-  test: {
-    browser: {
-      enabled: true,
-      provider: 'playwright',
-      headless: true,
-      instances: [{ browser: 'chromium' }],
-    },
-  },
-})
-```
-
-`src/__tests__/boot.smoke.browser.test.tsx`:
-
-```tsx
-import { expect, test, vi } from 'vitest'
-
-test('app boots without missing-async-stack errors', async () => {
-  const errors: string[] = []
-  const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation((...args) => {
-    errors.push(args.map(String).join(' '))
-  })
-
-  // Importing main mounts the app into the test page (createRoot called once).
-  await import('../main')
-
-  // Let the first reactive frame settle and any post-commit subscribe run.
-  await new Promise((resolve) => setTimeout(resolve, 50))
-
-  consoleErrorSpy.mockRestore()
-
-  const fatalBootErrors = errors.filter((e) =>
-    /missing async stack|ReatomError/.test(e),
-  )
-  expect(fatalBootErrors, fatalBootErrors.join('\n')).toEqual([])
-})
-```
-
-Add to `package.json` scripts and to `validate`:
-
-```jsonc
-{
-  "scripts": {
-    "test": "vitest run",
-    "validate": "npm run typecheck && npm run lint && npm run format:check && npm run intel && npm run test && echo '\u23f5  validate green. If this run is part of a bootstrap, end your turn with the pitfall summary described in references/setup/start-from-scratch.md → \"After bootstrap\".'"
-  }
-}
-```
-
-### Playwright standalone
-
-If you prefer Playwright directly, the equivalent smoke test runs the dev server and asserts no console error matches the pattern:
-
-```ts
-// e2e/boot.smoke.spec.ts
-import { expect, test } from '@playwright/test'
-
-test('app boots without missing-async-stack errors', async ({ page }) => {
-  const errors: string[] = []
-  page.on('console', (msg) => {
-    if (msg.type() === 'error') errors.push(msg.text())
-  })
-  await page.goto('/')
-  await page.waitForLoadState('networkidle')
-
-  const fatalBootErrors = errors.filter((e) =>
-    /missing async stack|ReatomError/.test(e),
-  )
-  expect(fatalBootErrors, fatalBootErrors.join('\n')).toEqual([])
-})
-```
-
-This catches the canonical class of strict-context regressions in one assertion: any handler (or module-level live observer) authored without a wrapping frame will surface during the initial render and fail the test. Expand coverage from there as features land.
+If it fails, fix the reported issue and rerun `npm run validate`. Only after a passing run should you give the final bootstrap response and the pitfall summary below.
 
 ## Reading list for the next steps
 
