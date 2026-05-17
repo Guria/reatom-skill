@@ -6,6 +6,20 @@ State persistence allows your application to maintain state across browser sessi
 
 **Check the target codebase's `package.json` to see which storage adapters are already in use and prefer those.**
 
+## Table of contents
+
+- [Quick Start](#quick-start)
+- [Configuration Options](#configuration-options)
+- [Version Migration](#version-migration)
+- [Schema Validation](#schema-validation)
+- [Adapter Comparison](#adapter-comparison)
+- [URL Search Params — withSearchParams](#url-search-params--withsearchparams)
+  - [searchParamsAtom — low-level API](#searchparamsatom--low-level-api)
+  - [Options](#options)
+  - [When to use withSearchParams vs route search schemas](#when-to-use-withsearchparams-vs-route-search-schemas)
+- [Custom Storage Implementation](#custom-storage-implementation)
+- [Gotchas](#gotchas)
+
 ## Quick Start
 
 [`withPersist` core](https://github.com/reatom/reatom/blob/v1001/packages/core/src/persist/index.ts) · [Web storage adapters](https://github.com/reatom/reatom/tree/v1001/packages/core/src/persist/web-storage)

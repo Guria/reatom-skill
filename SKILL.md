@@ -8,7 +8,7 @@ description: >
   adapters (@reatom/react, @reatom/vue, @reatom/solid-js, @reatom/preact,
   @reatom/lit, @reatom/jsx), testing, v3 migration, or errors mentioning
   ReatomError, missing async stack, or Reatom runtime exceptions.
-allowed-tools: read Bash
+allowed-tools: read Bash edit write
 ---
 
 # Reatom v1000+

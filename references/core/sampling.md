@@ -4,6 +4,22 @@
 
 Sampling is a core Reatom pattern: reading state and awaiting events procedurally inside async actions. It replaces debounce/throttle libraries and RxJS-style operators with native async/await.
 
+## Table of contents
+
+- [Debounce with wrap(sleep())](#debounce-with-wrapsleep)
+- [Throttle with withAbort('first-in-win')](#throttle-with-withabortfirst-in-win)
+- [take — await the next state change or action call](#take--await-the-next-state-change-or-action-call)
+  - [Awaiting action calls](#awaiting-action-calls)
+  - [Subscribing to action calls](#subscribing-to-action-calls)
+- [onEvent — await DOM/external events](#onevent--await-domexternal-events)
+  - [Checkpoint pattern — listen before long operations](#checkpoint-pattern--listen-before-long-operations)
+- [race — first wins, others abort](#race--first-wins-others-abort)
+  - [race with abortVar.createAndRun — concurrent providers](#race-with-abortvarcreateandrun--concurrent-providers)
+- [all — wait for multiple events](#all--wait-for-multiple-events)
+- [variable — custom async context](#variable--custom-async-context)
+- [abortVar — built-in abort context](#abortvar--built-in-abort-context)
+- [When to use what](#when-to-use-what)
+
 ## Debounce with wrap(sleep())
 
 [`wrap` source](https://github.com/reatom/reatom/blob/v1001/packages/core/src/methods/wrap.ts) · [`sleep` source](https://github.com/reatom/reatom/blob/v1001/packages/core/src/setTimeout.ts) · [`withAbort` source](https://github.com/reatom/reatom/blob/v1001/packages/core/src/extensions/withAbort.ts)
