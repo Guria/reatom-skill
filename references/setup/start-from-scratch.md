@@ -432,18 +432,4 @@ If it fails, fix the reported issue and rerun `npm run validate`. Only after a p
 
 ## After bootstrap — report pitfalls back to the user
 
-When you (the agent) finish bootstrapping a project, **produce a short pitfall summary as the final message of the bootstrap turn**. The goal is to surface anything you tripped on so the user can decide whether the skill or its references need updating, and so future runs can avoid the same loop.
-
-Format the summary as a plain Markdown list. Keep it factual and specific to what actually happened during this run — do not pad it with general advice or restate things that worked first try. For each pitfall include:
-
-1. **Symptom** — the exact error message, type-check failure, or unexpected behaviour you observed (one line).
-2. **Root cause** — the reactive-system rule or API contract that was violated (one line).
-3. **Fix applied** — the smallest change that resolved it (one line).
-4. **Where the skill addresses this today**, or **"not in skill yet — candidate for distillation"** if you could not find it referenced anywhere in `SKILL.md` or `references/`.
-
-Close the summary with one of:
-
-- `No pitfalls encountered` — if the bootstrap was clean end-to-end.
-- `Suggested skill updates: <bullet list>` — if any item was marked "not in skill yet".
-
-This turns every greenfield bootstrap into a passive eval of the skill itself. Skipping it loses the only signal we get about which guidance is missing or unclear.
+When you finish bootstrapping a project, read [`../meta/feedback-loop.md`](../meta/feedback-loop.md) and include its bootstrap pitfall summary in the final response. This turns every greenfield bootstrap into a passive eval of the skill itself; skipping it loses the signal about which guidance is missing or unclear.
