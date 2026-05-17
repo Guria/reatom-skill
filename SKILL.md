@@ -436,7 +436,7 @@ Read [`references/features/routing/index.md`](references/features/routing/index.
 
 Read [`references/features/forms.md`](references/features/forms.md) for field APIs, validation, and factories.
 
-- `reatomForm` belongs in route/scoped factories, not as a shared module-level singleton for route-bound data.
+- `reatomForm` belongs in route/scoped factories, not as a shared module-level singleton for route-bound data. But route ownership follows product behavior: choose the route boundary from URL/history/state-lifetime semantics before deciding which loader creates the form.
 - `bindField` is event-shaped; wire controls like `<select>` manually with `field.change(value)` and wrap handwritten handlers under `clearStack()`.
 - Prefer `field.value()` / `field.change(v)` for user-facing values; `field()` is the underlying state.
 - `field.validation().error` is the aggregated single-line message; `errors` is the structured list.
@@ -477,6 +477,7 @@ These are not API traps; they are design choices to question. Read the relevant 
 - Atom + effect bridges for one-shot commands (`latestEventAtom` + `effect()`); call the imperative API from the action unless the value is real rendered/persisted state.
 - Boot-only `start*Effects()` helpers; attach stable reactions to sources or put scoped work in loaders/factories/hooks.
 - Single create/edit route or broad dynamic routes beside literal routes.
+- Treating route shape as a purely technical file-organization decision. Routes define URL sharing, Back/Forward behavior, state lifetime, parent context, loading/error boundaries, breadcrumbs, analytics, permissions, and recovery from abandoned work; ask or state the UX tradeoff before choosing page vs child vs layout vs search-param vs modal vs inline state.
 - Layout/shell/component modules importing route singletons that import them back; thread navigation config/actions through props or a route-neutral module instead. Prefer passing precomputed `href`s or route-layer path-builder functions from loaders/models into components.
 - Controlled search/filter inputs bound to route loader payload while the loader preserves stale data during refresh. Use a dedicated atom for the live input value; sync it to the URL with `withSearchParams` when the value is URL state.
 - Index-route nav items using `match()` under a layout route. Use `exact()` for active state and add a pathname guard when the index loader should not run on descendants.

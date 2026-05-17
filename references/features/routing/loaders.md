@@ -12,6 +12,7 @@
     - [Index child loaders under layout routes](#index-child-loaders-under-layout-routes)
 - [Route loaders - factory pattern (forms + actions)](#route-loaders---factory-pattern-forms--actions)
   - [Precompute component links in loaders](#precompute-component-links-in-loaders)
+  - [Route shape is product architecture](#route-shape-is-product-architecture)
   - [Separate routes for create vs edit](#separate-routes-for-create-vs-edit)
   - [Form factory functions](#form-factory-functions)
   - [Auth redirects and concrete loader payloads](#auth-redirects-and-concrete-loader-payloads)
@@ -264,9 +265,35 @@ function ProjectsPage({ model }: { model: ProjectsPageModel }) {
 
 This pattern is not only for lists. Detail loaders can return breadcrumb `href`s, form-success redirect targets, tab links, and related-entity link builders. The route layer still owns URL shape and params validation; components receive plain strings/functions and stay easy to test or move.
 
+### Route shape is product architecture
+
+A loader can technically create any route-scoped state, but the route tree should be chosen from the product behavior first. Routes define more than code ownership: they define addressability, history semantics, restoration, access boundaries, data lifetime, page titles, breadcrumbs, analytics events, and how users recover from errors or abandoned work.
+
+Before adding a feature to an existing route, nesting it under a parent, or splitting it into its own route, consider:
+
+- **Addressability:** should this state be shareable, bookmarkable, restorable after reload, or deep-linked from notifications/search?
+- **History:** what should browser Back/Forward mean — close an overlay, return to a parent, undo search params, leave a flow, or step within a wizard?
+- **State lifetime:** which data should reset on navigation, and which should survive sibling tabs, filters, refreshes, or parent route changes?
+- **Data identity:** does the route represent a collection, an entity, a sub-resource, a task, or a transient UI mode?
+- **Concurrency:** can multiple instances exist, or is there a single app-wide/page-wide state?
+- **Authorization and guards:** should access be blocked at a parent boundary, a specific page, or a sub-flow?
+- **Loading and errors:** should failures replace the whole page, preserve stale parent context, or only affect a child region?
+- **Product semantics:** do breadcrumbs, document title, analytics, command palette entries, and navigation labels treat this as a distinct screen?
+
+Common route shapes are tools, not defaults:
+
+- **Dedicated page route:** when the state represents a distinct task/view with its own URL, guards, loading/error states, or success navigation.
+- **Nested child route:** when the parent context should stay visible while the child owns identity-specific data or a sub-task.
+- **Layout route with children:** when a boundary owns shared context, protection, navigation, or stable models for multiple pages.
+- **Search-param state:** when the URL should capture lightweight, reversible view state such as filters, sort, tabs, or pagination.
+- **Modal/overlay route:** when the user should keep parent context but Back should dismiss and the state may be linkable/restorable.
+- **Inline local state:** when the behavior is intentionally ephemeral and not meaningful as navigation.
+
+When the UX is unspecified, state the routing tradeoff briefly instead of silently choosing. Pick the least surprising shape for the requested app, and keep the implementation aligned with that choice: loader-owned models for route lifetime, parent loaders for shared stable context, URL/search atoms for immediate URL-backed UI state, and plain local atoms for ephemeral controls.
+
 ### Separate routes for create vs edit
 
-**Never** use a single route with conditional logic (`params.id === 'new'`). Use separate routes - each gets its own loader, its own form instance, and automatic cleanup on navigation. Also ensure the dynamic detail/edit route's `params` schema rejects literal siblings such as `new`; separate routes alone do not prevent `:id` from matching a literal segment.
+Do not use a single dynamic route with conditional logic such as `params.id === 'new'`. Prefer separate literal routes for create flows and constrained dynamic routes for identity flows. Each route gets its own loader, form instance, and cleanup semantics, and the route tree documents the UX. Also ensure the dynamic detail/edit route's `params` schema rejects literal siblings such as `new`; separate routes alone do not prevent `:id` from matching a literal segment.
 
 ```typescript
 // ❌ Bad - single route with conditional logic
