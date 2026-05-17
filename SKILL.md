@@ -439,7 +439,7 @@ Read [`references/features/forms.md`](references/features/forms.md) for field AP
 - `reatomForm` belongs in route/scoped factories, not as a shared module-level singleton for route-bound data. But route ownership follows product behavior: choose the route boundary from URL/history/state-lifetime semantics before deciding which loader creates the form.
 - `bindField` is event-shaped; wire controls like `<select>` manually with `field.change(value)` and wrap handwritten handlers under `clearStack()`.
 - Prefer `field.value()` / `field.change(v)` for user-facing values; `field()` is the underlying state.
-- `field.validation().error` is the aggregated single-line message; `errors` is the structured list.
+- `field.validation().error` is the single-field first-error message (a string); `form.validation().errors` is the structured list across all fields. Form-level `validation()` does not have an `.error` property — only individual fields do.
 - `form()` returns field values; there is no `form.getValues()`.
 - `form.submit.error` is an atom getter; call it (`form.submit.error()` / `submit.error()`), don't render the atom object.
 - Put submit mutations in `reatomForm({ onSubmit })` and call `form.submit()`. Separate actions that call `api.save(form())` bypass submit validation unless they explicitly trigger it; semantic commands should wrap/alias `form.submit()`.

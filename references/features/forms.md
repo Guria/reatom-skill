@@ -114,7 +114,7 @@ submit.retry()  // retry last submission
 
 ## Form gotchas
 
-- `validation()` returns `{ error, errors, ... }`. **`error` is the aggregated single-string message** (`string | undefined`) suitable for direct binding to one-line UI inputs; **`errors` is the structured list** (`FieldSetFieldError[]`, each with `.field` and `.message`) for full reporting. Use `error` for single-line input components; use `errors` when you need to render or filter the full list. Don't synthesize the string yourself when `error` already exists.
+- `validation()` on a form returns a `FieldSetValidation` with `errors: FieldSetFieldError[]`, `triggered: boolean`, and `validating`. It does not have an `.error` string property — that only exists on individual field validation (`field.validation().error`). For form-level error display, read the first element from `errors` or aggregate them.
 - `submit.error` is an **ATOM** — call it: `submit.error()` not `submit.error`
 - **`fields.name.value()` is the user-facing value**; `fields.name.set(value)` and `fields.name.change(value)` write it. The bare `field()` returns the underlying state, which may differ from `value` when `fromState`/`toState` transformers are used. Default to `value` and `change` in UI code.
 - `bindField` does NOT work with controls whose `onChange` receives a raw value instead of a DOM event (most third-party `<Select>` and `<Combobox>` components). Wire `value`/`onChange`/`onBlur`/`onFocus` manually using `field.change(v)` / `field.focus.in()` / `field.focus.out()`. After `clearStack()` those manual handlers must be `wrap()`-ed; `bindField`'s returned handlers are pre-wrapped.
