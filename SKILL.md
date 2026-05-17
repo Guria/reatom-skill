@@ -29,7 +29,7 @@ In-document sections (read top-to-bottom for orientation, jump for lookup):
 
 Reference files are loaded on demand — see the [reference table](#reference-files--read-on-demand) below.
 
-> **🚀 Setup reading rule:** for a full greenfield app or production scaffold, read [`references/setup/start-from-scratch.md`](references/setup/start-from-scratch.md) first. For lightweight questions ("which packages?", "minimal React demo", "add Reatom to existing Vite"), answer minimally and mention the setup guide as the production checklist rather than forcing the whole scaffold.
+> **🚀 Setup reading rule:** any task that creates or bootstraps a new Reatom project — production app, example, demo, prototype, or scaffold — must read [`references/setup/start-from-scratch.md`](references/setup/start-from-scratch.md) first and follow its validate pipeline before writing feature code. The pipeline (lint, format, dead-code detection, strict context, browser smoke test, validate script) is not a production luxury; it anchors conventions from line one and catches the class of runtime failures (missing `wrap()`, circular imports, stale context) that accumulate silently when skipped. For lightweight questions to an existing project ("which packages?", "how do I add X?"), answer minimally and mention the setup guide as a reference without forcing a full bootstrap.
 
 > **⚠️ v1000+ only — do not rely on any v3 or earlier packages.** The v3 ecosystem (`@reatom/lens`, `@reatom/hooks`, `@reatom/effects`, `@reatom/persist-web-storage`, etc.) is completely separate and incompatible. v1000+ consolidated everything into `@reatom/core` and `@reatom/react`. When researching, always target the `v1000+` / `v1001` branches — v3 docs will mislead you.
 

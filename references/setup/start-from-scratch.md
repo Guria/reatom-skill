@@ -317,7 +317,9 @@ createRoot(document.getElementById('root')!).render(
 
 See `SKILL.md` → "App Setup — optional clearStack and context.start" for when to use this strict setup vs the default global context.
 
-**Cost of the strict setup**: with `clearStack()` in place, every host-scheduled callback that touches Reatom (UI event handlers, timers, third-party listeners, etc.) must be wrapped with `wrap()` so it re-enters a reactive frame. Adapter helpers that produce callbacks for you wrap internally; ones you author by hand do not. If the discipline is too heavy for an exploratory codebase or one with a large hand-written event surface, drop `clearStack()` and use the default global context: you trade strict early-failure mode for ergonomics. Keep the strict setup for greenfield apps where the explicit boundary pays off; the lenient setup is reasonable for prototypes.
+**Cost of the strict setup**: with `clearStack()` in place, every host-scheduled callback that touches Reatom (UI event handlers, timers, third-party listeners, etc.) must be wrapped with `wrap()` so it re-enters a reactive frame. Adapter helpers that produce callbacks for you wrap internally; ones you author by hand do not. If the discipline is too heavy for an exploratory codebase or one with a large hand-written event surface, drop `clearStack()` and use the default global context: you trade strict early-failure mode for ergonomics.
+
+**Do not skip the validate pipeline for prototypes, examples, or demos.** The pipeline is intentionally Step 2 — before any feature code — because the issues it catches (missing `wrap()` boundaries, circular imports, React state leaking into the Reatom layer, stale async context) are invisible at first and expensive to retrofit. An example that skips lint/format/testing/strict-context teaches patterns that break in any real app following the recommended setup. If the project scope is intentionally small, the pipeline still applies — just keep the initial smoke test and lint config proportionally simple.
 
 ## Step 11 — Vitest browser smoke test
 
