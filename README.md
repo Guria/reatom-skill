@@ -68,10 +68,10 @@ This repository is a **single-skill repo** with `SKILL.md` at the repository roo
 npx skills add /path/to/reatom-skill
 
 # Git URL
-npx skills add https://gitlab.com/workhuman/reatom-skill.git
+npx skills add https://github.com/guria/reatom-skill.git
 
 # Explicit skill selection (optional because this repo contains one skill)
-npx skills add https://gitlab.com/workhuman/reatom-skill.git --skill reatom
+npx skills add https://github.com/guria/reatom-skill.git --skill reatom
 ```
 
 Validated locally with:
