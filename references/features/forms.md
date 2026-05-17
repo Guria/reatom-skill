@@ -63,6 +63,8 @@ const LoginForm = reatomComponent(() => {
       <input type="email" {...bindField(fields.email)} />
       <input type="password" {...bindField(fields.password)} />
       <button type="submit" disabled={!submit.ready()}>Login</button>
+      {/* ⚠️ form.submit uses withAsyncData() without status by default */}
+      {/* Use submit.ready(), submit.pending(), and submit.error() for normal form UI */}
       {/* ⚠️ validation().errors is FieldSetFieldError[], not strings */}
       {validation().errors.length > 0 && <div>Fix errors</div>}
       {/* ⚠️ submit.error() is a FUNCTION call (it's an atom) */}
@@ -111,16 +113,18 @@ validation().errors  // FieldSetFieldError[]
 // Each error: { field: FieldAtom, message: string, source: string }
 
 // Form submission
-submit.ready()  // true when not loading
-submit.error()  // Error | undefined (FUNCTION call!)
-submit.retry()  // retry last submission
+submit.ready()    // true when not loading
+submit.pending()  // number of in-flight submits
+submit.error()    // Error | undefined (FUNCTION call!)
+submit.retry()    // retry last submission
+// ⚠️ submit.status() is not available by default on reatomForm submit
 ```
 
 ## Form gotchas
 
 - `validation()` on a form returns a `FieldSetValidation` with `errors: FieldSetFieldError[]`, `triggered: boolean`, and `validating`. It does not have an `.error` string property — that only exists on individual field validation (`field.validation().error`). For form-level error display, read the first element from `errors` or aggregate them.
 - `submit.error` is an **ATOM** — call it: `submit.error()` not `submit.error`
-- `submit.status()` is only usable when the underlying async extension was configured with `{ status: true }`. `reatomForm` submit uses async data without status by default, so use `submit.ready()`, `submit.pending()`, and `submit.error()` for ordinary form UI unless you explicitly enabled status on a custom async action.
+- `submit.status()` is only usable when the underlying async extension was configured with `{ status: true }`. `reatomForm` submit is built with `withAsyncData(...)`, so `.status()` throws by default. For ordinary form UI, use `submit.ready()`, `submit.pending()` (count), and `submit.error()` unless you explicitly enabled status on a separate custom async action.
 - **`fields.name.value()` is the user-facing value**; `fields.name.set(value)` and `fields.name.change(value)` write it. The bare `field()` returns the underlying state, which may differ from `value` when `fromState`/`toState` transformers are used. Default to `value` and `change` in UI code.
 - `bindField` does NOT work with controls whose `onChange` receives a raw value instead of a DOM event. Wire `value`/`onChange`/`onBlur`/`onFocus` manually using `field.change(v)` / `field.focus.in()` / `field.focus.out()`. After `clearStack()` those manual handlers must be `wrap()`-ed; `bindField`'s returned handlers are pre-wrapped.
 - `form()` is the field set atom (returns values), not `form.getValues()`

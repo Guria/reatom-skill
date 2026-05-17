@@ -6,6 +6,8 @@ For greenfield work, treat this as the default sequence: scaffold, install the v
 
 This pipeline is intentionally **shift-left**: it is designed to surface tooling, context, and runtime-integration mistakes as early as possible, while the app is still cheap to correct.
 
+> **This applies to examples and demos too.** The validation pipeline is not ceremony for "later" or only for "real apps". It catches failures that `tsc --noEmit` and `vite build` will happily miss, especially strict-context runtime errors such as `missing async stack`, invalid async-status assumptions, and browser-only mount problems. If you deliberately want a lighter bootstrap, say what confidence is being traded away.
+
 > Prefer `npm create vite@latest` for the scaffold itself when practical. For packages installed after scaffolding, run `npm view <pkg> version` (or `dist-tags`) first.
 
 ## Execution guard for greenfield bootstraps
@@ -22,6 +24,17 @@ By default:
 6. **If the user intentionally wants a lighter path, say what is being skipped and why.** Adapt deliberately instead of drifting out of order by accident.
 
 If you catch yourself planning pages, routes, or models before Step 8, you are probably out of order. Stop, check whether the user explicitly narrowed the scope, and otherwise resume the checklist from the earliest incomplete step.
+
+Before substantial feature work, verify this gate explicitly:
+
+- [ ] scaffold exists and installs cleanly;
+- [ ] validation tooling is installed;
+- [ ] `npm run typecheck` passes;
+- [ ] `npm run lint` passes;
+- [ ] browser smoke test passes;
+- [ ] `npm run validate` is green.
+
+If any box is unchecked, the next task is still bootstrap work, not feature work.
 
 ## Table of contents
 
@@ -369,6 +382,13 @@ The exported `LOG` helper is the built-in Reatom `log` action. Prefer it over ad
 ## Step 10 — Vitest browser smoke test
 
 The validation pipeline should include one real-browser test from the start. Keep it intentionally small: render the app at `/` and assert the initial page appears. This catches both broken Vite/browser setup and the canonical strict-context runtime failures that only surface once the app mounts.
+
+Why this test matters even before feature work:
+
+- it proves the app can mount in a real browser, not just type-check or bundle;
+- it catches `missing async stack` failures caused by atom reads or render-time `wrap(...)` calls outside a reactive boundary;
+- it catches mistaken async-status assumptions that only throw once UI code runs;
+- it gives you a cheap regression check to rerun after adding the first route shell, form, or atom-driven component in a new layer.
 
 Give the initial page a stable heading or text marker, for example:
 

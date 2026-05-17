@@ -7,7 +7,7 @@
 [Source: `reatomComponent.ts`](https://github.com/reatom/reatom/blob/v1001/packages/react/src/reatomComponent.ts) · [Tests](https://github.com/reatom/reatom/blob/v1001/packages/react/src/reatomComponent.test.tsx)
 
 
-Wrap any React component that reads atom values with `reatomComponent`. This establishes a reactive subscription boundary — the component re-renders when read atoms change.
+Wrap any React component that reads atom values with `reatomComponent`. Under strict setup (`clearStack()`), extend that rule to components that create Reatom callbacks during render too — for example `wrap(...)` handlers, route checks, or other render-time reads of Reatom primitives. `reatomComponent` establishes the reactive boundary the render needs, and the component re-renders when the read atoms change.
 
 ```tsx
 import { reatomComponent } from '@reatom/react'
@@ -17,7 +17,26 @@ const Counter = reatomComponent(() => {
 })
 ```
 
-Components that call atom getters must be wrapped with `reatomComponent`; this applies to extracted child/row components as well as page-level components.
+Components that call atom getters must be wrapped with `reatomComponent`; this applies to extracted child/row components, tiny helper components, navigation items, and root/page components alike. If a component looks "too small to matter" but it reads a Reatom primitive or calls `wrap(...)` while rendering, it still needs the wrapper.
+
+### Practical audit rule
+
+When editing or generating React UI under strict setup, treat this as a mechanical check:
+
+A component should be `reatomComponent` if its render path does any of these:
+
+- calls an atom/computed getter such as `someAtom()` or `someComputed()`;
+- calls a route getter/check such as `someRoute()`, `someRoute.match()`, or `someRoute.exact()`;
+- creates a wrapped callback during render, such as `onClick={wrap(...)}` or `const onSubmit = wrap(...)`;
+- reads Reatom async/form helper atoms such as `.data()`, `.ready()`, `.error()`, `.pending()`, or `.status()`.
+
+`useAtom` / `useAction` components are the main exception: those hooks establish their own subscription boundary, so the component can stay a plain React function component.
+
+After a larger UI pass, do a quick audit of plain function components and verify each remaining one is truly Reatom-free. A simple starting grep is:
+
+```bash
+grep -rn "^function\|^const .*=(" src/ --include="*.tsx" | grep -v "reatomComponent"
+```
 
 **v1001+ appeared:** `reatomComponent` accepts `{ abortOnUnmount?: boolean }` and defaults it to `false`. Set `abortOnUnmount: true` only to restore v1000-style abort-on-unmount behavior.
 
@@ -133,7 +152,7 @@ UI event handlers, timers, and any host-scheduled callback run in a fresh execut
 
 Adapter helpers that *produce* callbacks for you (form binders, link/navigation generators, async sampling primitives like `take`/`onEvent`) wrap internally so you don't double-wrap. Callbacks you write by hand — custom buttons, link-style anchors, `setTimeout`, `requestAnimationFrame`, observers, message-port handlers, or any UI control whose `onChange` hands you a raw value — do not. The rule of thumb: if the callback was constructed by you and reads or writes a Reatom primitive, it needs `wrap()`.
 
-The place where you call `wrap(...)` matters too. `wrap()` captures the current Reatom frame at call time, so creating wrapped callbacks directly inside JSX is only safe when that render already runs inside a reactive boundary such as `reatomComponent`. In a plain function component, `onClick={wrap(doSomething)}` can fail under `clearStack()` because the wrap call itself happens during a non-Reatom React render. Fix that by converting the component to `reatomComponent`, or by pre-wrapping the callback in a reactive caller and passing the wrapped function down as a prop.
+The place where you call `wrap(...)` matters too. `wrap()` captures the current Reatom frame at call time, so creating wrapped callbacks directly inside JSX is only safe when that render already runs inside a reactive boundary such as `reatomComponent`. In a plain function component, `onClick={wrap(doSomething)}` or `const handleClick = wrap(doSomething)` can fail under `clearStack()` because the `wrap(...)` call itself happens during a non-Reatom React render. Fix that by converting the component to `reatomComponent`, or by pre-wrapping the callback in a reactive caller and passing the wrapped function down as a prop.
 
 ### React is only the view adapter
 
@@ -142,7 +161,7 @@ In a Reatom app, React should render and bind atoms; it should not own model inv
 React built-in hooks are fine for isolated view/DOM integration: refs, focus, measurement, portals, media-query/read-only browser data, third-party UI-library hooks, memoizing expensive view calculations, stable DOM callbacks, or ephemeral widget state that does not affect application behavior. This warning is about React owning or synchronizing application state; it is not a ban on `@reatom/react` adapter APIs such as `reatomComponent`, `useAtom`, or `useWrap` when a codebase intentionally uses hook-style integration.
 
 - Do not use React `useEffect`/`useState` to synchronize or mutate Reatom model state. Put state transitions in atoms, actions, computeds, or Reatom hooks/extensions.
-- Components that call atom getters must be wrapped with `reatomComponent`; this applies to extracted child/row components as well as page-level components.
+- Components that read Reatom primitives during render must be wrapped with `reatomComponent`; this includes extracted child/row helpers, navigation items, and root/page components. Under `clearStack()`, treat render-time `wrap(...)` creation the same way.
 - **Passing atoms as props is perfectly valid** — unlike Redux where passing state to children is sometimes discouraged, Reatom atoms are first-class primitives. Passing them as props (e.g., `<CheckboxField field={form.fields.rememberMe} />`) is the standard way to build abstract, reusable components and avoid prop drilling of values.
 
 ## Initial render and instant async completion

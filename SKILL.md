@@ -407,7 +407,7 @@ Keep this section as the always-loaded warning list. For detail, read the linked
 
 ### Async, lifecycle, build
 
-- `status` is disabled by default on `withAsync` / `withAsyncData`; pass `{ status: true }` before calling `.status()`.
+- `status` is disabled by default on `withAsync` / `withAsyncData`; pass `{ status: true }` before calling `.status()`. For form submit UI, default to `.ready()`, `.pending()`, and `.error()` unless the submit action was explicitly extended with status.
 - Async helper atoms are atom getters: call `.data()`, `.ready()`, `.error()`, `submit.error()`. Do not destructure them into inert values.
 - `status.isPending` and friends are properties, not functions. `status.error` does not exist; use the target's `.error()` atom.
 - `withAsyncData` overload trap: when using `initState`, let TypeScript infer from `initState` or annotate the value; do not force a generic that selects the no-`initState` overload.
@@ -462,8 +462,8 @@ Read [`references/features/forms.md`](references/features/forms.md) for field AP
 Read [`references/integrations/react.md`](references/integrations/react.md) for StrictMode and consumption patterns.
 
 - Treat React as a rendering adapter. React-owned domain state/effects are an architectural smell, but React hooks are fine for view-only DOM glue and memoization.
-- Prefer `reatomComponent`; `useAtom` / `useAction` are valid when matching an existing hook-style codebase. Components that call atom getters must be `reatomComponent`; `useAtom`-based components do not need that wrapper because the hook manages subscription.
-- Do not call `wrap(...)` directly in JSX of a plain function component under strict setup. `wrap()` captures the current Reatom frame at call time, so create wrapped callbacks inside `reatomComponent` (or another reactive caller), or pass pre-wrapped callbacks down as props.
+- Prefer `reatomComponent`; `useAtom` / `useAction` are valid when matching an existing hook-style codebase. Components that call atom getters must be `reatomComponent`; this includes root components, extracted child/row helpers, and navigation items, not just obvious page components. `useAtom`-based components do not need that wrapper because the hook manages subscription.
+- Do not call `wrap(...)` directly in JSX of a plain function component under strict setup. `wrap()` captures the current Reatom frame at call time, so create wrapped callbacks inside `reatomComponent` (or another reactive caller), or pass pre-wrapped callbacks down as props. Treat `const handler = wrap(...)` inside a plain component render as the same mistake.
 - Do not gate first-render boot/auth solely on `.ready()` from an async atom that may resolve immediately before `reatomComponent` subscribes. Use a synchronous source (persisted token, URL, route params, explicit init atom) for initial branching.
 - Passing atoms as props is recommended for reusable components; avoiding atom props is a Redux intuition, not a Reatom rule.
 - v1001 `reatomComponent` defaults `abortOnUnmount: false`; v1000 can throw `AbortError: Component unmount` in React StrictMode, so either disable StrictMode for v1000 or use strict context setup. Set `{ abortOnUnmount: true }` only when v1000-style cancellation is wanted.
