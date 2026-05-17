@@ -164,15 +164,21 @@ For v1001-only APIs (layout routes, URL codecs, action `(payload, params)` subsc
 
 ## Step 3 — `tsconfig.json`
 
-Reatom requires an `es2017+` TypeScript target so `wrap()` keeps native async/await microtask semantics. In an existing or freshly scaffolded `tsconfig.json`, check this specific option:
+Reatom leans heavily on TypeScript inference and typed composition, so the type system should be treated as part of the app architecture rather than optional polish. Reatom also requires an `es2017+` TypeScript target so `wrap()` keeps native async/await microtask semantics. In an existing or freshly scaffolded `tsconfig.json`, check at least these options:
 
 ```jsonc
 {
   "compilerOptions": {
-    "target": "es2022" // any es2017+ target is acceptable
+    "target": "es2022", // any es2017+ target is acceptable
+    "strict": true,
+    "noImplicitAny": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true
   }
 }
 ```
+
+Avoid normalizing unsafe escape hatches into the codebase. `any`, broad `as` assertions, double-casts (`as unknown as T`), and casual non-null assertions (`!`) tend to hide modeling problems that TypeScript could catch earlier. Prefer `satisfies` for declarative objects and configuration shapes when you want conformance checks without throwing away useful inference.
 
 Keep the rest of the scaffold's TypeScript settings unless the project has a separate reason to change them.
 
@@ -207,7 +213,7 @@ If using `@reatom/jsx` instead of React, drop `@vitejs/plugin-react` and configu
 
 ## Step 5 — oxlint configuration (`.oxlintrc.json`)
 
-oxlint reads `.oxlintrc.json` (or `oxlint.json`). The `eslint/no-restricted-imports` rule below is the **non-negotiable Reatom default** — it stops React app state from leaking into the codebase. Adjust other rules to taste.
+oxlint reads `.oxlintrc.json` (or `oxlint.json`). The `eslint/no-restricted-imports` rule below is the **non-negotiable Reatom default** — it stops React app state from leaking into the codebase. The lint baseline should also keep `any` out of day-to-day code, because once `any` becomes acceptable it quickly erodes the inference the rest of the model relies on. Adjust other rules to taste.
 
 If the scaffold already ships with ESLint, decide explicitly whether ESLint stays. The default recommendation in this skill is **one primary linter** (`oxlint`). Keep both only when the project truly depends on ESLint-only rules/plugins and you can explain why the overlap is worth it.
 
@@ -221,6 +227,7 @@ If the scaffold already ships with ESLint, decide explicitly whether ESLint stay
   },
   "plugins": ["typescript", "react", "import"],
   "rules": {
+    "typescript/no-explicit-any": "error",
     "eslint/no-restricted-imports": [
       "error",
       {
@@ -251,6 +258,8 @@ If the scaffold already ships with ESLint, decide explicitly whether ESLint stay
 ```
 
 Why these specific names? Each one represents React owning state, effects, memoization, or identity that Reatom should own instead. See `../../reatom/references/core/patterns.md` and the **React-owned app state** anti-pattern in `../../reatom/SKILL.md` for the rationale. If you intentionally need one of these for *view-only* concerns (e.g. `useRef` for DOM focus), add a narrow `// oxlint-disable-next-line` with a comment justifying the carve-out.
+
+Keep `typescript/no-explicit-any` enabled as `error`. If a boundary value is genuinely unknown, model it as `unknown`, validate or narrow it, and only then pass it into state or actions. That keeps the type guarantees intact instead of bypassing them with local suppressions.
 
 If the project uses `@reatom/jsx` (no React), replace `"name": "react"` with the relevant target or remove the rule — it's only meaningful when React is on the dependency tree.
 

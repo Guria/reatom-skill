@@ -461,6 +461,10 @@ Read [`references/features/forms.md`](references/features/forms.md) for field AP
 
 Read [`references/integrations/react.md`](references/integrations/react.md) for StrictMode and consumption patterns.
 
+- Reatom leans heavily on TypeScript inference, so unsafe typing should be treated as architecture debt rather than a harmless shortcut.
+- Do not introduce `any` into the codebase. Keep `no-explicit-any` enforced and avoid silencing it just to push a change through.
+- Avoid unsafe assertions when a better type model can express the contract: broad `as` casts, double-casts (`as unknown as T`), and casual non-null assertions (`!`) usually hide missing guards or unclear data flow. Prefer parsers, guards, local narrowing, explicit unions, and helper types.
+- Prefer `satisfies` for declarative objects and configuration-like shapes when you want conformance checks without throwing away inference.
 - Treat React as a rendering adapter. React-owned domain state/effects are an architectural smell, but React hooks are fine for view-only DOM glue and memoization.
 - Prefer `reatomComponent`; `useAtom` / `useAction` are valid when matching an existing hook-style codebase. Components that call atom getters must be `reatomComponent`; this includes root components, extracted child/row helpers, and navigation items, not just obvious page components. `useAtom`-based components do not need that wrapper because the hook manages subscription.
 - Do not call `wrap(...)` directly in JSX of a plain function component under strict setup. `wrap()` captures the current Reatom frame at call time, so create wrapped callbacks inside `reatomComponent` (or another reactive caller), or pass pre-wrapped callbacks down as props. Treat `const handler = wrap(...)` inside a plain component render as the same mistake.
