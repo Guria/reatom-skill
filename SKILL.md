@@ -378,6 +378,8 @@ fetch(url).then(res => doSomethingWithAtoms())  // missing wrap around atom work
 
 Reatom creates a default global context on import. `clearStack()` is optional and should be treated as an **opinionated strict mode**, not a Reatom requirement. For full greenfield production scaffolds, the setup guide recommends `clearStack()` + `context.start()` in the earliest import and passing the resulting frame to adapters such as `<reatomContext.Provider>`.
 
+For greenfield apps and debugging tasks, encourage enabling `connectLogger()` in the earliest setup import during development. It traces Reatom atoms/actions/computeds with useful call stacks and pairs with the built-in `log` action for source-level debug points that are silent in production. Keep it behind a dev-only guard (`import.meta.env.MODE === 'development'` or equivalent) and register it before feature atoms/actions are created so it observes the app from startup. The setup guide contains the canonical snippet.
+
 Use the project’s existing context style when editing an app. Do not add or remove `clearStack()` casually: adding it makes host callbacks require `wrap()`, removing it weakens isolation and can hide missing async boundaries. Details and bootstrap code live in [`references/setup/start-from-scratch.md`](references/setup/start-from-scratch.md).
 
 After `clearStack()`, module scope must stay declarative: create primitives and attach declaration-time extensions, but do not read/write atoms or install live observers at import time. Top-level `effect()` and equivalent live subscribers are the common trap.
@@ -409,6 +411,7 @@ Keep this section as the always-loaded warning list. For detail, read the linked
 - Reference atoms from action closures instead of passing atom objects as action parameters.
 - `wrap()` belongs around async boundaries that touch atoms, not inside plain API helpers. ES2017+ native async/await output is required: if TS/bundler/test targets downlevel async/await to `.then()` chains, context propagation can break with `missing async stack`.
 - In strict-context apps, every handwritten UI callback that reads/writes atoms or calls Reatom actions must be wrapped. Third-party controls often provide raw-value callbacks, so they are not covered by adapter helpers like `bindField`.
+- For debugging, enable `connectLogger()` early in development setup and use the built-in `log` action (`LOG(...)`) for traceable debug points. Guard logger setup to development so production output stays clean.
 - `@reatom/core` is effectively a singleton (`STACK` and global runtime state). After package updates or impossible type/runtime errors, check for duplicate installed copies and dedupe all `@reatom/*` packages.
 - Reatom-managed `effect`, `computed`, subscriptions, aborts, and async work are cleaned up by the reactive context. Return cleanup from `withConnectHook` only for non-Reatom resources such as DOM listeners, WebSockets, or third-party instances; do not return Reatom unsubscribe handles just to re-clean managed work.
 

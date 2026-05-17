@@ -16,7 +16,7 @@ Use this when bootstrapping a brand-new project around Reatom. The default stack
 - [Step 7 — fallow (code intelligence)](#step-7--fallow-code-intelligence)
 - [Step 8 — npm scripts (`package.json`)](#step-8--npm-scripts-packagejson)
 - [Step 9 — Pre-commit hook (lefthook)](#step-9--pre-commit-hook-lefthook)
-- [Step 10 — Reatom app entry (strict context, recommended)](#step-10--reatom-app-entry-strict-context-recommended)
+- [Step 10 — Reatom app entry (strict context + dev logger, recommended)](#step-10--reatom-app-entry-strict-context--dev-logger-recommended)
 - [Step 11 — Vitest browser smoke test](#step-11--vitest-browser-smoke-test)
 - [Step 12 — Final validation run](#step-12--final-validation-run)
 - [Reading list for the next steps](#reading-list-for-the-next-steps)
@@ -290,14 +290,25 @@ Install:
 npx lefthook install
 ```
 
-## Step 10 — Reatom app entry (strict context, recommended)
+## Step 10 — Reatom app entry (strict context + dev logger, recommended)
 
 ```ts
 // src/setup.ts — import this file BEFORE any atoms or components
-import { clearStack, context } from '@reatom/core'
+import { clearStack, connectLogger, context, log } from '@reatom/core'
 
 clearStack()
 export const rootFrame = context.start()
+
+if (import.meta.env.MODE === 'development') {
+  connectLogger()
+}
+
+declare global {
+  // Handy source-level debug helper: LOG('label', value)
+  var LOG: typeof log
+}
+
+globalThis.LOG = log
 ```
 
 ```tsx
@@ -315,7 +326,21 @@ createRoot(document.getElementById('root')!).render(
 )
 ```
 
-See `SKILL.md` → "App Setup — optional clearStack and context.start" for when to use this strict setup vs the default global context.
+See `SKILL.md` → "App Setup — context options" for when to use this strict setup vs the default global context.
+
+`connectLogger()` is strongly recommended for new apps while the model and file boundaries are still forming. It makes atom/action/computed flow visible in the console, traces relative call stacks, and helps catch accidental duplicate work or missing async boundaries before the app grows. Keep it dev-only and register it in `src/setup.ts` before importing modules that create Reatom primitives. For noisy apps, filter or highlight logs:
+
+```ts
+connectLogger({
+  match: (name, { state }) => {
+    if (name.includes('internal')) return false
+    if (name.includes('error')) return state?.code === 403 ? 'orange' : 'red'
+    return true
+  },
+})
+```
+
+The exported `LOG` helper is the built-in Reatom `log` action. Prefer it over ad-hoc `console.log` inside Reatom code because it participates in Reatom tracing and can remain in source; with the dev-only logger guard, these logs stay out of production output.
 
 **Cost of the strict setup**: with `clearStack()` in place, every host-scheduled callback that touches Reatom (UI event handlers, timers, third-party listeners, etc.) must be wrapped with `wrap()` so it re-enters a reactive frame. Adapter helpers that produce callbacks for you wrap internally; ones you author by hand do not. If the discipline is too heavy for an exploratory codebase or one with a large hand-written event surface, drop `clearStack()` and use the default global context: you trade strict early-failure mode for ergonomics.
 
