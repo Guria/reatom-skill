@@ -41,7 +41,7 @@ Reference files link back to canonical source on `github.com/reatom/reatom@v1001
 
 1. **Progressive disclosure.** SKILL.md stays under ~500 lines and covers orientation plus highest-priority warnings; deep topics live in `references/` and are read on demand.
 2. **Validate against source.** API claims, defaults, and gotchas should be checked against `github.com/reatom/reatom` at the v1001 branch tip used during authoring.
-3. **Opinionated setup defaults.** The setup guide suggests a verifiable production toolchain (`oxlint` + `oxfmt` + `fallow`, TS 6, Vite 8, lefthook) and an optional `no-restricted-imports` rule to discourage React-owned app state. These are defaults, not Reatom requirements.
+3. **Opinionated setup defaults.** The setup guide suggests a verifiable production toolchain (`oxlint` + `oxfmt` + `fallow`, TypeScript, Vite, browser smoke tests) and an optional `no-restricted-imports` rule to discourage React-owned app state. These are defaults, not Reatom requirements.
 4. **Version-sensitive.** Routing, action subscription shape, and `reatomComponent` defaults differ between v1000 and v1001; the skill flags every such API explicitly.
 
 ## Installation

@@ -17,10 +17,9 @@ For greenfield work, treat this as the default sequence: scaffold, install the v
 - [Step 6 — oxfmt configuration](#step-6--oxfmt-configuration)
 - [Step 7 — fallow (code intelligence)](#step-7--fallow-code-intelligence)
 - [Step 8 — npm scripts (`package.json`)](#step-8--npm-scripts-packagejson)
-- [Step 9 — Pre-commit hook (lefthook)](#step-9--pre-commit-hook-lefthook)
-- [Step 10 — Reatom app entry (strict context + dev logger, recommended)](#step-10--reatom-app-entry-strict-context--dev-logger-recommended)
-- [Step 11 — Vitest browser smoke test](#step-11--vitest-browser-smoke-test)
-- [Step 12 — Final validation run](#step-12--final-validation-run)
+- [Step 9 — Reatom app entry (strict context + dev logger, recommended)](#step-9--reatom-app-entry-strict-context--dev-logger-recommended)
+- [Step 10 — Vitest browser smoke test](#step-10--vitest-browser-smoke-test)
+- [Step 11 — Final validation run](#step-11--final-validation-run)
 - [Reading list for the next steps](#reading-list-for-the-next-steps)
 - [After bootstrap — report pitfalls back to the user](#after-bootstrap--report-pitfalls-back-to-the-user)
 
@@ -42,7 +41,6 @@ Keep this table as package selection guidance, not a version source. Package ver
 | Code intelligence | `fallow` | Graph/health checks for unused code, cycles, duplication, complexity |
 | Test runner | `vitest`, `@vitest/browser`, `@vitest/browser-playwright` | Browser smoke test baseline |
 | Browser provider | `playwright` | Install browser binaries after package install |
-| Git hooks | `lefthook` | Optional local guard; do not stage/commit without user approval |
 | Schema (optional) | `zod`, `valibot`, `arktype`, or another Standard Schema library | Prefer whatever the target project already uses |
 
 Adjust freely if the user requested:
@@ -74,7 +72,7 @@ If the project should have its own git repo and the parent is not already one, i
 git rev-parse --is-inside-work-tree >/dev/null 2>&1 || git init -b main
 ```
 
-Do not stage or commit unless the user explicitly asks. If they do want a baseline commit, do it after Step 12 so the validated bootstrap state is captured before feature work begins.
+Do not stage or commit unless the user explicitly asks. If they do want a baseline commit, do it after Step 11 so the validated bootstrap state is captured before feature work begins.
 
 Verify non-template packages right before installing them:
 
@@ -95,7 +93,7 @@ npm view playwright dist-tags
 
 ```bash
 # Vite's TypeScript template already installs vite/typescript and the framework plugin.
-npm i -D oxlint@latest oxfmt@latest fallow@latest lefthook@latest \
+npm i -D oxlint@latest oxfmt@latest fallow@latest \
         vitest@latest @vitest/browser@latest @vitest/browser-playwright@latest \
         playwright@latest
 npx playwright install chromium
@@ -202,7 +200,7 @@ If the project uses `@reatom/jsx` (no React), replace `"name": "react"` with the
 oxfmt currently follows oxc defaults; configuration is minimal at this version. Pin it to the project and run via npm scripts:
 
 ```bash
-npx oxfmt --check .   # CI / pre-commit
+npx oxfmt --check .   # CI / local validation
 npx oxfmt .           # write
 ```
 
@@ -273,43 +271,11 @@ Avoid invented commands such as `fallow analyze` or `fallow.config.json` unless 
 }
 ```
 
-`npm run validate` is the single entry point for CI and pre-push checks. Pre-commit can run faster staged lint/format plus tests, but the bootstrap is not complete until the full validate command passes.
+`npm run validate` is the single entry point for CI and local validation. The bootstrap is not complete until the full validate command passes.
 
 Keep typecheck and emit separate: either set `"noEmit": true` in the TypeScript config or pass `--noEmit` in typecheck/build scripts.
 
-## Step 9 — Pre-commit hook (lefthook)
-
-```yaml
-# lefthook.yml
-pre-commit:
-  parallel: true
-  commands:
-    typecheck:
-      run: npm run typecheck
-    lint:
-      run: npx oxlint --fix {staged_files}
-      stage_fixed: true
-      glob: "*.{ts,tsx,js,jsx}"
-    test:
-      run: npm run test
-    format:
-      run: npx oxfmt {staged_files}
-      stage_fixed: true
-      glob: "*.{ts,tsx,js,jsx,json,md}"
-
-pre-push:
-  commands:
-    validate:
-      run: npm run validate
-```
-
-Install:
-
-```bash
-npx lefthook install
-```
-
-## Step 10 — Reatom app entry (strict context + dev logger, recommended)
+## Step 9 — Reatom app entry (strict context + dev logger, recommended)
 
 ```ts
 // src/setup.ts — import this file BEFORE any atoms or components
@@ -365,7 +331,7 @@ The exported `LOG` helper is the built-in Reatom `log` action. Prefer it over ad
 
 **Do not skip the validate pipeline for prototypes, examples, or demos.** The pipeline is intentionally Step 2 — before any feature code — because the issues it catches (missing `wrap()` boundaries, circular imports, React state leaking into the Reatom layer, stale async context) are invisible at first and expensive to retrofit. An example that skips lint/format/testing/strict-context teaches patterns that break in any real app following the recommended setup. If the project scope is intentionally small, the pipeline still applies — just keep the initial smoke test and lint config proportionally simple.
 
-## Step 11 — Vitest browser smoke test
+## Step 10 — Vitest browser smoke test
 
 The validation pipeline should include one real-browser test from the start. Keep it intentionally small: render the app at `/` and assert the initial page appears. This catches both broken Vite/browser setup and the canonical strict-context runtime failures that only surface once the app mounts.
 
@@ -412,7 +378,7 @@ test('renders the initial page at root', async () => {
 
 Replace `My App` with the actual stable text for the generated landing page. If the project plans to write meaningful Reatom unit tests beyond this browser smoke check, also pull the `test` utility from the reusables registry (`npx jsrepo add test` after initializing jsrepo against [reatom/reusables](https://github.com/reatom/reusables)). It bundles a Vitest wrapper with automatic Reatom context lifecycle and mock-subscription helpers. See [`../meta/reusables.md`](../meta/reusables.md) for the wider catalog.
 
-## Step 12 — Final validation run
+## Step 11 — Final validation run
 
 Do not report bootstrap completion until the validation pipeline is green. At minimum, lint, tests, and format-check must pass; keep typecheck and fallow in the same command so CI has one entry point:
 
