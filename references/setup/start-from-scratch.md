@@ -155,6 +155,8 @@ If using `@reatom/jsx` instead of React, drop `@vitejs/plugin-react` and configu
 
 oxlint reads `.oxlintrc.json` (or `oxlint.json`). The `eslint/no-restricted-imports` rule below is the **non-negotiable Reatom default** — it stops React app state from leaking into the codebase. Adjust other rules to taste.
 
+If the scaffold already ships with ESLint, decide explicitly whether ESLint stays. The default recommendation in this skill is **one primary linter** (`oxlint`). Keep both only when the project truly depends on ESLint-only rules/plugins and you can explain why the overlap is worth it.
+
 ```jsonc
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
@@ -278,6 +280,8 @@ Use this as the recommended shape for a single validation entry point, then twea
 ```
 
 `npm run validate` is the single entry point for CI and local validation. The bootstrap is not complete until the full validate command passes, and the `postvalidate` hook reminds the agent to read `@references/meta/feedback-loop.md` for the bootstrap pitfall summary.
+
+If the scaffold still has an ESLint setup, either replace it with this oxlint-first baseline or keep both with a deliberate note about why ESLint remains. Avoid drifting into a redundant two-linter setup by accident.
 
 Keep typecheck and emit separate: either set `"noEmit": true` in the TypeScript config or pass `--noEmit` in typecheck/build scripts.
 

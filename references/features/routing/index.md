@@ -55,6 +55,15 @@ const goodsRoute = reatomRoute({
 })
 goodsRoute.go({ category: 'tech', sort: 'asc' })  // /goods/tech?sort=asc
 
+// ⚠️ Routes with `search` often still want an explicit object on `.go(...)`,
+// even when the search schema has defaults. Treat navigation as writing a URL
+// shape, not as "the route will fill everything in for me".
+const tasksRoute = reatomRoute({
+  path: 'tasks',
+  search: z.object({ q: z.string().default(''), status: z.enum(['all', 'open']).default('all') }),
+})
+tasksRoute.go({ q: '', status: 'all' })
+
 // Current URL - urlAtom() returns a URL OBJECT, not a string!
 const url = urlAtom()
 url.pathname  // '/users/123'

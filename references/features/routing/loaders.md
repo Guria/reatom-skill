@@ -40,7 +40,9 @@ Prefer handling loader state in the route `render(self)` instead of inside the p
 
 Keep `render(self)` as a route orchestration boundary, not as the page implementation. It should usually compose layouts/outlets, branch on loader/auth/route state, wire retry/navigation callbacks, and pass concrete data or scoped models into route-neutral components. Put substantial page markup, tables, forms, dashboards, and widgets in components imported by the route module. This keeps the route tree readable while preserving the TypeScript narrowing and async UX benefits of route-level status handling.
 
-With concrete loader payloads (no `undefined` branches), TypeScript narrows `status.data` to the full loader type in refresh branches. The branch order handles edge cases: `isFirstPending` covers the initial load, `isRejected` covers failures without usable data, and `isPending && isEverSettled` preserves settled content during background refresh. Only add a `status.data !== undefined` guard if the loader itself can return `undefined` in some branch.
+With concrete loader payloads (no `undefined` branches), TypeScript usually narrows `status.data` to the full loader type in refresh branches. The branch order handles edge cases: `isFirstPending` covers the initial load, `isRejected` covers failures without usable data, and `isPending && isEverSettled` preserves settled content during background refresh.
+
+In practice, some TypeScript versions/toolchains still refuse to narrow as far as intended in a stale-refresh branch. If that happens, do not fight the type system for half a file: capture a local `const data = status.data` and add a tiny fallback guard before rendering the settled branch. That is a tooling workaround, not a sign that the route pattern is wrong.
 
 ```typescript
 const userRoute = reatomRoute({
