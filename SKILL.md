@@ -467,7 +467,7 @@ Read [`references/integrations/react.md`](references/integrations/react.md) for 
 - Passing atoms as props is recommended for reusable components; avoiding atom props is a Redux intuition, not a Reatom rule.
 - v1001 `reatomComponent` defaults `abortOnUnmount: false`; v1000 can throw `AbortError: Component unmount` in React StrictMode, so either disable StrictMode for v1000 or use strict context setup. Set `{ abortOnUnmount: true }` only when v1000-style cancellation is wanted.
 - Capture atom getter results once for TypeScript narrowing; repeated calls break narrowing.
-- `Action` type does not include extension-added `.status()`; define a local extended interface when needed. `ReatomForm` is not exported; type forms inline from the returned value. Prefer `React.ReactNode` over `JSX.Element` for renderable children.
+- `Action` type does not include extension-added `.status()`; define a local extended interface when needed. `ReatomForm` is not exported; type forms inline from the returned value.
 
 ## Package Index
 

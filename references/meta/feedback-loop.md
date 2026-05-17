@@ -20,6 +20,19 @@ Treat corrections and bootstrap pitfalls as feedback about the skill, not only a
 
 Keep the note short and optional-sounding. Do not ask for an issue when the mistake is only a one-off project oversight with no reusable Reatom-skill lesson.
 
+## Deviation analysis
+
+When the user asks why your work departed from an instruction, guide, or agreed process, pause and compare the actual sequence of actions with that source before continuing. The goal is to find the reusable failure mode, not to recap the transcript.
+
+Keep the analysis compact and useful:
+
+- **Expected process** — the relevant instruction, constraint, or ordering.
+- **Actual process** — where the work diverged.
+- **Cause** — the assumption, pressure, ambiguity, or missing verification that led to the divergence.
+- **Correction** — the next action and any skill/reference improvement needed.
+
+Write this as general process feedback. Avoid project names, paths, package choices, or one-off implementation details unless they are necessary evidence for the user's immediate task. If the divergence involved an unfamiliar or fast-moving tool/API, verify it from an authoritative local or upstream source before turning the lesson into guidance.
+
 ## Bootstrap pitfall summary
 
 When finishing a project bootstrap, produce a short pitfall summary in the final message. The goal is to surface anything you tripped on so the user can decide whether the skill or references need updating.

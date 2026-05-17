@@ -1,8 +1,10 @@
 # Starting a Reatom Project From Scratch
 
-Use this when bootstrapping a brand-new project around Reatom. The default stack below is opinionated for production use; **adjust any layer if the user already specified a preference**. If the user has not, **use this default and verify the current latest versions with the available tooling before pinning** (`npm view <pkg> dist-tags`).
+Use this when bootstrapping a brand-new project around Reatom. The default stack below is opinionated for production use; **adjust any layer if the user already specified a preference**. If the user has not, **use this default and verify current package versions with the available tooling before pinning** (`npm view <pkg> dist-tags`).
 
-> Use `npm create vite@latest` for the scaffold itself. For packages installed after scaffolding, run `npm view <pkg> version` (or `dist-tags`) first. Versions in this file are verified examples, not pins.
+For greenfield work, treat this as the default sequence: scaffold, install the validation pipeline, configure quality gates, run validation, then write feature code. Existing examples are useful for local style and package shape, but sample them narrowly so they do not replace the bootstrap sequence.
+
+> Prefer `npm create vite@latest` for the scaffold itself when practical. For packages installed after scaffolding, run `npm view <pkg> version` (or `dist-tags`) first.
 
 ## Table of contents
 
@@ -24,27 +26,24 @@ Use this when bootstrapping a brand-new project around Reatom. The default stack
 
 ## Default stack (verify before installing)
 
-| Layer | Package | Verified latest at writing time |
+Keep this table as package selection guidance, not a version source. Package versions move faster than this skill, so verify dist-tags immediately before installing and let the scaffold choose its own matching dev dependencies where possible.
+
+| Layer | Package | Notes |
 |---|---|---|
-| Language | `typescript` | `6.0.3` (`latest` dist-tag) |
-| Bundler / dev server | `vite` | `8.0.13` (`latest` dist-tag, requires Node `^20.19.0 \|\| >=22.12.0`) |
-| React plugin | `@vitejs/plugin-react` | `6.0.2` (`latest` dist-tag) |
-| State | `@reatom/core` | `1001.0.0` (`latest` dist-tag) |
-| React adapter | `@reatom/react` | `1001.0.0` (`latest` dist-tag) |
-| Native JSX adapter | `@reatom/jsx` | `1000.1.0` (`latest` dist-tag) |
-| Vue adapter | `@reatom/vue` | `1000.0.0-alpha.31` in v1001 source; verify npm dist-tag before install |
-| Solid adapter | `@reatom/solid-js` | `1000.0.0-alpha.30` in v1001 source; verify npm dist-tag before install |
-| Preact adapter | `@reatom/preact` | `1000.0.0` (`latest` dist-tag) |
-| Lit adapter | `@reatom/lit` | `1000.0.0-alpha.32` in v1001 source; verify npm dist-tag before install |
-| Linter | `oxlint` | `1.65.0` ([oxc-project/oxc](https://github.com/oxc-project/oxc)) |
-| Formatter | `oxfmt` | `0.50.0` (`oxc-project/oxc` formatter; alpha — track upstream) |
-| Code intelligence | `fallow` | `2.75.0` ([fallow-rs/fallow](https://github.com/fallow-rs/fallow)) |
-| Test runner | `vitest` / `@vitest/browser` / `@vitest/browser-playwright` | verify npm dist-tags before install |
-| Browser provider | `playwright` | verify npm dist-tags before install |
-| Git hooks | `lefthook` | `2.1.6` (`latest` dist-tag) |
-| Schema (optional) | `zod` | `4.4.3` (Reatom forms/routing accept any [Standard Schema](https://github.com/standard-schema/standard-schema)) |
-| Schema (optional) | `valibot` | `1.4.0` (`latest` dist-tag) |
-| Schema (optional) | `arktype` | `2.2.0` (`latest` dist-tag) |
+| Language | `typescript` | Usually provided by the Vite template; keep target `es2017+` |
+| Bundler / dev server | `vite` | Prefer the current Vite scaffold; follow its Node version warning if shown |
+| React plugin | `@vitejs/plugin-react` | Only for React projects; normally provided by `react-ts` template |
+| State | `@reatom/core` | Install from the current v1000+/v1001 line unless matching an existing project |
+| React adapter | `@reatom/react` | Use for React projects |
+| Native JSX adapter | `@reatom/jsx` | Use when the project intentionally avoids React |
+| Other adapters | `@reatom/vue`, `@reatom/solid-js`, `@reatom/preact`, `@reatom/lit` | Verify published dist-tags; some adapters may lag core releases |
+| Linter | `oxlint` | Default fast lint choice; swap if the user/project prefers another linter |
+| Formatter | `oxfmt` | Default fast format choice; verify maturity and project preference |
+| Code intelligence | `fallow` | Graph/health checks for unused code, cycles, duplication, complexity |
+| Test runner | `vitest`, `@vitest/browser`, `@vitest/browser-playwright` | Browser smoke test baseline |
+| Browser provider | `playwright` | Install browser binaries after package install |
+| Git hooks | `lefthook` | Optional local guard; do not stage/commit without user approval |
+| Schema (optional) | `zod`, `valibot`, `arktype`, or another Standard Schema library | Prefer whatever the target project already uses |
 
 Adjust freely if the user requested:
 
@@ -53,9 +52,13 @@ Adjust freely if the user requested:
 - a different validator (Valibot, ArkType, etc.)
 - a different bundler (Rspack, Rsbuild, esbuild) — Reatom is bundler-agnostic provided the build target is `es2017+`
 
+Keep validation proportional, but do not silently drop quality gates just because the app is small, an example, or a prototype. `fallow`, browser smoke testing, and a single `validate` script are part of the recommended greenfield baseline. If the user wants a lighter setup, state what confidence is being traded away and keep the remaining checks runnable.
+
 ## Step 1 — Scaffold
 
-Use the official latest Vite CLI with a TypeScript template. For the default React stack:
+Use the official latest Vite CLI with a TypeScript template when it fits the task. It bakes in current Vite defaults and reduces hand-written config mistakes. Manual file-by-file scaffolding is acceptable in constrained environments (for example, embedding a standalone example in an existing repository), but say why and verify the result with the same install/typecheck/lint/test/build pipeline before treating it as equivalent to the CLI output.
+
+For the default React stack:
 
 ```bash
 npm create vite@latest my-app -- --template react-ts
@@ -207,30 +210,46 @@ Track [oxc-project/oxc](https://github.com/oxc-project/oxc) for upcoming config 
 
 ## Step 7 — fallow (code intelligence)
 
-fallow finds unused exports, circular imports, code duplication, and complexity hotspots. Keep it in the validate pipeline so dead code does not accumulate.
+fallow is codebase intelligence for JavaScript/TypeScript. It complements, rather than replaces, TypeScript and linting: TypeScript proves types, oxlint catches lint rules, while fallow inspects the project graph for unused files/exports/dependencies, circular dependencies, duplicate code, complexity hotspots, and optional architecture boundary rules. This is useful during bootstrap because dead exports and import cycles are easier to prevent while the structure is still moving.
+
+fallow is a recent tool and its CLI has changed quickly. Verify the installed CLI instead of assuming older command names or config keys:
 
 ```bash
-npx fallow init                  # generate fallow.config.json
-npx fallow analyze               # full report
-npx fallow analyze --json | jq   # machine-readable output for CI
+npx fallow --help
+npx fallow config-schema | head
 ```
 
-A reasonable starter `fallow.config.json`:
+Current baseline commands:
+
+```bash
+npx fallow init                         # generates .fallowrc.json by default
+npx fallow --quiet                      # combined dead-code + duplication + health report
+npx fallow --quiet --fail-on-issues     # validation gate for npm scripts / CI
+npx fallow --format json --quiet        # machine-readable output
+npx fallow audit --base main            # changed-file audit for PR/CI workflows
+```
+
+A small starter `.fallowrc.jsonc` can stay close to the generated config and tune severities through `rules`:
 
 ```jsonc
 {
-  "include": ["src/**/*.{ts,tsx}"],
-  "exclude": ["**/*.test.{ts,tsx}", "**/*.bench.{ts,tsx}"],
-  "checks": {
-    "unusedExports": "error",
-    "circularDependencies": "error",
-    "duplication": "warn",
-    "complexity": "warn"
+  "$schema": "https://raw.githubusercontent.com/fallow-rs/fallow/main/schema.json",
+  "entry": ["src/main.{ts,tsx}", "src/index.{ts,tsx}"],
+  "ignorePatterns": ["dist/**", "coverage/**"],
+  "duplicates": {
+    "minOccurrences": 3
+  },
+  "rules": {
+    "unused-files": "error",
+    "unused-exports": "error",
+    "unused-dependencies": "error",
+    "circular-dependencies": "error",
+    "boundary-violation": "error"
   }
 }
 ```
 
-Confirm exact keys with `npx fallow --help` before committing — fallow ships frequently.
+Avoid invented commands such as `fallow analyze` or `fallow.config.json` unless the local `--help` / `config-schema` output shows them. When an agent needs JSON output, prefer `--format json --quiet` and remember that issue findings may be a normal non-green result rather than a broken tool invocation.
 
 ## Step 8 — npm scripts (`package.json`)
 
@@ -245,7 +264,7 @@ Confirm exact keys with `npx fallow --help` before committing — fallow ships f
     "lint:fix": "oxlint --fix",
     "format": "oxfmt .",
     "format:check": "oxfmt --check .",
-    "intel": "fallow analyze",
+    "intel": "fallow --quiet --fail-on-issues",
     "typecheck": "tsc -b --noEmit",
     "test": "vitest run",
 

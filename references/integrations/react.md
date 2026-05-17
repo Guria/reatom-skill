@@ -178,4 +178,4 @@ StrictMode behavior is version-sensitive:
   const error = submit.error()
   {error && <div>{error.message}</div>}
   ```
-- **`JSX.Element` namespace may not be available** — use `React.ReactNode` instead
+- **`JSX.Element` namespace may not be available** — for renderable children/slots, import `ReactNode` as a type from `react` and use that instead

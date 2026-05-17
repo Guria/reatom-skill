@@ -40,7 +40,7 @@ const registerForm = reatomForm(
 
 registerForm.fields.email      // FieldAtom — atom with value, focus, validation, disabled
 registerForm.submit            // Action — call to submit
-registerForm.submit.error      // Error | undefined (property, NOT a function!)
+registerForm.submit.error()    // Error | undefined (atom getter — call it)
 registerForm.validation()      // { errors: FieldSetFieldError[], triggered: boolean }
 // Each FieldSetFieldError has: { field: FieldAtom, message: string, source: string }
 ```
@@ -116,6 +116,7 @@ submit.retry()  // retry last submission
 
 - `validation()` on a form returns a `FieldSetValidation` with `errors: FieldSetFieldError[]`, `triggered: boolean`, and `validating`. It does not have an `.error` string property — that only exists on individual field validation (`field.validation().error`). For form-level error display, read the first element from `errors` or aggregate them.
 - `submit.error` is an **ATOM** — call it: `submit.error()` not `submit.error`
+- `submit.status()` is only usable when the underlying async extension was configured with `{ status: true }`. `reatomForm` submit uses async data without status by default, so use `submit.ready()`, `submit.pending()`, and `submit.error()` for ordinary form UI unless you explicitly enabled status on a custom async action.
 - **`fields.name.value()` is the user-facing value**; `fields.name.set(value)` and `fields.name.change(value)` write it. The bare `field()` returns the underlying state, which may differ from `value` when `fromState`/`toState` transformers are used. Default to `value` and `change` in UI code.
 - `bindField` does NOT work with controls whose `onChange` receives a raw value instead of a DOM event (most third-party `<Select>` and `<Combobox>` components). Wire `value`/`onChange`/`onBlur`/`onFocus` manually using `field.change(v)` / `field.focus.in()` / `field.focus.out()`. After `clearStack()` those manual handlers must be `wrap()`-ed; `bindField`'s returned handlers are pre-wrapped.
 - `form()` is the field set atom (returns values), not `form.getValues()`
