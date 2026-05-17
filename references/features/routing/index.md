@@ -96,6 +96,12 @@ Two kinds of routes in **v1001+**:
 - **Layout routes** (`layout: true`) - render on any match, use `self.outlet()` to wrap child content. Use for shells, sidebars, protection layers.
 - **Page routes** (default) - render only on exact match. When a child is active, the page steps aside and its content bubbles up to the nearest layout's `outlet()`.
 
+For navigation highlighting, choose the predicate that matches the UX:
+- use `route.match()` for sections that should stay active while descendants are open
+- use `route.exact()` for index/home items (`path: ''`) or pages that should only be active on their exact URL
+
+An index route under a layout commonly matches descendant URLs for route activity/loader purposes, so using `match()` for its nav item can make both the index item and a child item active. Pair `exact()` active state with the index-loader guard described in [`loaders.md`](./loaders.md#index-child-loaders-under-layout-routes) when the index loader should only run on the parent URL.
+
 **v1000 migration note:** there is no `layout` option. A route with `render` behaves like a layout by default (`match()`); add `exactRender: true` for exact/page behavior. When migrating v1000 → v1001, add `layout: true` to old wrapper routes and remove `exactRender: true` from old page routes.
 
 ```typescript

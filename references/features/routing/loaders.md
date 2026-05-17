@@ -7,6 +7,7 @@
 ## Table of contents
 
 - [Route loaders - data fetching](#route-loaders---data-fetching)
+  - [Search params, controlled inputs, and stale loader data](#search-params-controlled-inputs-and-stale-loader-data)
   - [Identity-changing routes, parent loader data, and clean scoped state](#identity-changing-routes-parent-loader-data-and-clean-scoped-state)
     - [Index child loaders under layout routes](#index-child-loaders-under-layout-routes)
 - [Route loaders - factory pattern (forms + actions)](#route-loaders---factory-pattern-forms--actions)
@@ -82,6 +83,55 @@ const UserPage = reatomComponent(({
 ```
 
 For list/search routes, avoid replacing the whole page on every search-param change. With a concrete loader model, `isPending` after `isEverSettled` means "refreshing" — keep previous data rendered with a subtle pending indicator. When params identify a different entity, use the parent-loader pattern below instead of preserving the previous entity model.
+
+### Search params, controlled inputs, and stale loader data
+
+Stale-while-refresh has an important UI consequence: while a search-param-driven loader is pending, `status.data` may still be the previous fulfilled payload. That is useful for keeping tables and lists stable, but it makes loader fields a poor source of truth for high-frequency controlled inputs. If an input's `value` comes from `status.data.query` and `onChange` updates the route search, the next render may briefly reuse the old loader payload and overwrite what the user just typed.
+
+Use a dedicated atom for the live input value, and sync that atom to the URL when the value is part of navigation state. `withSearchParams` updates the URL from atom changes and initializes from the URL on matching paths; the route loader can still read the validated route search params for fetching.
+
+```typescript
+import { atom, withSearchParams } from '@reatom/core'
+
+const itemSearchAtom = atom('', 'itemSearch').extend(
+  withSearchParams('q', {
+    path: '/items/*',          // scope to the route subtree that owns this search value
+    replace: true,             // typing should not usually add a history entry per keypress
+    serialize: (value) => value || undefined,
+  }),
+)
+
+const itemsRoute = rootRoute.reatomRoute({
+  path: 'items',
+  search: z.object({ q: z.string().default('') }),
+  async loader({ q }) {
+    const items = await wrap(api.searchItems(q))
+    return { items }
+  },
+  render(self) {
+    const status = self.loader.status()
+    if (status.isFirstPending) return <PageSkeleton />
+    if (status.isFulfilled || (status.isPending && status.isEverSettled)) {
+      return <ItemsPage items={status.data.items} refreshing={status.isPending} />
+    }
+    if (status.isRejected) return <PageError error={self.loader.error() ?? new Error('Failed to load items')} />
+    return <PageSkeleton />
+  },
+})
+
+const ItemsPage = reatomComponent(({ items, refreshing }: { items: Item[]; refreshing?: boolean }) => {
+  return <>
+    <input
+      value={itemSearchAtom()}
+      onInput={wrap((event) => itemSearchAtom.set(event.currentTarget.value))}
+    />
+    {refreshing && <InlineSpinner />}
+    <ItemTable items={items} />
+  </>
+})
+```
+
+If you do not want URL synchronization, use a plain atom instead. The key rule is the same: loader payloads are fetched results, not the live buffer for currently typed input.
 
 ### Identity-changing routes, parent loader data, and clean scoped state
 

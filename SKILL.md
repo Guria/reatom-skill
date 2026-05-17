@@ -421,12 +421,14 @@ Read [`references/features/routing/index.md`](references/features/routing/index.
 - v1001 render semantics: `layout: true` for wrapper routes; page routes are exact-by-default. v1000 uses match-by-default plus `exactRender: true` for pages.
 - Loader takes one merged params/search object; `(params, search)` is wrong and the second arg is `undefined`. Handle loader states in `render(self)` with `.status()` and pass typed data/model props down, not the loader itself.
 - Use the full status model for UX-sensitive async: `isFirstPending` for first skeleton, `isPending && isEverSettled` for stale refresh, `isFulfilled` for narrowed data, `isRejected` for errors. `.ready()` is too lossy for route loaders.
+- During stale-while-refresh, `status.data` may intentionally be the previous fulfilled loader payload. Do not use loader payload fields as the source of truth for high-frequency controlled inputs such as search boxes; keep immediate input state in an atom (often synced with `withSearchParams`) and let the loader read route search for fetching.
 - Separate stale-refresh from identity changes: same list/search identity may keep stale UI; `:id` switches should usually block at a parent identity loader and let children derive scoped models from `await wrap(parentRoute.loader())`.
 - Auth/redirect/feature-gate decisions belong in `params()` / parent guards, not nullable loader returns.
 - Dynamic params near literal siblings need constrained schemas; do not hide collisions with `outlet().at(0)` because the wrong loader can still run.
 - Guard index child loaders under layout routes: v1001 page `render` is exact-by-default, but loaders follow route matching and a `{ path: '' }` child can match descendants.
 - Avoid route/layout import cycles. A route module may import a layout or shell component to render it, but that layout/shell should not import the same route singletons back for navigation state. Pass route-derived navigation items/actions down from the route module, or extract route-neutral view config, so ESM initialization cannot hit temporal-dead-zone runtime errors. For entity links, precompute `href` strings in loaders/models and pass them to components. When a component needs lazy link construction, wrap `route.path(...)` behind small functions created in the route/model layer and pass those functions down instead of importing routes in the component layer.
 - `urlAtom()` returns a `URL` object; use `urlAtom().pathname`, never `urlAtom().startsWith(...)`. Use `route.match()` for route checks.
+- For an index route (`path: ''`) under a layout, prefer `route.exact()` for active navigation state. `match()` can stay true for descendants, making both the index item and a child item appear active.
 - Default redirects are source-attached URL reactions: register `urlAtom.extend(withChangeHook(...))` at module scope. Do not replace it with top-level `effect()` or boot-only `start*Effects()`.
 - Use `retryComputed(self.loader)` for retry buttons; distinguish stale refresh from identity changes.
 
@@ -476,6 +478,8 @@ These are not API traps; they are design choices to question. Read the relevant 
 - Boot-only `start*Effects()` helpers; attach stable reactions to sources or put scoped work in loaders/factories/hooks.
 - Single create/edit route or broad dynamic routes beside literal routes.
 - Layout/shell/component modules importing route singletons that import them back; thread navigation config/actions through props or a route-neutral module instead. Prefer passing precomputed `href`s or route-layer path-builder functions from loaders/models into components.
+- Controlled search/filter inputs bound to route loader payload while the loader preserves stale data during refresh. Use a dedicated atom for the live input value; sync it to the URL with `withSearchParams` when the value is URL state.
+- Index-route nav items using `match()` under a layout route. Use `exact()` for active state and add a pathname guard when the index loader should not run on descendants.
 - Avoiding atom props; passing atoms to children is recommended decoupling.
 - Misnaming atom factories as `create*` / `make*`; use `reatom*` for custom primitives and scoped models.
 - React-owned app state that mirrors atoms or coordinates domain flow. If enforcing this with lint rules, label it as the setup guide's opinionated default, not a Reatom requirement.
