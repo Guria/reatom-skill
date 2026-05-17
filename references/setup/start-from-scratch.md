@@ -57,6 +57,8 @@ Keep validation proportional, but do not silently drop quality gates just becaus
 
 Use the official latest Vite CLI with a TypeScript template when it fits the task. It bakes in current Vite defaults and reduces hand-written config mistakes. Manual file-by-file scaffolding is acceptable if the user explicitly requests it or has a strong opinion on how to scaffold the app — in that case, say why you're deviating and verify the result with the same install/typecheck/lint/test/build pipeline before treating it as equivalent to the CLI output.
 
+Treat the Vite scaffold as the starting baseline, not something to immediately fight. Right after the Vite CLI scaffold is in place, wire the validation pipeline before feature work starts. After bootstrap, tweak that pipeline to match the generated project structure and the user's real stack choices rather than preserving every default here verbatim.
+
 For the default React stack:
 
 ```bash
@@ -252,6 +254,8 @@ Avoid invented commands such as `fallow analyze` or `fallow.config.json` unless 
 
 ## Step 8 — npm scripts (`package.json`)
 
+Use this as the recommended shape for a single validation entry point, then tweak it to fit what the Vite scaffold actually generated and what the user decided to keep after bootstrap.
+
 ```jsonc
 {
   "scripts": {
@@ -267,12 +271,13 @@ Avoid invented commands such as `fallow analyze` or `fallow.config.json` unless 
     "typecheck": "tsc -b --noEmit",
     "test": "vitest run",
 
-    "validate": "npm run typecheck && npm run lint && npm run test && npm run format:check && npm run intel && echo '\u23f5  validate green. If this run is part of a bootstrap, end your turn with the pitfall summary described in references/setup/start-from-scratch.md → \"After bootstrap\".'"
+    "validate": "npm run typecheck && npm run lint && npm run test && npm run format:check && npm run intel",
+    "postvalidate": "echo '\u23f5  validate green. If this run is part of a bootstrap, read @references/meta/feedback-loop.md and include its bootstrap pitfall summary.'"
   }
 }
 ```
 
-`npm run validate` is the single entry point for CI and local validation. The bootstrap is not complete until the full validate command passes.
+`npm run validate` is the single entry point for CI and local validation. The bootstrap is not complete until the full validate command passes, and the `postvalidate` hook reminds the agent to read `@references/meta/feedback-loop.md` for the bootstrap pitfall summary.
 
 Keep typecheck and emit separate: either set `"noEmit": true` in the TypeScript config or pass `--noEmit` in typecheck/build scripts.
 
