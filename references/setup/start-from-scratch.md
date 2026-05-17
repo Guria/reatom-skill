@@ -184,7 +184,7 @@ If the scaffold already ships with ESLint, decide explicitly whether ESLint stay
     "perf": "warn",
     "suspicious": "warn"
   },
-  "plugins": ["typescript", "react", "react-hooks", "import"],
+  "plugins": ["typescript", "react", "import"],
   "rules": {
     "eslint/no-restricted-imports": [
       "error",
