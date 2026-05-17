@@ -6,17 +6,41 @@ Use this when writing or fixing Reatom unit tests, especially when a suite menti
 
 ## Table of contents
 
+- [Prefer the reusable test harness](#prefer-the-reusable-test-harness)
 - [Choose the context style](#choose-the-context-style)
 - [Default/global-context tests](#defaultglobal-context-tests)
 - [Strict `clearStack()` tests](#strict-clearstack-tests)
 - [`mock()` usage](#mock-usage)
 - [Checklist](#checklist)
 
+## Prefer the reusable test harness
+
+For new app test setup, prefer the Reatom reusables `test` utility instead of hand-writing a local harness. Add it with `npx jsrepo add test` from the [`reatom/reusables` registry](../meta/reusables.md), then import testing helpers from the generated module/path your project config maps (many Reatom packages alias it as `test`). The reusable calls `clearStack()` once and wraps each test callback in `context.start(...)`, so test bodies can read/write atoms without repeating boilerplate.
+
+```ts
+import { expect, subscribe, test } from 'test'
+import { atom } from '@reatom/core'
+
+const counter = atom(0, 'counter')
+
+test('counter increments', () => {
+  const sub = subscribe(counter)
+
+  counter.set(1)
+
+  expect(counter()).toBe(1)
+  expect(sub).toHaveBeenLastCalledWith(1)
+  sub.unsubscribe()
+})
+```
+
+Use the manual patterns below when you are documenting core behavior, working in a repo that has not vendored the reusable yet, or matching an existing suite that deliberately uses a different setup.
+
 ## Choose the context style
 
 Reatom pushes a default global context when `@reatom/core` is imported. In that default mode, atom reads/writes in tests work directly and `context.reset()` clears accumulated state between tests.
 
-`clearStack()` removes that default frame. It is useful for strict apps because it catches atom work that happens outside an explicit frame, but it also means test bodies must run inside `context.start(...)` (or a project helper that does so). Otherwise the first atom read/write throws `ReatomError: missing async stack`.
+`clearStack()` removes that default frame. It is useful for strict apps because it catches atom work that happens outside an explicit frame, but it also means test bodies must run inside `context.start(...)` (or a project helper such as the reusable `test` wrapper). Otherwise the first atom read/write throws `ReatomError: missing async stack`.
 
 When editing an existing suite, match its style rather than changing the whole test environment.
 

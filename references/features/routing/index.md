@@ -37,14 +37,14 @@ const userRoute = reatomRoute('users/:userId')
 userRoute()           // { userId: '123' } | null
 userRoute.exact()     // true only for /users/123
 userRoute.match()     // true for /users/123/anything
-// ⚠️ .go() takes params object, NOT a path string!
-// ❌ loginRoute.go('/login')  // TypeError: Expected 2 arguments, got 1
+// ⚠️ .go() takes a params object (plus optional replace boolean), NOT a path string!
+// ❌ loginRoute.go('/login')  // Type error; routes build their own path
 // ✅ route.go() with no args for simple routes:
 loginRoute.go()
 // ✅ route.go({ param: 'value' }) for routes with params:
 userDetailRoute.go({ id: '123' })
 // ✅ Build URL without navigating:
-const url = userDetailRoute.path({ id: '123' })  // '/users/123'
+const userUrl = userDetailRoute.path({ id: '123' })  // '/users/123'
 userRoute.path({ userId: '123' }) // build URL without navigating
 
 // Object config - path, search params
@@ -56,7 +56,7 @@ goodsRoute.go({ category: 'tech', sort: 'asc' })  // /goods/tech?sort=asc
 
 // Current URL - urlAtom() returns a URL OBJECT, not a string!
 const url = urlAtom()
-url.pathname  // '/users/123?tab=posts'
+url.pathname  // '/users/123'
 url.search    // '?tab=posts'
 
 // ⚠️ DO NOT use string methods on urlAtom() directly!
@@ -144,13 +144,15 @@ Typical app structure: root layout → optional auth/protection layers (also lay
 
 ## Protected routes - auth guard
 
-Protected routes use a `params()` callback that returns `null` to block the route and all descendants. The callback is reactive (it reruns when read atoms change), so it fits auth, roles, feature flags, and wizards. Use the same guard pattern for public pages that should be unavailable in a given state, such as redirecting away from sign-in when a session already exists; keeping the redirect in `params()` keeps loaders concrete.
+Protected routes use a `params()` callback that returns `null` to block the route and all descendants before their render/loaders are exposed. The callback is reactive (it reruns when read atoms change), so it fits auth, roles, feature flags, and wizards. Use the same guard pattern for public pages that should be unavailable in a given state, such as redirecting away from sign-in when a session already exists; keeping the redirect in `params()` keeps loaders concrete.
+
+For auth redirects, pass `true` as the second `.go()` argument when you want `history.replaceState` semantics. This avoids leaving blocked/private URLs or transient login URLs in the browser history.
 
 ```typescript
 // The `params` function enables protected routes:
 // - Return null to block the route (and all children)
 // - Return an object to inject derived parameters
-// - Call .go() inside params for redirects
+// - Call .go(params, true) inside params for redirects that should replace history
 
 const authToken = atom(localStorage.getItem('token'), 'authToken')
 
@@ -166,19 +168,20 @@ const protectedRoute = layoutRoute.reatomRoute({
     const token = authToken()
     // No-token is a synchronous auth decision; do not wait on user.ready().
     if (!token) {
-      if (!loginRoute.match()) loginRoute.go()
+      if (!loginRoute.match()) loginRoute.go(undefined, true)
       return null  // blocks this route and all children
     }
 
     const userData = user.data()
     // Token exists, so user.ready() represents the real /api/me request.
     if (!userData) {
-      if (user.ready() && !loginRoute.match()) loginRoute.go()
+      if (user.ready() && !loginRoute.match()) loginRoute.go(undefined, true)
       return null
     }
-    // Already logged in but on login page - redirect to dashboard
+    // Already logged in but on login page - redirect to dashboard.
+    // This pathless guard also matches /login, so this branch can run there.
     if (loginRoute.match()) {
-      dashboardRoute.go()
+      dashboardRoute.go(undefined, true)
     }
     // Inject user data as params for child routes
     return { userId: userData.id, role: userData.role }
@@ -251,7 +254,7 @@ const protectedRoute = rootRoute.reatomRoute({
   layout: true,
   params() {
     if (!authToken()) {
-      loginRoute.go()
+      loginRoute.go(undefined, true)
       return null
     }
     return {} // guard only; don't inject unrelated params

@@ -321,7 +321,7 @@ const loginRoute = rootRoute.reatomRoute({
   path: 'login',
   params() {
     if (authToken()) {
-      dashboardRoute.go()
+      dashboardRoute.go(undefined, true)
       return null // blocks route before loader, but loader data stays concrete
     }
     return {}
@@ -346,7 +346,7 @@ const loginRoute = rootRoute.reatomRoute({
 })
 ```
 
-Use the same pattern for private route trees: a parent guard route `params()` can redirect unauthenticated users and return `{}` for descendants. Descendant loaders can then assume the guard has passed and return typed page models without nullable escape hatches.
+Use the same pattern for private route trees: a parent guard route `params()` can redirect unauthenticated users with `loginRoute.go(undefined, true)` and return `{}` for descendants. Descendant loaders can then assume the guard has passed and return typed page models without nullable escape hatches.
 
 ### Pre-fill settings form from persisted atoms
 

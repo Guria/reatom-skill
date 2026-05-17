@@ -61,16 +61,16 @@ export const protectedRoute = layoutRoute.reatomRoute({
   params() {
     const token = authToken()
     if (!token) {
-      if (!loginRoute.match()) loginRoute.go()
+      if (!loginRoute.match()) loginRoute.go(undefined, true)
       return null
     }
 
     const userData = user.data()
     if (!userData) {
-      if (user.ready() && !loginRoute.match()) loginRoute.go()
+      if (user.ready() && !loginRoute.match()) loginRoute.go(undefined, true)
       return null
     }
-    if (loginRoute.match()) dashboardRoute.go()
+    if (loginRoute.match()) dashboardRoute.go(undefined, true)
     return userData
   },
   render(self) {
