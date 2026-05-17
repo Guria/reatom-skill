@@ -424,9 +424,9 @@ Read [`references/features/routing/index.md`](references/features/routing/index.
 - The root element returned from each route `render` should have a static `key` because parent routes render child outputs as an outlet array. Keep it stable per route; only use params/search in the key when an intentional remount is desired.
 - Route paths have no leading `/`; use `reatomRoute('')` for root; `route.go()` takes params (or nothing), not a path string.
 - v1001 render semantics: `layout: true` for wrapper routes; page routes are exact-by-default. v1000 uses match-by-default plus `exactRender: true` for pages.
-- Loader takes one merged params/search object; `(params, search)` is wrong and the second arg is `undefined`. Handle loader states in `render(self)` with `.status()` and pass typed data/model props down, not the loader itself.
-- Use the full status model for UX-sensitive async: `isFirstPending` for first skeleton, `isPending && isEverSettled` for stale refresh, `isFulfilled` for narrowed data, `isRejected` for errors. `.ready()` is too lossy for route loaders.
-- During stale-while-refresh, `status.data` may intentionally be the previous fulfilled loader payload. Do not use loader payload fields as the source of truth for high-frequency controlled inputs such as search boxes; keep immediate input state in an atom (often synced with `withSearchParams`) and let the loader read route search for fetching.
+- Loader takes one merged params/search object; `(params, search)` is wrong and the second arg is `undefined`. Handle loader/resource state orchestration in `render(self)` with `.status()`, then pass typed data/model props to route-neutral components instead of passing the loader or inlining full page UI.
+- Use the full status model for UX-sensitive async: `isFirstPending` for first skeleton, `isPending && isEverSettled` for stale refresh, `isFulfilled` for narrowed data, `isRejected` for errors. Successful empty collections are fulfilled states too — render intentional empty-state UI rather than an empty table/list/card. `.ready()` is too lossy for route loaders.
+- During stale-while-refresh, `status.data` may intentionally be the previous fulfilled loader payload. Keep settled content visible, including empty-state UI when the settled collection is empty; do not bind high-frequency controlled inputs to stale loader payload fields. Use a dedicated atom (often synced with `withSearchParams`) and let the loader read route search for fetching.
 - Separate stale-refresh from identity changes: same list/search identity may keep stale UI; `:id` switches should usually block at a parent identity loader and let children derive scoped models from `await wrap(parentRoute.loader())`.
 - Auth/redirect/feature-gate decisions belong in `params()` / parent guards, not nullable loader returns.
 - Redirects inside reactive guards (`params()`, URL hooks) must be idempotent: before `.go(..., true)`, prove the guard owns the current URL and check that the target route is not already active. Routes that omit `path` inherit the parent's URL scope, so auth/layout guards can observe public siblings unless you explicitly exclude them.
@@ -480,7 +480,7 @@ These are not API traps; they are design choices to question. Read the relevant 
 - Identity actions that only forward to `atom.set()`; expose atoms or use built-in primitives unless the action adds semantics.
 - Route components checking `route.match()` or accepting loader props; use route `render(self)`.
 - Nullable loader payloads for redirects/auth/feature gates; block in `params()` / parent guards instead.
-- Unmounting on background refresh (`!status.isFulfilled`) and losing focus/stale UI; use status flags that preserve settled data during refresh.
+- Unmounting on background refresh (`!status.isFulfilled`) and losing focus/stale UI; use status flags that preserve settled data during refresh, and treat empty arrays as fulfilled data requiring empty-state UI.
 - Module-level forms/actions for route-owned lifecycle; create scoped models in route loaders/factories.
 - Syncing atoms with `withChangeHook`; use `computed` / `withComputed` for derivation.
 - Atom + effect bridges for one-shot commands (`latestEventAtom` + `effect()`); call the imperative API from the action unless the value is real rendered/persisted state.

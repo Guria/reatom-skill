@@ -152,7 +152,7 @@ Typical app structure: root layout → optional auth/protection layers (also lay
 
 ## Avoid route/component import cycles
 
-Routes are singleton atoms/computeds, so treat the route tree as the owner of navigation knowledge. It is fine for a route module to import a layout or page component in its `render`, but avoid the reverse direction: layout/page/list components should not import route singletons from the same route module when that route module already imports those components. In ESM this can create temporal-dead-zone runtime failures, not just a static design smell.
+Routes are singleton atoms/computeds, so treat the route tree as the owner of navigation knowledge. It is fine for a route module to import a layout or page component in its `render`, and that is usually the desired boundary: route modules orchestrate matching, guards, loader state, retries, outlets, and navigation config; components render the substantial UI. Avoid the reverse direction: layout/page/list components should not import route singletons from the same route module when that route module already imports those components. In ESM this can create temporal-dead-zone runtime failures, not just a static design smell.
 
 Prefer one of these shapes:
 

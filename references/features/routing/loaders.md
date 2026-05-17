@@ -7,6 +7,7 @@
 ## Table of contents
 
 - [Route loaders - data fetching](#route-loaders---data-fetching)
+  - [Thin render boundary and empty states](#thin-render-boundary-and-empty-states)
   - [Search params, controlled inputs, and stale loader data](#search-params-controlled-inputs-and-stale-loader-data)
   - [Identity-changing routes, parent loader data, and clean scoped state](#identity-changing-routes-parent-loader-data-and-clean-scoped-state)
     - [Index child loaders under layout routes](#index-child-loaders-under-layout-routes)
@@ -37,7 +38,9 @@ Prefer handling loader state in the route `render(self)` instead of inside the p
 - `isRejected` - show a full-page error when no useful data has ever loaded, or an inline refresh error when preserving stale data is appropriate for that resource.
 - `isEverPending` / `isEverSettled` - historical flags useful for rare aborted/no-data edges.
 
-With concrete loader payloads (no `undefined` branches), TypeScript narrows `status.data` to the full loader type in `AnotherPending`. The branch order handles edge cases: `isFirstPending` covers the initial load, `isRejected` covers failures — by the time you reach `isPending && isEverSettled`, the type system confirms data exists. Only add a `status.data !== undefined` guard if the loader itself returns `undefined` in some branch.
+Keep `render(self)` as a route orchestration boundary, not as the page implementation. It should usually compose layouts/outlets, branch on loader/auth/route state, wire retry/navigation callbacks, and pass concrete data or scoped models into route-neutral components. Put substantial page markup, tables, forms, dashboards, and widgets in components imported by the route module. This keeps the route tree readable while preserving the TypeScript narrowing and async UX benefits of route-level status handling.
+
+With concrete loader payloads (no `undefined` branches), TypeScript narrows `status.data` to the full loader type in refresh branches. The branch order handles edge cases: `isFirstPending` covers the initial load, `isRejected` covers failures without usable data, and `isPending && isEverSettled` preserves settled content during background refresh. Only add a `status.data !== undefined` guard if the loader itself can return `undefined` in some branch.
 
 ```typescript
 const userRoute = reatomRoute({
@@ -48,24 +51,24 @@ const userRoute = reatomRoute({
   },
   render(self) {
     const status = self.loader.status()
+    const error = self.loader.error()
 
     if (status.isFirstPending) return <UserPageSkeleton />
 
-    if (status.isFulfilled) {
-      return <UserPage model={status.data} />
+    if (error && !status.data) {
+      return <PageError error={error} onRetry={self.loader.retry} />
     }
 
-    // Once a concrete page model exists, pending means background refresh.
-    // Keep it visible; the type system confirms data exists for concrete loader types.
-    if (status.isPending && status.isEverSettled) {
-      return <UserPage model={status.data} refreshing />
+    if (!status.data) {
+      return <NoDataState />
     }
 
-    if (status.isRejected) {
-      return <PageError error={self.loader.error() ?? new Error('Request failed')} onRetry={self.loader.retry} />
-    }
-
-    return <></>
+    return (
+      <UserPage
+        model={status.data}
+        refreshing={status.isPending && status.isEverSettled}
+      />
+    )
   },
 })
 
@@ -83,7 +86,47 @@ const UserPage = reatomComponent(({
 })
 ```
 
-For list/search routes, avoid replacing the whole page on every search-param change. With a concrete loader model, `isPending` after `isEverSettled` means "refreshing" — keep previous data rendered with a subtle pending indicator. When params identify a different entity, use the parent-loader pattern below instead of preserving the previous entity model.
+### Thin render boundary and empty states
+
+A fulfilled loader can legitimately contain empty collections or optional content. Empty collections are not loading states and are not errors; show an intentional empty state with recovery guidance instead of rendering an empty table/list/card. The route can compute route-level facts such as `isRefreshing` and pass data into components, while the component decides how to present empty sections.
+
+```tsx
+render(self) {
+  const status = self.loader.status()
+  const error = self.loader.error()
+  const data = self.loader.data()
+
+  if (status.isFirstPending) return <PageSkeleton />
+  if (error && !data) return <PageError error={error} onRetry={self.loader.retry} />
+  if (!data) return <NoDataState />
+
+  return (
+    <ListPage
+      items={data.items}
+      isRefreshing={status.isPending && status.isEverSettled}
+    />
+  )
+}
+
+const ListPage = reatomComponent(({
+  items,
+  isRefreshing,
+}: {
+  items: Item[]
+  isRefreshing?: boolean
+}) => (
+  <>
+    {isRefreshing && <InlineSpinner />}
+    {items.length === 0 ? (
+      <EmptyState title="No items yet" description="Create an item or change the filters." />
+    ) : (
+      <ItemTable items={items} />
+    )}
+  </>
+))
+```
+
+For list/search routes, avoid replacing the whole page on every search-param change. With a concrete loader model, `isPending` after `isEverSettled` means "refreshing" — keep previous data rendered with a subtle pending indicator, including empty-state UI if the settled collection is empty. When params identify a different entity, use the parent-loader pattern below instead of preserving the previous entity model.
 
 ### Search params, controlled inputs, and stale loader data
 
