@@ -195,13 +195,18 @@ Use the same pattern for shells/sidebar navigation: create route-derived items w
 
 Protected routes use a `params()` callback that returns `null` to block the route and all descendants before their render/loaders are exposed. The callback is reactive (it reruns when read atoms change), so it fits auth, roles, feature flags, and wizards. Use the same guard pattern for public pages that should be unavailable in a given state, such as redirecting away from sign-in when a session already exists; keeping the redirect in `params()` keeps loaders concrete.
 
+Redirects inside `params()` must be **idempotent** because `params()` is part of route matching and reruns whenever the atoms it reads change. Before calling `.go(..., true)`, first prove that this guard owns the current URL and that the target route is not already active. Use `!targetRoute.match()` for ordinary cases, or a stricter URL/predicate check when the guard is broad.
+
 For auth redirects, pass `true` as the second `.go()` argument when you want `history.replaceState` semantics. This avoids leaving blocked/private URLs or transient login URLs in the browser history.
+
+Be careful with guard routes that omit `path`. In Reatom, omitting `path` means the route contributes no URL segment and can match as broadly as its parent; this is useful for cross-cutting layouts, but dangerous for auth redirects because the guard can observe public sibling routes too. Prefer a real private path segment when the product has a private area, or explicitly exempt public URLs before redirecting. If you mean "index page only", use `path: ''` plus an exact/pathname guard instead of omitting `path`.
 
 ```typescript
 // The `params` function enables protected routes:
 // - Return null to block the route (and all children)
 // - Return an object to inject derived parameters
 // - Call .go(params, true) inside params for redirects that should replace history
+// - Guard .go() with ownership + !targetRoute.match() so params() is idempotent
 
 const authToken = atom(localStorage.getItem('token'), 'authToken')
 
@@ -227,10 +232,11 @@ const protectedRoute = layoutRoute.reatomRoute({
       if (user.ready() && !loginRoute.match()) loginRoute.go(undefined, true)
       return null
     }
-    // Already logged in but on login page - redirect to dashboard.
-    // This pathless guard also matches /login, so this branch can run there.
-    if (loginRoute.match()) {
-      dashboardRoute.go(undefined, true)
+    // Already logged in but on a public-only route: move to the allowed default.
+    // The source-route check documents that this broad guard can observe public siblings;
+    // the target-route check keeps the redirect idempotent.
+    if (loginRoute.match() && !defaultPrivateRoute.match()) {
+      defaultPrivateRoute.go(undefined, true)
     }
     // Inject user data as params for child routes
     return { userId: userData.id, role: userData.role }
@@ -238,7 +244,7 @@ const protectedRoute = layoutRoute.reatomRoute({
   render(self) { return self.outlet() },
 })
 
-const dashboardRoute = protectedRoute.reatomRoute({
+const defaultPrivateRoute = protectedRoute.reatomRoute({
   path: 'dashboard',
   render(self) {
     const params = self()
@@ -426,20 +432,27 @@ It throws if the parent route is not currently matched. In v1000, call `reviewRo
 
 ### Default redirect with urlAtom.extend(withChangeHook(...))
 
-A common pattern is redirecting the root URL to a default page. Use `urlAtom.extend(withChangeHook(...))` at module scope (typically in the app entry file) to watch every URL change and redirect when needed:
+A common pattern is redirecting the root URL to a default page. Use `urlAtom.extend(withChangeHook(...))` at module scope (typically in the app entry file) to watch every URL change and redirect when needed. In apps with auth, onboarding, tenant selection, or feature gates, the "default page" is conditional — do not blindly redirect `/` to a private page and rely on a later guard to recover.
 
 ```typescript
 // App.tsx (or app entry file)
 import { urlAtom, withChangeHook } from '@reatom/core'
-import { rootRoute } from '#shared/router'
-import { dashboardRoute } from '#pages/dashboard'
+import { signInRoute, defaultPrivateRoute } from '#shared/router'
+import { hasAccessToPrivateArea } from '#shared/session'
 
-// Redirect root URL to the default page
-// Uses replace (second arg `true`) so the root URL doesn't appear in browser history
+// Redirect root URL to the appropriate default page.
+// Uses replace (second arg `true`) so the root URL doesn't appear in browser history.
 urlAtom.extend(
-  withChangeHook(() => {
-    if (rootRoute.exact()) {
-      dashboardRoute.go(undefined, true)
+  withChangeHook((url) => {
+    // For global root redirects, prefer the concrete URL pathname over a route
+    // predicate. A root route with no explicit path/no segments reports `exact`
+    // broadly by design, and layout predicates can be shaped by the route tree.
+    if (url.pathname !== '/') return
+
+    if (hasAccessToPrivateArea()) {
+      if (!defaultPrivateRoute.match()) defaultPrivateRoute.go(undefined, true)
+    } else {
+      if (!signInRoute.match()) signInRoute.go(undefined, true)
     }
   }),
 )
@@ -448,7 +461,9 @@ urlAtom.extend(
 Key details:
 - `urlAtom.extend(...)` at module scope is a **deliberate declaration-time side effect** — it attaches middleware once when the module loads and persists for the app lifetime. The middleware does not run until `urlAtom` changes, which makes it appropriate for app-level routing setup.
 - Use `.go(undefined, true)` (replace) so the redirect doesn't create a history entry — the back button skips the root and goes to whatever was before.
-- `rootRoute.exact()` checks for a bare `/` match without children — this avoids redirecting when any sub-route is active.
+- For global redirects from `/`, prefer checking the concrete `url.pathname === '/'` from the `withChangeHook` callback. A route predicate such as `rootRoute.exact()` can be shaped by the route tree; in the current source, a root route with no explicit path/no segments reports `exact` as true broadly, so it is not the same as a raw pathname check.
+- Make default redirects state-aware. If the default target depends on auth or setup state, branch before navigating instead of causing `/` → private page → public page cascades.
+- Redirects from URL reactions and route guards should be idempotent: check the target route before calling `.go()`.
 - Do not replace this with a top-level `effect()` or a `start*Effects()` boot helper. `effect()` subscribes immediately and needs an active reactive frame after `clearStack()`; a source-attached `withChangeHook` models the app-lifetime URL reaction without a separate activation step.
 - This same pattern works for other URL-source reactions such as navigation analytics or scroll restoration. Keep purely imperative one-shot work in the action that causes it; only store an event in an atom when other code actually reads that state.
 
