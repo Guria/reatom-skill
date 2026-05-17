@@ -11,6 +11,7 @@ Treat corrections and bootstrap pitfalls as feedback about the skill, not only a
    - missing or ambiguous SKILL.md/reference guidance;
    - v1000/v1001 mismatch or accidental v3 knowledge;
    - a reference file that should have been read earlier;
+   - a step-by-step guide that was read as background context instead of executed as an ordered checklist;
    - overgeneralizing from React, Redux, or generic frontend habits;
    - project-specific constraints that were not inspected or preserved.
 3. If the lesson is reusable beyond the current project, include a concise **Skill feedback** note:

@@ -6,6 +6,21 @@ For greenfield work, treat this as the default sequence: scaffold, install the v
 
 > Prefer `npm create vite@latest` for the scaffold itself when practical. For packages installed after scaffolding, run `npm view <pkg> version` (or `dist-tags`) first.
 
+## Execution guard for greenfield bootstraps
+
+Use this as the **default sequence** for new apps/examples/packages. It exists to counter a common agent failure mode — jumping into feature code before the scaffold and validation harness exist. It should make the workflow harder to accidentally skip, not override explicit user constraints or common sense.
+
+By default:
+
+1. **Do not hand-write `package.json` or app entry files first.** Run the scaffold step first unless the user explicitly asked for manual scaffolding.
+2. **Do not install feature dependencies first.** Install the validation/tooling pipeline immediately after the scaffold.
+3. **Do not write substantial feature code before the bootstrap is green.** No routes, pages, forms, or backend mocks before the validate pipeline, smoke test, and Storybook/runtime harness are in place.
+4. **Do not treat examples, demos, or standalone packages as automatic exceptions.** They teach by example, so the bootstrap quality bar often matters more, not less.
+5. **If the user gave target-path constraints, preserve them while still following the sequence.** For example, a standalone package inside `./examples/...` still starts with the scaffold step inside that directory.
+6. **If the user intentionally wants a lighter path, say what is being skipped and why.** Adapt deliberately instead of drifting out of order by accident.
+
+If you catch yourself planning pages, routes, or models before Step 8, you are probably out of order. Stop, check whether the user explicitly narrowed the scope, and otherwise resume the checklist from the earliest incomplete step.
+
 ## Table of contents
 
 - [Default stack (verify before installing)](#default-stack-verify-before-installing)
@@ -55,6 +70,8 @@ Keep validation proportional, but do not silently drop quality gates just becaus
 
 ## Step 1 — Scaffold
 
+By default, do this step before creating `package.json`, `tsconfig.json`, `vite.config.ts`, or feature files by hand unless the user explicitly asked for manual scaffolding.
+
 Use the official latest Vite CLI with a TypeScript template when it fits the task. It bakes in current Vite defaults and reduces hand-written config mistakes. Manual file-by-file scaffolding is acceptable if the user explicitly requests it or has a strong opinion on how to scaffold the app — in that case, say why you're deviating and verify the result with the same install/typecheck/lint/test/build pipeline before treating it as equivalent to the CLI output.
 
 Treat the Vite scaffold as the starting baseline, not something to immediately fight. Right after the Vite CLI scaffold is in place, wire the validation pipeline before feature work starts. After bootstrap, tweak that pipeline to match the generated project structure and the user's real stack choices rather than preserving every default here verbatim.
@@ -93,6 +110,8 @@ npm view playwright dist-tags
 ## Step 2 — Install the validate pipeline FIRST
 
 > Set up lint/format/intel **before** writing any production code. This anchors the conventions and catches drift from line one.
+
+If you are about to add routes, components, forms, models, mocked backend code, or UI dependencies before finishing this step, stop and come back here unless the user explicitly chose a lighter path.
 
 ```bash
 # Vite's TypeScript template already installs vite/typescript and the framework plugin.
