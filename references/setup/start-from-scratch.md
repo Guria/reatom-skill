@@ -4,6 +4,8 @@ Use this when bootstrapping a brand-new project around Reatom. The default stack
 
 For greenfield work, treat this as the default sequence: scaffold, install the validation pipeline, configure quality gates, run validation, then write feature code. Existing examples are useful for local style and package shape, but sample them narrowly so they do not replace the bootstrap sequence.
 
+This pipeline is intentionally **shift-left**: it is designed to surface tooling, context, and runtime-integration mistakes as early as possible, while the app is still cheap to correct.
+
 > Prefer `npm create vite@latest` for the scaffold itself when practical. For packages installed after scaffolding, run `npm view <pkg> version` (or `dist-tags`) first.
 
 ## Execution guard for greenfield bootstraps
@@ -14,7 +16,7 @@ By default:
 
 1. **Do not hand-write `package.json` or app entry files first.** Run the scaffold step first unless the user explicitly asked for manual scaffolding.
 2. **Do not install feature dependencies first.** Install the validation/tooling pipeline immediately after the scaffold.
-3. **Do not write substantial feature code before the bootstrap is green.** No routes, pages, forms, or backend mocks before the validate pipeline, smoke test, and Storybook/runtime harness are in place.
+3. **Do not write substantial feature code before the bootstrap is green.** No routes, pages, forms, or backend mocks before the validate pipeline, smoke test, Storybook/runtime harness, and post-validate feedback loop are in place.
 4. **Do not treat examples, demos, or standalone packages as automatic exceptions.** They teach by example, so the bootstrap quality bar often matters more, not less.
 5. **If the user gave target-path constraints, preserve them while still following the sequence.** For example, a standalone package inside `./examples/...` still starts with the scaffold step inside that directory.
 6. **If the user intentionally wants a lighter path, say what is being skipped and why.** Adapt deliberately instead of drifting out of order by accident.
@@ -110,6 +112,8 @@ npm view playwright dist-tags
 ## Step 2 — Install the validate pipeline FIRST
 
 > Set up lint/format/intel **before** writing any production code. This anchors the conventions and catches drift from line one.
+
+This is the early-feedback stage of the bootstrap: the point is to break fast on wiring mistakes now, instead of discovering them after the route tree, forms, and async flows already exist.
 
 If you are about to add routes, components, forms, models, mocked backend code, or UI dependencies before finishing this step, stop and come back here unless the user explicitly chose a lighter path.
 
@@ -300,6 +304,8 @@ Use this as the recommended shape for a single validation entry point, then twea
 
 `npm run validate` is the single entry point for CI and local validation. The bootstrap is not complete until the full validate command passes, and the `postvalidate` hook reminds the agent to read `@references/meta/feedback-loop.md` for the bootstrap pitfall summary.
 
+Treat `postvalidate` as part of the workflow, not cosmetic output. It is the mechanism that routes the agent back into the skill's feedback loop after a green run, which helps the next attempt start with sharper guidance instead of repeating the same mistakes.
+
 If the scaffold still has an ESLint setup, either replace it with this oxlint-first baseline or keep both with a deliberate note about why ESLint remains. Avoid drifting into a redundant two-linter setup by accident.
 
 Keep typecheck and emit separate: either set `"noEmit": true` in the TypeScript config or pass `--noEmit` in typecheck/build scripts.
@@ -459,7 +465,7 @@ Also verify Storybook starts and renders the first story:
 npx storybook dev --smoke-test
 ```
 
-If it fails, fix the reported issue and rerun `npm run validate`. Only after a passing run should you give the final bootstrap response and the pitfall summary below.
+If it fails, fix the reported issue and rerun `npm run validate`. These checks are the runtime side of the shift-left pipeline: they are meant to catch mount-time/context errors before manual app exploration. Only after a passing run should you give the final bootstrap response and the pitfall summary below.
 
 ## Reading list for the next steps
 
