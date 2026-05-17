@@ -15,9 +15,17 @@ Use this skill when the task is primarily about creating a new Reatom codebase o
 
 The goal is not just to list packages. The important part is the **order**: scaffold first, install the validation pipeline early, prove the app mounts, and only then start feature work.
 
-## Read first
+The common failure mode is that an agent installs tooling such as `oxlint`, `oxfmt`, `fallow`, and Storybook but never actually wires them into a working pipeline. Treat that as an incomplete bootstrap, not as a minor omission.
 
-- Read [`references/scaffold.md`](references/scaffold.md) in full for greenfield/bootstrap work.
+## Read strategy
+
+Start with [`references/overview.md`](references/overview.md).
+
+Then choose depth deliberately:
+- For a full greenfield bootstrap, read [`references/scaffold.md`](references/scaffold.md) in full and follow it as an ordered checklist.
+- For narrower bootstrap questions, use the overview to jump to the relevant section of `scaffold.md` instead of loading the whole checklist immediately.
+
+This skill should stay light in always-loaded context. The detailed commands, file contents, and step-by-step bootstrap sequence live in the reference files.
 
 ## Scope
 
@@ -31,6 +39,30 @@ This skill is not the best fit for ordinary bug fixing or API lookup in an exist
 
 ## Working style
 
-- Treat the scaffold reference as an ordered checklist, not background reading.
+- Decide first whether the user needs the full scaffold flow or only a slice of it.
+- Treat the full scaffold reference as an ordered checklist, not background reading.
+- As soon as the scaffold root exists, write the original user request verbatim or near-verbatim to `GOAL.md` in that project/package root. Treat it as parked future work, not as the current implementation checklist.
+- Until the validation pipeline is green, focus on scaffold work and intentionally defer the contents of `GOAL.md`.
 - Preserve explicit user constraints, but do not drift into feature work before the bootstrap gate is green unless the user knowingly asked for a lighter path.
+- Do not stop at dependency installation. The job is only complete when the tools are configured, exposed through scripts, and actually run successfully.
 - When bootstrap finishes, switch to the `reatom-feedback-loop` skill's pitfall summary flow so the run improves the skill, not only the project.
+
+## Completion contract
+
+Do not report bootstrap work as done until all relevant parts of the promised pipeline exist and have been executed successfully.
+
+For the default recommended flow, that means the agent should normally complete and report evidence for:
+- `GOAL.md` exists and preserves the original request for post-bootstrap work
+- `npm run lint` using `oxlint`
+- `npm run format:check` using `oxfmt`
+- `npm run intel` using `fallow`
+- browser smoke test
+- `npm run validate`
+- Storybook smoke validation when Storybook is part of the requested bootstrap
+
+If one of these is intentionally omitted, say that explicitly and explain what confidence is being traded away. Do not silently downgrade the pipeline.
+
+## Reference files
+
+- `references/overview.md` — first read; scope check, reading strategy, and cross-skill handoff.
+- `references/scaffold.md` — full ordered bootstrap workflow with commands, configs, validation gates, and post-bootstrap handoff.

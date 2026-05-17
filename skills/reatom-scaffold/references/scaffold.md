@@ -17,17 +17,19 @@ Use this as the **default sequence** for new apps/examples/packages. It exists t
 By default:
 
 1. **Do not hand-write `package.json` or app entry files first.** Run the scaffold step first unless the user explicitly asked for manual scaffolding.
-2. **Do not install feature dependencies first.** Install the validation/tooling pipeline immediately after the scaffold.
-3. **Do not write substantial feature code before the bootstrap is green.** No routes, pages, forms, or backend mocks before the validate pipeline, smoke test, Storybook/runtime harness, and post-validate feedback loop are in place.
-4. **Do not treat examples, demos, or standalone packages as automatic exceptions.** They teach by example, so the bootstrap quality bar often matters more, not less.
-5. **If the user gave target-path constraints, preserve them while still following the sequence.** For example, a standalone package inside `./examples/...` still starts with the scaffold step inside that directory.
-6. **If the user intentionally wants a lighter path, say what is being skipped and why.** Adapt deliberately instead of drifting out of order by accident.
+2. **As soon as the scaffold root exists, write `GOAL.md` with the original user request.** This is the parking place for the requested product work; after that, intentionally stop thinking about feature implementation until the scaffold is proven green.
+3. **Do not install feature dependencies first.** Install the validation/tooling pipeline immediately after the scaffold.
+4. **Do not write substantial feature code before the bootstrap is green.** No routes, pages, forms, or backend mocks before the validate pipeline, smoke test, Storybook/runtime harness, and post-validate feedback loop are in place.
+5. **Do not treat examples, demos, or standalone packages as automatic exceptions.** They teach by example, so the bootstrap quality bar often matters more, not less.
+6. **If the user gave target-path constraints, preserve them while still following the sequence.** For example, a standalone package inside `./examples/...` still starts with the scaffold step inside that directory.
+7. **If the user intentionally wants a lighter path, say what is being skipped and why.** Adapt deliberately instead of drifting out of order by accident.
 
 If you catch yourself planning pages, routes, or models before Step 8, you are probably out of order. Stop, check whether the user explicitly narrowed the scope, and otherwise resume the checklist from the earliest incomplete step.
 
 Before substantial feature work, verify this gate explicitly:
 
 - [ ] scaffold exists and installs cleanly;
+- [ ] `GOAL.md` exists and preserves the original request;
 - [ ] validation tooling is installed;
 - [ ] `npm run typecheck` passes;
 - [ ] `npm run lint` passes;
@@ -35,6 +37,8 @@ Before substantial feature work, verify this gate explicitly:
 - [ ] `npm run validate` is green.
 
 If any box is unchecked, the next task is still bootstrap work, not feature work.
+
+A package install alone does not count. `oxlint`, `oxfmt`, `fallow`, and Storybook only matter if they are configured, reachable through scripts or documented commands, and actually executed.
 
 ## Table of contents
 
@@ -86,6 +90,20 @@ Keep validation proportional, but do not silently drop quality gates just becaus
 ## Step 1 — Scaffold
 
 By default, do this step before creating `package.json`, `tsconfig.json`, `vite.config.ts`, or feature files by hand unless the user explicitly asked for manual scaffolding.
+
+Immediately after the scaffold root exists, create `GOAL.md` in that root and copy the original user request into it. Keep it short but faithful. The purpose is to preserve the requested app/package outcome while forcing the agent to finish the validation pipeline before acting on that goal.
+
+Example:
+
+```md
+# Goal
+
+Build a new Reatom app for <user request here>.
+
+## Original request
+
+<copy the user's request here, verbatim or near-verbatim>
+```
 
 Use the official latest Vite CLI with a TypeScript template when it fits the task. It bakes in current Vite defaults and reduces hand-written config mistakes. Manual file-by-file scaffolding is acceptable if the user explicitly requests it or has a strong opinion on how to scaffold the app — in that case, say why you're deviating and verify the result with the same install/typecheck/lint/test/build pipeline before treating it as equivalent to the CLI output.
 
@@ -310,12 +328,12 @@ Use this as the recommended shape for a single validation entry point, then twea
     "test": "vitest run",
 
     "validate": "npm run typecheck && npm run lint && npm run test && npm run format:check && npm run intel",
-    "postvalidate": "echo '\u23f5  validate green. If this run is part of a bootstrap, read the reatom-feedback-loop skill and include its bootstrap pitfall summary.'"
+    "postvalidate": "echo '\u23f5  validate green. Resume from GOAL.md:' && cat GOAL.md && echo '' && echo '\u23f5  Then read the reatom-feedback-loop skill and include its bootstrap pitfall summary.'"
   }
 }
 ```
 
-`npm run validate` is the single entry point for CI and local validation. The bootstrap is not complete until the full validate command passes, and the `postvalidate` hook reminds the agent to switch into the `reatom-feedback-loop` skill for the bootstrap pitfall summary.
+`npm run validate` is the single entry point for CI and local validation. The bootstrap is not complete until the full validate command passes, and the `postvalidate` hook serves two purposes: it re-surfaces `GOAL.md` so the agent can resume the original request only after the scaffold is proven green, and it reminds the agent to switch into the `reatom-feedback-loop` skill for the bootstrap pitfall summary.
 
 Treat `postvalidate` as part of the workflow, not cosmetic output. It is the mechanism that routes the agent back into the skill's feedback loop after a green run, which helps the next attempt start with sharper guidance instead of repeating the same mistakes.
 
@@ -473,7 +491,21 @@ Set up the Storybook files your project actually needs (typically `main.ts`, `pr
 
 ## Step 12 — Final validation run
 
-Do not report bootstrap completion until the validation pipeline is green. At minimum, lint, tests, and format-check must pass; keep typecheck and fallow in the same command so CI has one entry point:
+Do not report bootstrap completion until the validation pipeline is green. At minimum, lint, tests, and format-check must pass; keep typecheck and fallow in the same command so CI has one entry point.
+
+A common weak finish is: dependencies installed, files written, but the pipeline never actually ran. Treat that as unfinished. The completion bar is successful execution, not plausible configuration.
+
+Before the final response, confirm all promised quality gates were both wired and executed:
+- `GOAL.md` exists and `postvalidate` can echo it back
+- `npm run lint` uses `oxlint`
+- `npm run format:check` uses `oxfmt`
+- `npm run intel` uses `fallow`
+- browser smoke test passes
+- `npm run validate` passes
+- Storybook smoke validation passes when Storybook is part of the requested bootstrap
+
+If the user explicitly chose a lighter setup, say which gates were skipped and why.
+
 
 ```bash
 npm run validate

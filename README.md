@@ -21,6 +21,7 @@ skills/
 ├── reatom-scaffold/
 │   ├── SKILL.md
 │   └── references/
+│       ├── overview.md
 │       └── scaffold.md
 └── reatom-feedback-loop/
     ├── SKILL.md
@@ -99,7 +100,9 @@ Use for:
 - scaffolding a Reatom package/app inside another repo
 - validation pipeline setup before feature work
 
-It contains the ordered scaffold workflow in `skills/reatom-scaffold/references/scaffold.md`.
+It uses progressive disclosure:
+- `skills/reatom-scaffold/references/overview.md` for scope and reading depth
+- `skills/reatom-scaffold/references/scaffold.md` for the full ordered workflow
 
 ### `reatom-feedback-loop`
 
