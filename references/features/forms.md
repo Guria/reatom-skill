@@ -51,20 +51,22 @@ registerForm.validation()      // { errors: FieldSetFieldError[], triggered: boo
 
 
 ```tsx
+import { wrap } from '@reatom/core'
 import { reatomComponent, bindField } from '@reatom/react'
 
 const LoginForm = reatomComponent(() => {
   const { fields, submit, validation } = loginForm
+  const error = submit.error()
 
   return (
-    <form onSubmit={(e) => { e.preventDefault(); submit() }}>
+    <form onSubmit={wrap((e) => { e.preventDefault(); submit() })}>
       <input type="email" {...bindField(fields.email)} />
       <input type="password" {...bindField(fields.password)} />
       <button type="submit" disabled={!submit.ready()}>Login</button>
       {/* ⚠️ validation().errors is FieldSetFieldError[], not strings */}
       {validation().errors.length > 0 && <div>Fix errors</div>}
       {/* ⚠️ submit.error() is a FUNCTION call (it's an atom) */}
-      {submit.error() && <div>{submit.error().message}</div>}
+      {error && <div>{error.message}</div>}
     </form>
   )
 })
@@ -82,6 +84,8 @@ const LoginForm = reatomComponent(() => {
   <option value="viewer">Viewer</option>
 </select>
 ```
+
+`bindField(field)` returns the field's bound `value`/`checked`, `onChange`, `onBlur`, `onFocus`, **and** `error`. Spread it directly into ordinary inputs and avoid passing a second `error` prop from `field.validation().error` unless you are intentionally overriding the bound one.
 
 ## Form field access patterns
 
@@ -118,11 +122,12 @@ submit.retry()  // retry last submission
 - `submit.error` is an **ATOM** — call it: `submit.error()` not `submit.error`
 - `submit.status()` is only usable when the underlying async extension was configured with `{ status: true }`. `reatomForm` submit uses async data without status by default, so use `submit.ready()`, `submit.pending()`, and `submit.error()` for ordinary form UI unless you explicitly enabled status on a custom async action.
 - **`fields.name.value()` is the user-facing value**; `fields.name.set(value)` and `fields.name.change(value)` write it. The bare `field()` returns the underlying state, which may differ from `value` when `fromState`/`toState` transformers are used. Default to `value` and `change` in UI code.
-- `bindField` does NOT work with controls whose `onChange` receives a raw value instead of a DOM event (most third-party `<Select>` and `<Combobox>` components). Wire `value`/`onChange`/`onBlur`/`onFocus` manually using `field.change(v)` / `field.focus.in()` / `field.focus.out()`. After `clearStack()` those manual handlers must be `wrap()`-ed; `bindField`'s returned handlers are pre-wrapped.
+- `bindField` does NOT work with controls whose `onChange` receives a raw value instead of a DOM event. Wire `value`/`onChange`/`onBlur`/`onFocus` manually using `field.change(v)` / `field.focus.in()` / `field.focus.out()`. After `clearStack()` those manual handlers must be `wrap()`-ed; `bindField`'s returned handlers are pre-wrapped.
 - `form()` is the field set atom (returns values), not `form.getValues()`
 - `form.reset()` resets to initial values, not to empty state
 - `form.init({ ... })` updates initial values (affects reset)
 - **Put submit mutations on `reatomForm({ onSubmit })` and call `form.submit()`.** A separate action that does `api.save(form())` reads raw values and bypasses the form's submit validation pipeline unless it manually triggers validation. If you expose a semantic command such as `save`/`create`, make it an alias or wrapper around `form.submit()`, not a parallel raw-value submit path.
+- **Handwritten form handlers still need `wrap()` under `clearStack()`.** `bindField` returns pre-wrapped field handlers, but a handwritten `<form onSubmit={...}>` callback is still your callback. Wrap it when it calls `form.submit()`, `field.change(...)`, or any other Reatom primitive.
 - **Only reset after submit when staying in the same form lifetime.** If a route-loader-created form successfully submits and navigation leaves that route, route lifecycle disposes the form; `form.reset()` is redundant. Use `form.reset()` after submit when the intended UX is to remain on the same form and prepare another entry, or when the user explicitly cancels/restarts within the same route.
 - **Forms in loaders, not models** — never define `reatomForm` at module scope. Create forms inside route loaders for automatic lifecycle management.
 - **`form.submit()` returns whatever your `onSubmit` callback returns.** This is the canonical way to chain a one-shot side-effect after a successful submit (navigate, toast, focus) without registering a live observer at module scope:

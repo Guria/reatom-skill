@@ -33,7 +33,7 @@ const LegacyUnmountAbort = reatomComponent(
 [Source: `bindField.ts`](https://github.com/reatom/reatom/blob/v1001/packages/react/src/bindField.ts)
 
 
-`bindField` creates `value`/`onChange`/`onFocus`/`onBlur` props for form field atoms. Works with `<input>` and `<textarea>`, but **NOT** with `<select>`.
+`bindField` creates `value`/`checked`/`onChange`/`onFocus`/`onBlur`/`error` props for form field atoms. Works with `<input>` and `<textarea>`, but **NOT** with `<select>`.
 
 ```tsx
 import { reatomComponent, bindField } from '@reatom/react'
@@ -131,7 +131,9 @@ UI event handlers, timers, and any host-scheduled callback run in a fresh execut
 <Button onClick={wrap(() => count.set(c => c + 1))} />
 ```
 
-Adapter helpers that *produce* callbacks for you (form binders, link/navigation generators, async sampling primitives like `take`/`onEvent`) wrap internally so you don't double-wrap. Callbacks you write by hand — third-party UI controls whose `onChange` hands you a raw value, custom buttons, link-style anchors, `setTimeout`, `requestAnimationFrame`, observers, message-port handlers — do not. The rule of thumb: if the callback was constructed by you and reads or writes a Reatom primitive, it needs `wrap()`.
+Adapter helpers that *produce* callbacks for you (form binders, link/navigation generators, async sampling primitives like `take`/`onEvent`) wrap internally so you don't double-wrap. Callbacks you write by hand — custom buttons, link-style anchors, `setTimeout`, `requestAnimationFrame`, observers, message-port handlers, or any UI control whose `onChange` hands you a raw value — do not. The rule of thumb: if the callback was constructed by you and reads or writes a Reatom primitive, it needs `wrap()`.
+
+The place where you call `wrap(...)` matters too. `wrap()` captures the current Reatom frame at call time, so creating wrapped callbacks directly inside JSX is only safe when that render already runs inside a reactive boundary such as `reatomComponent`. In a plain function component, `onClick={wrap(doSomething)}` can fail under `clearStack()` because the wrap call itself happens during a non-Reatom React render. Fix that by converting the component to `reatomComponent`, or by pre-wrapping the callback in a reactive caller and passing the wrapped function down as a prop.
 
 ### React is only the view adapter
 

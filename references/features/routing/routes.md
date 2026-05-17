@@ -168,7 +168,8 @@ Prefer one of these shapes:
 1. **Pass navigation config from the route layer into components.** Build nav items, active predicates, and `go` callbacks next to the routes, then pass them through `render(self)`.
 2. **Precompute entity `href`s in loaders/models.** List/detail loaders already know the route params and loaded entity IDs; add `href` fields to returned view models so components render plain links without importing routes.
 3. **Pass path-builder functions down when the component needs lazy construction.** Wrap `route.path(...)` in a small function created in the route/model layer, then pass that function to the component.
-4. **Extract route-neutral component config.** If a component and a route both need labels/icons/columns, move that static data to a module that imports neither routes nor components.
+4. **Co-locate mutually-referencing routes in a composition-root module.** If two guards or redirects need each other's route singletons, keep those core routes together and let feature-specific child routes import from that shared parent one-way.
+5. **Extract route-neutral component config.** If a component and a route both need labels/icons/columns, move that static data to a module that imports neither routes nor components.
 
 ```typescript
 const itemsRoute = rootRoute.reatomRoute({ path: 'items', layout: true })
@@ -208,6 +209,8 @@ Protected routes use a `params()` callback that returns `null` to block the rout
 Redirects inside `params()` must be **idempotent** because `params()` is part of route matching and reruns whenever the atoms it reads change. Before calling `.go(..., true)`, first prove that this guard owns the current URL and that the target route is not already active. Use `!targetRoute.match()` for ordinary cases, or a stricter URL/predicate check when the guard is broad.
 
 For auth redirects, pass `true` as the second `.go()` argument when you want `history.replaceState` semantics. This avoids leaving blocked/private URLs or transient login URLs in the browser history.
+
+When a public-only route and a private/default route redirect to each other, prefer keeping those core routes in the same composition-root module so both sides can continue using typed `.go()` calls. Treat `urlAtom.go('/some/path')` as a low-level primitive, not as the default escape hatch for application navigation.
 
 Be careful with guard routes that omit `path`. In Reatom, omitting `path` means the route contributes no URL segment and can match as broadly as its parent; this is useful for cross-cutting layouts, but dangerous for auth redirects because the guard can observe public sibling routes too. Prefer a real private path segment when the product has a private area, or explicitly exempt public URLs before redirecting. If you mean "index page only", use `path: ''` plus an exact/pathname guard instead of omitting `path`.
 
@@ -438,7 +441,9 @@ It throws if the parent route is not currently matched. In v1000, call `reviewRo
 [Source: `web/url.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/web/url.ts)
 
 
-`urlAtom.go('/path')` navigates, `urlAtom()` reads the current `URL` object, `urlAtom.catchLinks(false)` disables SPA link interception, `urlAtom.routes` is a registry of all created routes. `isSomeLoaderPending` tracks global loading state across all route loaders.
+`urlAtom()` reads the current `URL` object, `urlAtom.catchLinks(false)` disables SPA link interception, `urlAtom.routes` is a registry of all created routes, and `isSomeLoaderPending` tracks global loading state across all route loaders.
+
+Prefer `someRoute.go(...)` / `someRoute.path(...)` for ordinary application navigation. Reach for `urlAtom.go(...)` or `urlAtom.set(...)` only when the task is truly URL-level: tests, boot/default URL normalization, integration with another router/history owner, or raw URL manipulation that is not naturally owned by one route singleton.
 
 ### Default redirect with urlAtom.extend(withChangeHook(...))
 
