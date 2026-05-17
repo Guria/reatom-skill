@@ -120,6 +120,44 @@ submit.retry()    // retry last submission
 // ⚠️ submit.status() is not available by default on reatomForm submit
 ```
 
+## Submit wrapper pattern
+
+A common route-loader shape is: the form owns validation and submit semantics, while a separate semantic action (`save`, `create`, `publish`) exists only to expose UI-friendly async helpers or a clearer intent name.
+
+Keep that action as a thin wrapper around `form.submit()`.
+
+```typescript
+import { action, reatomForm, withAbort, withAsync, wrap } from '@reatom/core'
+
+const form = reatomForm(
+  { title: '', description: '' },
+  {
+    name: 'entityForm',
+    validateOnBlur: true,
+    schema: entitySchema,
+    onSubmit: async (values) => {
+      const res = await wrap(fetch('/api/entities', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(values),
+      }))
+      return await wrap(res.json())
+    },
+  },
+)
+
+const save = action(async () => {
+  return await wrap(form.submit())
+}, 'entityForm.save').extend(withAsync(), withAbort())
+
+onClick={wrap(async () => {
+  const saved = await wrap(save())
+  navigateToEntity(saved.id)
+})}
+```
+
+This keeps one submit pipeline: validation runs first, `onSubmit` owns the mutation, and callers can use the resolved payload for one-shot follow-up work without inventing a parallel raw-value save path.
+
 ## Form gotchas
 
 - `validation()` on a form returns a `FieldSetValidation` with `errors: FieldSetFieldError[]`, `triggered: boolean`, and `validating`. It does not have an `.error` string property — that only exists on individual field validation (`field.validation().error`). For form-level error display, read the first element from `errors` or aggregate them.
@@ -138,7 +176,7 @@ submit.retry()    // retry last submission
   ```typescript
   onClick={wrap(async () => {
     const saved = await wrap(form.submit())
-    if (saved) detailRoute.go({ id: saved.id })
+    navigateToEntity(saved.id)
   })}
   ```
   Reach for the inline-await pattern (or the action's body, or a declaration-time hook on the source) before any module-level observer registration — those don't run under the strict `clearStack()` setup.

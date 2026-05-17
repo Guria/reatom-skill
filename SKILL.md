@@ -440,7 +440,7 @@ Read [`references/features/routing/routes.md`](references/features/routing/route
 - `urlAtom()` returns a `URL` object; use `urlAtom().pathname`, never `urlAtom().startsWith(...)`. Use `route.match()` for route checks.
 - For an index route (`path: ''`) under a layout, prefer `route.exact()` for active navigation state. `match()` can stay true for descendants, making both the index item and a child item appear active.
 - Default redirects are source-attached URL reactions: register `urlAtom.extend(withChangeHook(...))` at module scope. Do not replace it with top-level `effect()` or boot-only `start*Effects()`.
-- Use `retryComputed(self.loader)` for retry buttons; distinguish stale refresh from identity changes.
+- Use `retryComputed(self.loader)` for retry buttons; distinguish stale refresh from identity changes. After a successful mutation, remember that a loader whose params/search did not change may keep its cached payload; explicitly invalidate or retry it when the UI should refresh in place.
 
 ### Forms
 
@@ -452,7 +452,7 @@ Read [`references/features/forms.md`](references/features/forms.md) for field AP
 - `field.validation().error` is the single-field first-error message (a string); `form.validation().errors` is the structured list across all fields. Form-level `validation()` does not have an `.error` property — only individual fields do.
 - `form()` returns field values; there is no `form.getValues()`.
 - `form.submit.error` is an atom getter; call it (`form.submit.error()` / `submit.error()`), don't render the atom object.
-- Put submit mutations in `reatomForm({ onSubmit })` and call `form.submit()`. Separate actions that call `api.save(form())` bypass submit validation unless they explicitly trigger it; semantic commands should wrap/alias `form.submit()`.
+- Put submit mutations in `reatomForm({ onSubmit })` and call `form.submit()`. Separate actions that call `api.save(form())` bypass submit validation unless they explicitly trigger it; semantic commands should wrap/alias `form.submit()` rather than creating a second raw-value submit path.
 - `form.submit()` returns the `onSubmit` result, useful for one-shot navigation/toast/focus without module-level subscriptions.
 - Do not reset route-loader-created forms just for cleanup when successful submit navigates away; the route lifecycle disposes them. Reset only when staying in the same form lifetime and intentionally preparing another entry/cancel/restart.
 - `ifChanged` is not available on atoms; use `computed` / `withComputed` for derived state.

@@ -12,6 +12,7 @@
   - [Identity-changing routes, parent loader data, and clean scoped state](#identity-changing-routes-parent-loader-data-and-clean-scoped-state)
     - [Index child loaders under layout routes](#index-child-loaders-under-layout-routes)
 - [Route loaders - factory pattern (forms + actions)](#route-loaders---factory-pattern-forms--actions)
+  - [Refreshing loaders after mutations](#refreshing-loaders-after-mutations)
   - [Precompute component links in loaders](#precompute-component-links-in-loaders)
   - [Route shape is product architecture](#route-shape-is-product-architecture)
   - [Separate routes for create vs edit](#separate-routes-for-create-vs-edit)
@@ -212,14 +213,24 @@ const itemEditRoute = itemRoute.reatomRoute({
   path: 'edit',
   async loader({ itemId }) {
     const item = await wrap(itemRoute.loader())
-    const form = reatomItemForm(item, `itemEdit#${itemId}.form`)
+
+    const form = reatomForm(
+      { name: item.name, description: item.description },
+      {
+        name: `itemEdit#${itemId}.form`,
+        schema: itemSchema,
+        onSubmit: async (values) => {
+          return await wrap(api.saveItem(item.id, values))
+        },
+      },
+    )
 
     const save = action(async () => {
-      const saved = await wrap(api.saveItem(item.id, form()))
-      form.init(saved)
+      const saved = await wrap(form.submit())
+      if (saved) form.init(saved)
       return saved
     }, `itemEdit#${itemId}.save`).extend(
-      withAsync({ status: true }),
+      withAsync(),
       withAbort(),
     )
 
@@ -264,6 +275,34 @@ Loaders are plain async functions — they can return atoms, forms, actions, com
 
 
 Route loaders are the **single source of truth** for all route-specific state. Create forms, actions, and computed atoms **inside** the loader - they get garbage collected when the route unmounts, giving you automatic memory management with global accessibility.
+
+### Refreshing loaders after mutations
+
+Route loaders are cached computeds. If a mutation changes the backing data but the current route params/search stay the same, simply navigating back to the same URL may keep showing the previous fulfilled loader payload.
+
+Use one of these patterns deliberately:
+
+- **Route-local retry** — when the mutation lives next to the route and already has access to the loader, call `retryComputed(self.loader)` or `self.loader.retry()` after a successful mutation.
+- **Version atom invalidation** — when the mutation lives outside the route module and you want to avoid route/component import cycles, create a small atom that the loader reads and bump it after successful mutations.
+
+```typescript
+const listVersionAtom = atom(0, 'listVersion')
+
+const listRoute = rootRoute.reatomRoute({
+  path: 'records',
+  async loader() {
+    listVersionAtom() // dependency for mutation-driven refresh
+    return await wrap(api.listRecords())
+  },
+})
+
+const deleteRecord = action(async (id: string) => {
+  await wrap(api.deleteRecord(id))
+  listVersionAtom.set((state) => state + 1)
+}, 'deleteRecord').extend(withAsync(), withAbort())
+```
+
+This pattern is especially useful for list pages that stay on the same search/filter URL after delete, create, or edit. Without an explicit invalidation signal, the loader has no reason to recompute.
 
 ### Precompute component links in loaders
 
@@ -363,19 +402,25 @@ export const userCreateRoute = usersRoute.reatomRoute({
 
     const form = reatomForm(
       { name: '', email: '', role: 'viewer' as const, active: true },
-      { name: 'userForm#create', validateOnBlur: true, schema: userSchema },
+      {
+        name: 'userForm#create',
+        validateOnBlur: true,
+        schema: userSchema,
+        onSubmit: async (values) => {
+          const res = await wrap(fetch('/api/users', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${authToken()}` },
+            body: JSON.stringify(values),
+          }))
+          if (!res.ok) throw new Error('Failed to save')
+          return await wrap(res.json())
+        },
+      },
     )
 
     const saveUserAction = action(async () => {
-      const values = form()
-      const res = await wrap(fetch('/api/users', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${authToken()}` },
-        body: JSON.stringify(values),
-      }))
-      if (!res.ok) throw new Error('Failed to save')
-      return wrap(res.json())
-    }).extend(withAsync({ status: true }))
+      return await wrap(form.submit())
+    }).extend(withAsync(), withAbort())
 
     return { form, saveUserAction, user: null, isNew: true }
   },
@@ -400,19 +445,25 @@ export const userEditRoute = usersRoute.reatomRoute({
 
     const form = reatomForm(
       { name: user.name, email: user.email, role: user.role, active: user.active },
-      { name: `userForm#edit#${params.id}`, validateOnBlur: true, schema: userSchema },
+      {
+        name: `userForm#edit#${params.id}`,
+        validateOnBlur: true,
+        schema: userSchema,
+        onSubmit: async (values) => {
+          const res = await wrap(fetch(`/api/users/${params.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            body: JSON.stringify(values),
+          }))
+          if (!res.ok) throw new Error('Failed to save')
+          return await wrap(res.json())
+        },
+      },
     )
 
     const saveUserAction = action(async () => {
-      const values = form()
-      const res = await wrap(fetch(`/api/users/${params.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify(values),
-      }))
-      if (!res.ok) throw new Error('Failed to save')
-      return wrap(res.json())
-    }).extend(withAsync({ status: true }))
+      return await wrap(form.submit())
+    }).extend(withAsync(), withAbort())
 
     return { form, saveUserAction, user, isNew: false }
   },
@@ -544,24 +595,26 @@ const settingsRoute = rootRoute.reatomRoute({
           autoSave: z.boolean(),
           sidebarCollapsed: z.boolean(),
         }),
+        onSubmit: async (values) => {
+          themeAtom.set(values.theme)
+          languageAtom.set(values.language)
+          notificationsAtom.set(values.notifications)
+          autoSaveAtom.set(values.autoSave)
+          sidebarCollapsedAtom.set(values.sidebarCollapsed)
+
+          const res = await wrap(fetch('/api/settings', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${authToken()}` },
+            body: JSON.stringify(values),
+          }))
+          if (!res.ok) throw new Error('Failed to save settings')
+        },
       },
     )
 
     const saveSettingsAction = action(async () => {
-      const values = form()
-      themeAtom.set(values.theme)
-      languageAtom.set(values.language)
-      notificationsAtom.set(values.notifications)
-      autoSaveAtom.set(values.autoSave)
-      sidebarCollapsedAtom.set(values.sidebarCollapsed)
-
-      const res = await wrap(fetch('/api/settings', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${authToken()}` },
-        body: JSON.stringify(values),
-      }))
-      if (!res.ok) throw new Error('Failed to save settings')
-    }).extend(withAsync({ status: true }))
+      return await wrap(form.submit())
+    }).extend(withAsync(), withAbort())
 
     return { form, action: saveSettingsAction }
   },
