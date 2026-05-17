@@ -9,6 +9,7 @@
 - [Basic routes](#basic-routes)
 - [Nested routes](#nested-routes)
 - [Layout routes with render (v1001+ semantics)](#layout-routes-with-render-v1001-semantics)
+- [Avoid route/component import cycles](#avoid-routecomponent-import-cycles)
 - [Protected routes - auth guard](#protected-routes---auth-guard)
 - [Dynamic route collisions with literal siblings](#dynamic-route-collisions-with-literal-siblings)
   - [Parent params and child schemas](#parent-params-and-child-schemas)
@@ -141,6 +142,48 @@ const navItems = [
 ```
 
 Typical app structure: root layout → optional auth/protection layers (also layout) → page routes. Entire app renders from root: `computed(() => layoutRoute.render())`.
+
+## Avoid route/component import cycles
+
+Routes are singleton atoms/computeds, so treat the route tree as the owner of navigation knowledge. It is fine for a route module to import a layout or page component in its `render`, but avoid the reverse direction: layout/page/list components should not import route singletons from the same route module when that route module already imports those components. In ESM this can create temporal-dead-zone runtime failures, not just a static design smell.
+
+Prefer one of these shapes:
+
+1. **Pass navigation config from the route layer into components.** Build nav items, active predicates, and `go` callbacks next to the routes, then pass them through `render(self)`.
+2. **Precompute entity `href`s in loaders/models.** List/detail loaders already know the route params and loaded entity IDs; add `href` fields to returned view models so components render plain links without importing routes.
+3. **Pass path-builder functions down when the component needs lazy construction.** Wrap `route.path(...)` in a small function created in the route/model layer, then pass that function to the component.
+4. **Extract route-neutral component config.** If a component and a route both need labels/icons/columns, move that static data to a module that imports neither routes nor components.
+
+```typescript
+const itemsRoute = rootRoute.reatomRoute({ path: 'items', layout: true })
+const itemRoute = itemsRoute.reatomRoute({ path: ':itemId' })
+
+const itemsIndexRoute = itemsRoute.reatomRoute({
+  path: '',
+  async loader() {
+    const items = await wrap(api.listItems())
+    return {
+      items: items.map((item) => ({
+        ...item,
+        href: itemRoute.path({ itemId: item.id }),
+      })),
+      itemHref: (itemId: string) => itemRoute.path({ itemId }),
+    }
+  },
+  render(self) {
+    const status = self.loader.status()
+    if (status.isFulfilled) return <ItemsPage model={status.data} />
+    return <PageSkeleton />
+  },
+})
+
+// The component receives plain strings/functions; it does not import routes.
+function ItemsPage({ model }: { model: { items: Array<Item & { href: string }>; itemHref: (id: string) => string } }) {
+  return <ItemTable rows={model.items} getItemHref={model.itemHref} />
+}
+```
+
+Use the same pattern for shells/sidebar navigation: create route-derived items where the routes are defined and pass them into the layout. This keeps UI modules reusable and prevents route modules and component modules from initializing each other in a cycle.
 
 ## Protected routes - auth guard
 

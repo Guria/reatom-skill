@@ -238,7 +238,7 @@ Confirm exact keys with `npx fallow --help` before committing — fallow ships f
 {
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "tsc -b --noEmit && vite build",
     "preview": "vite preview",
 
     "lint": "oxlint",
@@ -255,6 +255,8 @@ Confirm exact keys with `npx fallow --help` before committing — fallow ships f
 ```
 
 `npm run validate` is the single entry point for CI and pre-push checks. Pre-commit can run faster staged lint/format plus tests, but the bootstrap is not complete until the full validate command passes.
+
+Keep typecheck and emit separate: either set `"noEmit": true` in the TypeScript config or pass `--noEmit` in typecheck/build scripts.
 
 ## Step 9 — Pre-commit hook (lefthook)
 

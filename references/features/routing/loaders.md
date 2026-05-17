@@ -10,6 +10,7 @@
   - [Identity-changing routes, parent loader data, and clean scoped state](#identity-changing-routes-parent-loader-data-and-clean-scoped-state)
     - [Index child loaders under layout routes](#index-child-loaders-under-layout-routes)
 - [Route loaders - factory pattern (forms + actions)](#route-loaders---factory-pattern-forms--actions)
+  - [Precompute component links in loaders](#precompute-component-links-in-loaders)
   - [Separate routes for create vs edit](#separate-routes-for-create-vs-edit)
   - [Form factory functions](#form-factory-functions)
   - [Auth redirects and concrete loader payloads](#auth-redirects-and-concrete-loader-payloads)
@@ -167,6 +168,51 @@ Loaders are plain async functions — they can return atoms, forms, actions, com
 
 
 Route loaders are the **single source of truth** for all route-specific state. Create forms, actions, and computed atoms **inside** the loader - they get garbage collected when the route unmounts, giving you automatic memory management with global accessibility.
+
+### Precompute component links in loaders
+
+Loaders are also a good place to convert route knowledge into component-friendly data. If a page component imports a route singleton only to call `route.path(...)` for rows, cards, breadcrumbs, or action links, prefer moving that path construction into the route loader/model. This keeps components route-neutral and avoids route ↔ component import cycles when route modules render those components.
+
+Two useful forms:
+
+- **Precomputed `href` values** for concrete entities returned by the loader.
+- **Path-builder functions** for child components that need to build links lazily from an ID or search state.
+
+```typescript
+const projectRoute = projectsRoute.reatomRoute({ path: ':projectId' })
+
+const projectsIndexRoute = projectsRoute.reatomRoute({
+  path: '',
+  async loader() {
+    const projects = await wrap(api.listProjects())
+
+    return {
+      projects: projects.map((project) => ({
+        ...project,
+        href: projectRoute.path({ projectId: project.id }),
+      })),
+      projectHref: (projectId: string) => projectRoute.path({ projectId }),
+    }
+  },
+  render(self) {
+    const status = self.loader.status()
+    if (status.isFulfilled) return <ProjectsPage model={status.data} />
+    if (status.isRejected) return <PageError error={self.loader.error() ?? new Error('Failed to load projects')} />
+    return <PageSkeleton />
+  },
+})
+
+type ProjectsPageModel = {
+  projects: Array<Project & { href: string }>
+  projectHref: (projectId: string) => string
+}
+
+function ProjectsPage({ model }: { model: ProjectsPageModel }) {
+  return <ProjectList projects={model.projects} getProjectHref={model.projectHref} />
+}
+```
+
+This pattern is not only for lists. Detail loaders can return breadcrumb `href`s, form-success redirect targets, tab links, and related-entity link builders. The route layer still owns URL shape and params validation; components receive plain strings/functions and stay easy to test or move.
 
 ### Separate routes for create vs edit
 

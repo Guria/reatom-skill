@@ -425,6 +425,7 @@ Read [`references/features/routing/index.md`](references/features/routing/index.
 - Auth/redirect/feature-gate decisions belong in `params()` / parent guards, not nullable loader returns.
 - Dynamic params near literal siblings need constrained schemas; do not hide collisions with `outlet().at(0)` because the wrong loader can still run.
 - Guard index child loaders under layout routes: v1001 page `render` is exact-by-default, but loaders follow route matching and a `{ path: '' }` child can match descendants.
+- Avoid route/layout import cycles. A route module may import a layout or shell component to render it, but that layout/shell should not import the same route singletons back for navigation state. Pass route-derived navigation items/actions down from the route module, or extract route-neutral view config, so ESM initialization cannot hit temporal-dead-zone runtime errors. For entity links, precompute `href` strings in loaders/models and pass them to components. When a component needs lazy link construction, wrap `route.path(...)` behind small functions created in the route/model layer and pass those functions down instead of importing routes in the component layer.
 - `urlAtom()` returns a `URL` object; use `urlAtom().pathname`, never `urlAtom().startsWith(...)`. Use `route.match()` for route checks.
 - Default redirects are source-attached URL reactions: register `urlAtom.extend(withChangeHook(...))` at module scope. Do not replace it with top-level `effect()` or boot-only `start*Effects()`.
 - Use `retryComputed(self.loader)` for retry buttons; distinguish stale refresh from identity changes.
@@ -474,6 +475,7 @@ These are not API traps; they are design choices to question. Read the relevant 
 - Atom + effect bridges for one-shot commands (`latestEventAtom` + `effect()`); call the imperative API from the action unless the value is real rendered/persisted state.
 - Boot-only `start*Effects()` helpers; attach stable reactions to sources or put scoped work in loaders/factories/hooks.
 - Single create/edit route or broad dynamic routes beside literal routes.
+- Layout/shell/component modules importing route singletons that import them back; thread navigation config/actions through props or a route-neutral module instead. Prefer passing precomputed `href`s or route-layer path-builder functions from loaders/models into components.
 - Avoiding atom props; passing atoms to children is recommended decoupling.
 - Misnaming atom factories as `create*` / `make*`; use `reatom*` for custom primitives and scoped models.
 - React-owned app state that mirrors atoms or coordinates domain flow. If enforcing this with lint rules, label it as the setup guide's opinionated default, not a Reatom requirement.
