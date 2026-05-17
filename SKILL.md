@@ -76,9 +76,8 @@ references/
 | `references/core/sampling.md` | Debounce/throttle, `take()`, `onEvent()`, `race()`, `abortVar`, checkpoint pattern |
 | `references/core/testing.md` | Testing contexts, `clearStack()`, `context.start()`, `context.reset()`, `mock()`, and source-backed examples |
 | `references/core/patterns.md` | Architectural decisions: atomization, computed factory/scoped models, standalone atoms vs lenses, file organization |
-| `references/features/routing/index.md` | Working with `reatomRoute`, nested routes, layouts, URL params, navigation, codecs |
+| `references/features/routing/routes.md` | Working with `reatomRoute`, nested routes, layouts, URL params, navigation, codecs |
 | `references/features/routing/loaders.md` | Route loaders: data fetching, factory pattern, dynamic collisions, protected routes |
-| `references/features/routing/spa-example.md` | Full end-to-end SPA example combining routing + loaders + components |
 | `references/features/forms.md` | Working with `reatomForm`, `bindField`, field validation, form factories |
 | `references/features/persistence.md` | Using `withLocalStorage`, `withIndexedDb`, `withCookie`, or any storage adapter |
 | `references/integrations/react.md` | Using `@reatom/react`: `reatomComponent`, `bindField`, StrictMode issues |
@@ -185,7 +184,7 @@ priority.set('low')
 
 ## Routing
 
-See [references/features/routing/index.md](references/features/routing/index.md) for complete routing API: routes, nested routes, loaders, layout/page routes, protected routes, modal gates, search-only routes, and a full SPA example.
+See [references/features/routing/routes.md](references/features/routing/routes.md) for complete routing API: routes, nested routes, loaders, layout/page routes, protected routes, modal gates, and search-only routes.
 
 Routing accepts any [Standard Schema](https://github.com/standard-schema/standard-schema) compliant library (Zod, Valibot, ArkType, etc.) for params and search validation.
 
@@ -421,7 +420,7 @@ Keep this section as the always-loaded warning list. For detail, read the linked
 
 ### Routing
 
-Read [`references/features/routing/index.md`](references/features/routing/index.md) and [`references/features/routing/loaders.md`](references/features/routing/loaders.md) before changing routes or loaders.
+Read [`references/features/routing/routes.md`](references/features/routing/routes.md) and [`references/features/routing/loaders.md`](references/features/routing/loaders.md) before changing routes or loaders.
 
 - `render` is a route option; after construction `route.render` is a computed output, not an assignable callback.
 - `RouteChild` needs one framework declaration merge, and `outlet()` returns `RouteChild[]`.

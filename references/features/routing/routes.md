@@ -1,6 +1,6 @@
 # Routing Reference — Core API
 
-> Loaders, data fetching, and factory patterns are split out into [`./loaders.md`](./loaders.md). The full end-to-end SPA example is in [`./spa-example.md`](./spa-example.md).
+> Loaders, data fetching, and factory patterns are split out into [`./loaders.md`](./loaders.md).
 >
 > Source: [`packages/core/src/routing`](https://github.com/reatom/reatom/tree/v1001/packages/core/src/routing) plus [`packages/core/src/web/url.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/web/url.ts). Per-section source links inline below.
 

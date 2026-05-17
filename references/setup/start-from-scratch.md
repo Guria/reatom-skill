@@ -471,7 +471,7 @@ If it fails, fix the reported issue and rerun `npm run validate`. Only after a p
 
 **Read on demand** when you start the relevant feature:
 
-4. [`../features/routing/index.md`](../features/routing/index.md) — routing API. Then [`../features/routing/loaders.md`](../features/routing/loaders.md) when you write the first loader.
+4. [`../features/routing/routes.md`](../features/routing/routes.md) — routing API. Then [`../features/routing/loaders.md`](../features/routing/loaders.md) when you write the first loader.
 5. [`../features/forms.md`](../features/forms.md) — when adding the first form. Read **before** considering React Hook Form / Formik — `reatomForm` covers both.
 6. [`../features/persistence.md`](../features/persistence.md) — when state needs to survive refresh / cross-tab sync.
 7. [`../integrations/react.md`](../integrations/react.md) (or [`../integrations/jsx.md`](../integrations/jsx.md)) — adapter-specific gotchas, especially the StrictMode and "instant async resolution" notes.
@@ -490,7 +490,6 @@ If it fails, fix the reported issue and rerun `npm run validate`. Only after a p
 - [`../meta/packages.md`](../meta/packages.md) — "which package has X?" / "is this v3 package still alive?"
 - [`../meta/migration.md`](../meta/migration.md) — only when migrating an existing v3 codebase.
 - [`../core/writing-extensions.md`](../core/writing-extensions.md) — only when authoring a custom `.extend(...)` helper for reuse.
-- [`../features/routing/spa-example.md`](../features/routing/spa-example.md) — worked example that wires everything together; useful as a sanity check.
 
 ## After bootstrap — report pitfalls back to the user
 

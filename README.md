@@ -18,9 +18,8 @@ reatom/
     │   ├── forms.md                  # reatomForm, bindField, validation
     │   ├── persistence.md            # withLocalStorage, withIndexedDb, withCookie, …
     │   └── routing/
-    │       ├── index.md              # Routes, layouts, codecs, urlAtom
-    │       ├── loaders.md            # Loader patterns, guards, collisions
-    │       └── spa-example.md        # End-to-end SPA wiring
+    │       ├── routes.md             # Routes, layouts, codecs, urlAtom
+    │       └── loaders.md            # Loader patterns, guards, collisions
     ├── integrations/
     │   ├── react.md                  # @reatom/react, StrictMode, hooks
     │   └── jsx.md                    # @reatom/jsx native runtime

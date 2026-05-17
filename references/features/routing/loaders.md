@@ -1,6 +1,6 @@
 # Routing Reference — Loaders
 
-> Core routing API in [`./index.md`](./index.md). Full SPA example in [`./spa-example.md`](./spa-example.md).
+> Core routing API in [`./routes.md`](./routes.md).
 >
 > Source: [`routing/route.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/routing/route.ts) (loader option), [`routing/route.types.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/routing/route.types.ts) (`RouteLoader`), [`async/withAsyncData.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/async/withAsyncData.ts) (used internally), [`route.security.test.browser.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/routing/route.security.test.browser.ts) (guards/collisions). Per-section links inline below.
 
