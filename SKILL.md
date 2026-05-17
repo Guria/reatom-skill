@@ -421,6 +421,7 @@ Read [`references/features/routing/index.md`](references/features/routing/index.
 
 - `render` is a route option; after construction `route.render` is a computed output, not an assignable callback.
 - `RouteChild` needs one framework declaration merge, and `outlet()` returns `RouteChild[]`.
+- The root element returned from each route `render` should have a static `key` because parent routes render child outputs as an outlet array. Keep it stable per route; only use params/search in the key when an intentional remount is desired.
 - Route paths have no leading `/`; use `reatomRoute('')` for root; `route.go()` takes params (or nothing), not a path string.
 - v1001 render semantics: `layout: true` for wrapper routes; page routes are exact-by-default. v1000 uses match-by-default plus `exactRender: true` for pages.
 - Loader takes one merged params/search object; `(params, search)` is wrong and the second arg is `undefined`. Handle loader states in `render(self)` with `.status()` and pass typed data/model props down, not the loader itself.
