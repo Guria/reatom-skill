@@ -94,27 +94,17 @@ For v1001-only APIs (layout routes, URL codecs, action `(payload, params)` subsc
 
 ## Step 3 — `tsconfig.json`
 
-Reatom requires `es2017+` target so `wrap()` keeps native async/await microtask semantics. With TS 6.x the safe minimum is:
+Reatom requires an `es2017+` TypeScript target so `wrap()` keeps native async/await microtask semantics. In an existing or freshly scaffolded `tsconfig.json`, check this specific option:
 
 ```jsonc
 {
   "compilerOptions": {
-    "target": "es2022",
-    "module": "esnext",
-    "moduleResolution": "bundler",
-    "strict": true,
-    "noUncheckedIndexedAccess": true,
-    "exactOptionalPropertyTypes": true,
-    "verbatimModuleSyntax": true,
-    "isolatedModules": true,
-    "skipLibCheck": true,
-    "lib": ["es2023", "dom", "dom.iterable"],
-    "jsx": "react-jsx",
-    "types": ["vite/client"]
-  },
-  "include": ["src"]
+    "target": "es2022" // any es2017+ target is acceptable
+  }
 }
 ```
+
+Keep the rest of the scaffold's TypeScript settings unless the project has a separate reason to change them.
 
 ## Step 4 — `vite.config.ts`
 
