@@ -121,6 +121,8 @@ submit.retry()  // retry last submission
 - `form()` is the field set atom (returns values), not `form.getValues()`
 - `form.reset()` resets to initial values, not to empty state
 - `form.init({ ... })` updates initial values (affects reset)
+- **Put submit mutations on `reatomForm({ onSubmit })` and call `form.submit()`.** A separate action that does `api.save(form())` reads raw values and bypasses the form's submit validation pipeline unless it manually triggers validation. If you expose a semantic command such as `save`/`create`, make it an alias or wrapper around `form.submit()`, not a parallel raw-value submit path.
+- **Only reset after submit when staying in the same form lifetime.** If a route-loader-created form successfully submits and navigation leaves that route, route lifecycle disposes the form; `form.reset()` is redundant. Use `form.reset()` after submit when the intended UX is to remain on the same form and prepare another entry, or when the user explicitly cancels/restarts within the same route.
 - **Forms in loaders, not models** — never define `reatomForm` at module scope. Create forms inside route loaders for automatic lifecycle management.
 - **`form.submit()` returns whatever your `onSubmit` callback returns.** This is the canonical way to chain a one-shot side-effect after a successful submit (navigate, toast, focus) without registering a live observer at module scope:
   ```typescript
