@@ -158,6 +158,56 @@ onClick={wrap(async () => {
 
 This keeps one submit pipeline: validation runs first, `onSubmit` owns the mutation, and callers can use the resolved payload for one-shot follow-up work without inventing a parallel raw-value save path.
 
+## Consumer-side submit hooks
+
+When the route-specific follow-up work is small, keep the form inline in the loader and await `form.submit()` directly where the UI command happens.
+
+When the form definition is large enough to justify moving it into a separate factory file, keep that factory focused on field state, validation, and the core mutation. Then let the consuming loader attach route-specific reactions to the created form instance.
+
+```typescript
+// forms/entityForm.ts
+export const createEntityForm = (initialState: EntityDraft) =>
+  reatomForm(initialState, {
+    name: 'entityForm',
+    schema: entitySchema,
+    onSubmit: async (values) => {
+      return await wrap(api.saveEntity(values))
+    },
+  })
+```
+
+```typescript
+// route loader
+import { action, withAbort, withAsync, withCallHook, wrap } from '@reatom/core'
+
+const form = createEntityForm({ title: entity.title, description: entity.description })
+
+form.submit.onFulfill.extend(
+  withCallHook(({ payload: saved }) => {
+    form.init(saved)
+    refreshCurrentResource()
+    navigateToEntity(saved.id)
+  }),
+)
+
+form.submit.onReject.extend(
+  withCallHook(() => {
+    focusFirstInvalidField(form)
+  }),
+)
+
+const save = action(() => wrap(form.submit()), 'entityForm.save').extend(
+  withAsync(),
+  withAbort(),
+)
+```
+
+This keeps route knowledge out of the factory. The factory owns submit semantics; the consumer owns what should happen after success or failure in that particular route.
+
+Prefer `withCallHook` on `form.submit.onFulfill` / `onReject` when command completion is the thing you care about. Reach for `addCallHook` only when the hook truly needs runtime attach/detach behavior.
+
+`withChangeHook` / `addChangeHook` are for atoms, so they fit `form.submit.data`, `form.submit.error`, or an explicit status atom when changed state is the source of truth. They are usually the wrong first choice for post-submit navigation or retry logic, where action lifecycle hooks express the intent more directly.
+
 ## Form gotchas
 
 - `validation()` on a form returns a `FieldSetValidation` with `errors: FieldSetFieldError[]`, `triggered: boolean`, and `validating`. It does not have an `.error` string property — that only exists on individual field validation (`field.validation().error`). For form-level error display, read the first element from `errors` or aggregate them.
@@ -168,7 +218,7 @@ This keeps one submit pipeline: validation runs first, `onSubmit` owns the mutat
 - `form()` is the field set atom (returns values), not `form.getValues()`
 - `form.reset()` resets to initial values, not to empty state
 - `form.init({ ... })` updates initial values (affects reset)
-- **Put submit mutations on `reatomForm({ onSubmit })` and call `form.submit()`.** A separate action that does `api.save(form())` reads raw values and bypasses the form's submit validation pipeline unless it manually triggers validation. If you expose a semantic command such as `save`/`create`, make it an alias or wrapper around `form.submit()`, not a parallel raw-value submit path.
+- **Put submit mutations on `reatomForm({ onSubmit })` and call `form.submit()`.** A separate action that does `api.save(form())` reads raw values and bypasses the form's submit validation pipeline unless it manually triggers validation. If you expose a semantic command such as `save`/`create`, make it an alias or wrapper around `form.submit()`, not a parallel raw-value submit path. If route-specific retry, navigation, or focus work would make `onSubmit` noisy, attach that behavior from the consuming loader via `form.submit.onFulfill` / `form.submit.onReject` hooks instead of pushing route knowledge back into the factory.
 - **Handwritten form handlers still need `wrap()` under `clearStack()`.** `bindField` returns pre-wrapped field handlers, but a handwritten `<form onSubmit={...}>` callback is still your callback. Wrap it when it calls `form.submit()`, `field.change(...)`, or any other Reatom primitive.
 - **Only reset after submit when staying in the same form lifetime.** If a route-loader-created form successfully submits and navigation leaves that route, route lifecycle disposes the form; `form.reset()` is redundant. Use `form.reset()` after submit when the intended UX is to remain on the same form and prepare another entry, or when the user explicitly cancels/restarts within the same route.
 - **Forms in loaders, not models** — never define `reatomForm` at module scope. Create forms inside route loaders for automatic lifecycle management.
@@ -179,6 +229,6 @@ This keeps one submit pipeline: validation runs first, `onSubmit` owns the mutat
     navigateToEntity(saved.id)
   })}
   ```
-  Reach for the inline-await pattern (or the action's body, or a declaration-time hook on the source) before any module-level observer registration — those don't run under the strict `clearStack()` setup.
+  Reach for the inline-await pattern first. When the form comes from an extracted factory and the follow-up behavior belongs to the consuming route, attach it with `form.submit.onFulfill` / `form.submit.onReject` hooks on that created instance rather than adding module-level observers — those don't run under the strict `clearStack()` setup.
 - **Don't use `ifChanged` on atoms** — `ifChanged` is not available on atoms. Read atom values directly in loaders or use `computed` for derived state.
 - **Validation error `.field` is the atom reference, not a name string** — compare by reference: `e.field === form.fields.email`

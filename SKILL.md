@@ -453,6 +453,7 @@ Read [`references/features/forms.md`](references/features/forms.md) for field AP
 - `form()` returns field values; there is no `form.getValues()`.
 - `form.submit.error` is an atom getter; call it (`form.submit.error()` / `submit.error()`), don't render the atom object.
 - Put submit mutations in `reatomForm({ onSubmit })` and call `form.submit()`. Separate actions that call `api.save(form())` bypass submit validation unless they explicitly trigger it; semantic commands should wrap/alias `form.submit()` rather than creating a second raw-value submit path.
+- Default to inline form creation in the loader when route lifetime and post-submit behavior are part of the same local story. If a form is large enough to extract into its own factory file, keep the factory focused on fields/validation/core mutation and attach route-specific retry, navigation, or focus behavior from the consuming loader via `form.submit.onFulfill` / `form.submit.onReject` hooks.
 - `form.submit()` returns the `onSubmit` result, useful for one-shot navigation/toast/focus without module-level subscriptions.
 - Do not reset route-loader-created forms just for cleanup when successful submit navigates away; the route lifecycle disposes them. Reset only when staying in the same form lifetime and intentionally preparing another entry/cancel/restart.
 - `ifChanged` is not available on atoms; use `computed` / `withComputed` for derived state.

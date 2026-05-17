@@ -17,6 +17,7 @@
   - [Route shape is product architecture](#route-shape-is-product-architecture)
   - [Separate routes for create vs edit](#separate-routes-for-create-vs-edit)
   - [Form factory functions](#form-factory-functions)
+    - [Two good organization shapes](#two-good-organization-shapes)
   - [Auth redirects and concrete loader payloads](#auth-redirects-and-concrete-loader-payloads)
   - [Pre-fill settings form from persisted atoms](#pre-fill-settings-form-from-persisted-atoms)
 
@@ -478,11 +479,11 @@ export const userEditRoute = usersRoute.reatomRoute({
 
 ### Form factory functions
 
-For schemas used by multiple routes, extract factory functions into a separate file:
+For forms used by multiple routes or large enough to deserve their own file, extract a factory function. Keep the factory responsible for field state, validation, and the core submit mutation.
 
 ```typescript
-// src/features/auth/authForm.ts
-import { reatomForm } from '@reatom/core'
+// forms/authForm.ts
+import { reatomForm, wrap } from '@reatom/core'
 import { z } from 'zod/v4'
 
 export const createLoginForm = () =>
@@ -495,41 +496,59 @@ export const createLoginForm = () =>
         email: z.string().email('Invalid email'),
         password: z.string().min(4, 'Password must be at least 4 characters'),
       }),
-    },
-  )
-
-export const createRegisterForm = () =>
-  reatomForm(
-    { name: '', email: '', password: '', confirmPassword: '' },
-    {
-      name: 'authForm#register',
-      validateOnBlur: true,
-      schema: z.object({
-        name: z.string().min(2),
-        email: z.string().email(),
-        password: z.string().min(4),
-        confirmPassword: z.string(),
-      }).refine((d) => d.password === d.confirmPassword, {
-        message: 'Passwords must match',
-        path: ['confirmPassword'],
-      }),
+      onSubmit: async (values) => {
+        return await wrap(api.login(values))
+      },
     },
   )
 ```
 
+#### Two good organization shapes
+
+**1. Default: create the form inline in the loader**
+
+Use this when the route is the natural lifetime boundary and the form is still readable where it is created. It keeps the route's state model in one place and makes navigation/retry behavior obvious.
+
+**2. Extract the form factory, but keep route reactions in the loader**
+
+When the form definition becomes large, move the form factory out, but do not move route-specific navigation, retry, or parent-resource refresh rules into that factory.
+
 ```typescript
-// In route loader
-import { createLoginForm } from './authForm'
+// in route loader
+import { action, withAbort, withAsync, withCallHook, wrap } from '@reatom/core'
+import { createLoginForm } from './forms/authForm'
 
 const loginRoute = rootRoute.reatomRoute({
   path: 'login',
   async loader() {
     const form = createLoginForm()
-    // ... create action ...
+
+    form.submit.onFulfill.extend(
+      withCallHook(({ payload: result }) => {
+        refreshSessionResource()
+        navigateAfterLogin(result)
+      }),
+    )
+
+    form.submit.onReject.extend(
+      withCallHook(() => {
+        focusFirstInvalidField(form)
+      }),
+    )
+
+    const loginAction = action(() => wrap(form.submit()), 'loginAction').extend(
+      withAsync(),
+      withAbort(),
+    )
+
     return { form, action: loginAction }
   },
 })
 ```
+
+This split keeps the factory reusable and keeps route concerns at the route boundary. The route decides what to refresh, where to navigate, and how to handle local UX details after success or failure.
+
+When completion of a command is the real source event, prefer `form.submit.onFulfill` / `form.submit.onReject` with `withCallHook`. Use `withChangeHook` or `addChangeHook` only when an atom state change is what other code actually needs to observe, such as mirroring `form.submit.data()` or reacting to a dedicated status atom.
 
 ### Auth redirects and concrete loader payloads
 
