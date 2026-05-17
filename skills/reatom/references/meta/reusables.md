@@ -41,7 +41,7 @@ Items default into `src/reatom/`; reconfigure paths in the generated `jsrepo.con
 | [`test`](https://github.com/reatom/reusables/tree/main/src/reusables/test/test.ts) | utility | Vitest test wrapper with automatic Reatom context lifecycle and mock subscription helpers. |
 | [`tweakpane`](https://github.com/reatom/reusables/tree/main/src/reusables/tweakpane/) | integration | Bind atoms to [Tweakpane](https://tweakpane.github.io/docs/) controls for runtime tuning. |
 
-The `test` utility is particularly useful when bootstrapping: it bundles the Reatom + Vitest setup the start-from-scratch reference describes by hand, so you can `npx jsrepo add test` instead of writing the harness yourself. Use it whenever the project intends to write meaningful Reatom unit tests; for a single boot smoke test the hand-rolled spy from `setup/start-from-scratch.md` is enough.
+The `test` utility is particularly useful when bootstrapping: it bundles the Reatom + Vitest setup the sibling `reatom-scaffold` skill describes by hand, so you can `npx jsrepo add test` instead of writing the harness yourself. Use it whenever the project intends to write meaningful Reatom unit tests; for a single bootstrap smoke test the hand-rolled spy from that scaffold guide is enough.
 
 ## How the items differ from `@reatom/core`
 

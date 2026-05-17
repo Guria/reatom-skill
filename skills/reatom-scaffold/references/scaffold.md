@@ -1,4 +1,4 @@
-# Starting a Reatom Project From Scratch
+# Scaffolding a Reatom Project
 
 Use this when bootstrapping a brand-new project around Reatom. The default stack below is opinionated for production use; **adjust any layer if the user already specified a preference**. If the user has not, **use this default and verify current package versions with the available tooling before pinning** (`npm view <pkg> dist-tags`).
 
@@ -232,7 +232,7 @@ If the scaffold already ships with ESLint, decide explicitly whether ESLint stay
 }
 ```
 
-Why these specific names? Each one represents React owning state, effects, memoization, or identity that Reatom should own instead. See `../core/patterns.md` and the **React-owned app state** anti-pattern in `SKILL.md` for the rationale. If you intentionally need one of these for *view-only* concerns (e.g. `useRef` for DOM focus), add a narrow `// oxlint-disable-next-line` with a comment justifying the carve-out.
+Why these specific names? Each one represents React owning state, effects, memoization, or identity that Reatom should own instead. See `../../reatom/references/core/patterns.md` and the **React-owned app state** anti-pattern in `../../reatom/SKILL.md` for the rationale. If you intentionally need one of these for *view-only* concerns (e.g. `useRef` for DOM focus), add a narrow `// oxlint-disable-next-line` with a comment justifying the carve-out.
 
 If the project uses `@reatom/jsx` (no React), replace `"name": "react"` with the relevant target or remove the rule — it's only meaningful when React is on the dependency tree.
 
@@ -310,12 +310,12 @@ Use this as the recommended shape for a single validation entry point, then twea
     "test": "vitest run",
 
     "validate": "npm run typecheck && npm run lint && npm run test && npm run format:check && npm run intel",
-    "postvalidate": "echo '\u23f5  validate green. If this run is part of a bootstrap, read @references/meta/feedback-loop.md and include its bootstrap pitfall summary.'"
+    "postvalidate": "echo '\u23f5  validate green. If this run is part of a bootstrap, read the reatom-feedback-loop skill and include its bootstrap pitfall summary.'"
   }
 }
 ```
 
-`npm run validate` is the single entry point for CI and local validation. The bootstrap is not complete until the full validate command passes, and the `postvalidate` hook reminds the agent to read `@references/meta/feedback-loop.md` for the bootstrap pitfall summary.
+`npm run validate` is the single entry point for CI and local validation. The bootstrap is not complete until the full validate command passes, and the `postvalidate` hook reminds the agent to switch into the `reatom-feedback-loop` skill for the bootstrap pitfall summary.
 
 Treat `postvalidate` as part of the workflow, not cosmetic output. It is the mechanism that routes the agent back into the skill's feedback loop after a green run, which helps the next attempt start with sharper guidance instead of repeating the same mistakes.
 
@@ -359,7 +359,7 @@ createRoot(document.getElementById('root')!).render(
 )
 ```
 
-See `SKILL.md` → "App Setup — context options" for when to use this strict setup vs the default global context.
+See `../../reatom/SKILL.md` → "App Setup — context options" for when to use this strict setup vs the default global context.
 
 `connectLogger()` is strongly recommended for new apps while the model and file boundaries are still forming. It makes atom/action/computed flow visible in the console, traces relative call stacks, and helps catch accidental duplicate work or missing async boundaries before the app grows. Keep it dev-only and register it in `src/setup.ts` before importing modules that create Reatom primitives. For noisy apps, filter or highlight logs:
 
@@ -431,13 +431,13 @@ test('renders the initial page at root', async () => {
 })
 ```
 
-Replace `My App` with the actual stable text for the generated landing page. If the project plans to write meaningful Reatom unit tests beyond this browser smoke check, also pull the `test` utility from the reusables registry (`npx jsrepo add test` after initializing jsrepo against [reatom/reusables](https://github.com/reatom/reusables)). It bundles a Vitest wrapper with automatic Reatom context lifecycle and mock-subscription helpers. See [`../meta/reusables.md`](../meta/reusables.md) for the wider catalog.
+Replace `My App` with the actual stable text for the generated landing page. If the project plans to write meaningful Reatom unit tests beyond this browser smoke check, also pull the `test` utility from the reusables registry (`npx jsrepo add test` after initializing jsrepo against [reatom/reusables](https://github.com/reatom/reusables)). It bundles a Vitest wrapper with automatic Reatom context lifecycle and mock-subscription helpers. See [`../../reatom/references/meta/reusables.md`](../../reatom/references/meta/reusables.md) for the wider catalog.
 
 ## Step 11 — Storybook
 
 For this bootstrap flow, Storybook is part of the runtime validation harness, not just a design convenience. The point is to prove the generated app actually renders and survives interaction in a realistic browser environment on the first run. After the app is verified and the user wants a leaner surface area, offer to clean Storybook back out deliberately.
 
-**Read [`../integrations/storybook.md`](../integrations/storybook.md) in full before starting this step.** It covers the Reatom-specific parts that matter here: fresh frame per story, routed story URL ownership, optional MSW setup, browser-test integration, and pitfalls.
+**Read [`../../reatom/references/integrations/storybook.md`](../../reatom/references/integrations/storybook.md) in full before starting this step.** It covers the Reatom-specific parts that matter here: fresh frame per story, routed story URL ownership, optional MSW setup, browser-test integration, and pitfalls.
 
 ### Install Storybook packages
 
@@ -460,7 +460,7 @@ npm view storybook dist-tags
 
 ### Follow the reference
 
-Set up the Storybook files your project actually needs (typically `main.ts`, `preview.tsx`, optional routed-story helpers, optional viewport helpers, and `vitest.config.ts`) by following [`../integrations/storybook.md`](../integrations/storybook.md). Then add the scripts to `package.json`:
+Set up the Storybook files your project actually needs (typically `main.ts`, `preview.tsx`, optional routed-story helpers, optional viewport helpers, and `vitest.config.ts`) by following [`../../reatom/references/integrations/storybook.md`](../../reatom/references/integrations/storybook.md). Then add the scripts to `package.json`:
 
 ```jsonc
 {
@@ -491,32 +491,32 @@ If it fails, fix the reported issue and rerun `npm run validate`. These checks a
 
 **Must-read before writing the first feature** (in order):
 
-1. [`../core/patterns.md`](../core/patterns.md) — atomization, scoped factories (`reatom*`), file organization, boolean-as-lifecycle-switch. **Skip this and the codebase will drift** toward identity actions, module-level forms, and React-owned state.
-2. The Gotchas + Anti-patterns sections of `SKILL.md` — most production bugs come from violating these.
-3. [`../core/extensions.md`](../core/extensions.md) — `withAsyncData` + `withAsync` are used in almost every feature; `withChangeHook` and `withConnectHook` cover most lifecycle work.
+1. [`../../reatom/references/core/patterns.md`](../../reatom/references/core/patterns.md) — atomization, scoped factories (`reatom*`), file organization, boolean-as-lifecycle-switch. **Skip this and the codebase will drift** toward identity actions, module-level forms, and React-owned state.
+2. The Gotchas + Anti-patterns sections of `../../reatom/SKILL.md` — most production bugs come from violating these.
+3. [`../../reatom/references/core/extensions.md`](../../reatom/references/core/extensions.md) — `withAsyncData` + `withAsync` are used in almost every feature; `withChangeHook` and `withConnectHook` cover most lifecycle work.
 
 **Read on demand** when you start the relevant feature:
 
-4. [`../features/routing/routes.md`](../features/routing/routes.md) — routing API. Then [`../features/routing/loaders.md`](../features/routing/loaders.md) when you write the first loader.
-5. [`../features/forms.md`](../features/forms.md) — when adding the first form. Read **before** considering React Hook Form / Formik — `reatomForm` covers both.
-6. [`../features/persistence.md`](../features/persistence.md) — when state needs to survive refresh / cross-tab sync.
-7. [`../integrations/react.md`](../integrations/react.md) (or [`../integrations/jsx.md`](../integrations/jsx.md)) — adapter-specific gotchas, especially the StrictMode and "instant async resolution" notes.
-8. [`../core/sampling.md`](../core/sampling.md) — when you need debounce/throttle, race conditions, or imperative event awaiting.
+4. [`../../reatom/references/features/routing/routes.md`](../../reatom/references/features/routing/routes.md) — routing API. Then [`../../reatom/references/features/routing/loaders.md`](../../reatom/references/features/routing/loaders.md) when you write the first loader.
+5. [`../../reatom/references/features/forms.md`](../../reatom/references/features/forms.md) — when adding the first form. Read **before** considering React Hook Form / Formik — `reatomForm` covers both.
+6. [`../../reatom/references/features/persistence.md`](../../reatom/references/features/persistence.md) — when state needs to survive refresh / cross-tab sync.
+7. [`../../reatom/references/integrations/react.md`](../../reatom/references/integrations/react.md) (or [`../../reatom/references/integrations/jsx.md`](../../reatom/references/integrations/jsx.md)) — adapter-specific gotchas, especially the StrictMode and "instant async resolution" notes.
+8. [`../../reatom/references/core/sampling.md`](../../reatom/references/core/sampling.md) — when you need debounce/throttle, race conditions, or imperative event awaiting.
 
 **Read once before any v1001-only API call:**
 
-9. [`../meta/v1001.md`](../meta/v1001.md) — if you installed `@reatom/core@1001.x`, this lists every API that exists ONLY in v1001. Cite it in PR descriptions when bumping.
+9. [`../../reatom/references/meta/v1001.md`](../../reatom/references/meta/v1001.md) — if you installed `@reatom/core@1001.x`, this lists every API that exists ONLY in v1001. Cite it in PR descriptions when bumping.
 
 **Read when setting up Storybook (Step 11):**
 
-10. [`../integrations/storybook.md`](../integrations/storybook.md) — Storybook + Reatom integration patterns: fresh frame per story, routed story setup, optional MSW, browser-test integration, and common pitfalls.
+10. [`../../reatom/references/integrations/storybook.md`](../../reatom/references/integrations/storybook.md) — Storybook + Reatom integration patterns: fresh frame per story, routed story setup, optional MSW, browser-test integration, and common pitfalls.
 
 **Reference (look up only):**
 
-- [`../meta/packages.md`](../meta/packages.md) — "which package has X?" / "is this v3 package still alive?"
-- [`../meta/migration.md`](../meta/migration.md) — only when migrating an existing v3 codebase.
-- [`../core/writing-extensions.md`](../core/writing-extensions.md) — only when authoring a custom `.extend(...)` helper for reuse.
+- [`../../reatom/references/meta/packages.md`](../../reatom/references/meta/packages.md) — "which package has X?" / "is this v3 package still alive?"
+- [`../../reatom/references/meta/migration.md`](../../reatom/references/meta/migration.md) — only when migrating an existing v3 codebase.
+- [`../../reatom/references/core/writing-extensions.md`](../../reatom/references/core/writing-extensions.md) — only when authoring a custom `.extend(...)` helper for reuse.
 
 ## After bootstrap — report pitfalls back to the user
 
-When you finish bootstrapping a project, read [`../meta/feedback-loop.md`](../meta/feedback-loop.md) and include its bootstrap pitfall summary in the final response. This turns every greenfield bootstrap into a passive eval of the skill itself; skipping it loses the signal about which guidance is missing or unclear.
+When you finish bootstrapping a project, read [`../../reatom-feedback-loop/references/feedback-loop.md`](../../reatom-feedback-loop/references/feedback-loop.md) and include its bootstrap pitfall summary in the final response. This turns every greenfield bootstrap into a passive eval of the skill itself; skipping it loses the signal about which guidance is missing or unclear.

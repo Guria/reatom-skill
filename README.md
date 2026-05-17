@@ -1,67 +1,55 @@
-# Reatom Skill for pi (and other Agent Skills runtimes)
+# Reatom skills for pi (and other Agent Skills runtimes)
 
-A pi [skill](https://agentskills.io/specification) bundling expert guidance for [Reatom](https://github.com/reatom/reatom) v1000+ state management. It steers an LLM-powered coding agent (pi, Claude Code, etc.) toward production-ready Reatom patterns and away from common footguns.
+A multi-skill package for [Reatom](https://github.com/reatom/reatom) v1000+ guidance.
 
-## What's in here
+It currently follows **approach A**:
+- `reatom` — the main expert skill for existing codebases, API usage, architecture, debugging, and migration
+- `reatom-scaffold` — ordered bootstrap workflow for new projects
+- `reatom-feedback-loop` — correction / pitfall distillation workflow after wrong guidance or completed bootstrap
 
-```
-reatom/
-├── SKILL.md                          # Always-loaded orientation: routing, quick APIs, priority warnings
-└── references/                       # Loaded on demand via the read tool
-    ├── core/
-    │   ├── extensions.md             # withAsyncData, withAbort, withChangeHook, …
-    │   ├── writing-extensions.md     # Authoring custom .extend() helpers
-    │   ├── sampling.md               # debounce/throttle, take, onEvent, race, abortVar
-    │   ├── testing.md                # context.reset, clearStack/context.start, mock
-    │   └── patterns.md               # Atomization, scoped factories, file org
-    ├── features/
-    │   ├── forms.md                  # reatomForm, bindField, validation
-    │   ├── persistence.md            # withLocalStorage, withIndexedDb, withCookie, …
-    │   └── routing/
-    │       ├── routes.md             # Routes, layouts, codecs, urlAtom
-    │       └── loaders.md            # Loader patterns, guards, collisions
-    ├── integrations/
-    │   ├── react.md                  # @reatom/react, StrictMode, hooks
-    │   └── jsx.md                    # @reatom/jsx native runtime
-    ├── meta/
-    │   ├── packages.md               # Package index, deprecated v3 list
-    │   ├── reusables.md              # jsrepo catalog (form helpers, undo, logger, test, tweakpane…)
-    │   ├── migration.md              # v3 → v1000+ API mapping
-    │   └── v1001.md                  # Delta vs v1000 (API gating)
-    └── setup/
-        └── start-from-scratch.md     # Bootstrap a new TS+Vite+Reatom project
+## Package layout
+
+```text
+skills/
+├── reatom/
+│   ├── SKILL.md
+│   └── references/
+│       ├── core/
+│       ├── features/
+│       ├── integrations/
+│       └── meta/
+├── reatom-scaffold/
+│   ├── SKILL.md
+│   └── references/
+│       └── scaffold.md
+└── reatom-feedback-loop/
+    ├── SKILL.md
+    └── references/
+        └── feedback-loop.md
 ```
 
-**High-priority reference:** `references/setup/start-from-scratch.md` should be read first for full greenfield apps, project bootstraps, package/tooling choices, TS/Vite setup, lint/format/test pipelines, or production skeleton requests. For minimal examples or existing-app additions, answer narrowly and point to the setup guide as the production checklist.
+## Why this split
 
-Reference files link back to canonical source on `github.com/reatom/reatom@v1001` so the agent can verify behavior against upstream code, not just docs. SKILL.md stays mostly citation-light by design and points to those source-backed references for details.
+This package keeps one broad `reatom` skill for everyday Reatom work, while extracting two workflow-heavy areas that do not need to load for ordinary debugging or code review:
 
-## Design principles
+- **Scaffold** is a strict ordered process, not just background knowledge.
+- **Feedback loop** is a follow-up correction workflow, not a default concern for every task.
 
-1. **Progressive disclosure.** SKILL.md stays under ~500 lines and covers orientation plus highest-priority warnings; deep topics live in `references/` and are read on demand.
-2. **Validate against source.** API claims, defaults, and gotchas should be checked against `github.com/reatom/reatom` at the v1001 branch tip used during authoring.
-3. **Opinionated setup defaults.** The setup guide suggests a verifiable production toolchain (`oxlint` + `oxfmt` + `fallow`, TypeScript, Vite, browser smoke tests) and an optional `no-restricted-imports` rule to discourage React-owned app state. These are defaults, not Reatom requirements.
-4. **Version-sensitive.** Routing, action subscription shape, and `reatomComponent` defaults differ between v1000 and v1001; the skill flags every such API explicitly.
+This keeps the main skill broad and useful without carrying bootstrap/process instructions into every Reatom task.
 
 ## Installation
 
-### As a local pi skill (project-scoped)
+The exact install location is chosen by the user at install time.
+
+### Via pi package manager
 
 ```bash
-mkdir -p .pi/skills
-git clone <this-repo> .pi/skills/reatom
-```
-
-### As a global pi skill
-
-```bash
-mkdir -p ~/.pi/agent/skills
-git clone <this-repo> ~/.pi/agent/skills/reatom
+pi install git:github.com/<owner>/reatom-skill
+# or
+pi install npm:@<scope>/reatom-skill
 ```
 
 ### Via `skills.sh` / `npx skills`
-
-This repository is a **single-skill repo** with `SKILL.md` at the repository root. That layout is intentionally compatible with `skills.sh` discovery.
 
 ```bash
 # Local path
@@ -70,79 +58,94 @@ npx skills add /path/to/reatom-skill
 # Git URL
 npx skills add https://github.com/guria/reatom-skill.git
 
-# Explicit skill selection (optional because this repo contains one skill)
-npx skills add https://github.com/guria/reatom-skill.git --skill reatom
-```
-
-Validated locally with:
-
-```bash
+# List discovered skills
 npx skills add . --list
 ```
 
-which discovers the root `reatom` skill correctly.
-
-### Via pi package manager
-
-If you publish this as an npm or git pi-package:
-
-```bash
-pi install git:github.com/<owner>/reatom-skill
-# or
-pi install npm:@<scope>/reatom-skill
-```
-
-The `package.json` already declares `keywords: ["pi-package"]` and `pi.skills` so it's discoverable.
-
 ### Other Agent-Skills-compliant runtimes
 
-Place the directory at any of:
+Install the package, then place or expose the contained `skills/` directory through the runtime's normal skill search locations.
 
-- `~/.agents/skills/reatom/`
-- `.agents/skills/reatom/`
+The `package.json` declares:
 
-The format follows the [Agent Skills standard](https://agentskills.io/specification) and is portable. `skills.sh` also discovers root-level `SKILL.md` files, so a dedicated `skills/reatom/` wrapper directory is not required for this repository.
+```json
+{
+  "keywords": ["pi-package"],
+  "pi": { "skills": ["./skills"] }
+}
+```
 
-## When the skill triggers
+so pi can discover all bundled skills.
 
-Pi loads the skill based on its `description` field. It triggers on:
+## Skills overview
 
-- Any file importing from `@reatom/*`
-- Explicit Reatom API usage (`atom`/`computed`/`action` imported from `@reatom/core`, `reatomComponent`, `reatomRoute`, `reatomForm`, `withAsyncData`, `withChangeHook`, `wrap()` in Reatom context)
-- Errors mentioning `ReatomError` or "missing async stack"
-- Direct questions about Reatom, migrating from v3, choosing adapters, etc.
+### `reatom`
 
-The description is anchored to Reatom-specific imports, APIs, adapters, and errors to avoid triggering on unrelated atom libraries such as Jotai or Nanostores.
+Use for:
+- existing Reatom codebases
+- `@reatom/*` APIs
+- routing, forms, persistence, React integration
+- architecture and code review
+- migration and version-sensitive guidance
+- runtime errors like `ReatomError` or missing async stack
+
+This skill keeps the main source-backed references.
+
+### `reatom-scaffold`
+
+Use for:
+- brand-new Reatom apps
+- demos, examples, and prototypes that still need a proper bootstrap order
+- scaffolding a Reatom package/app inside another repo
+- validation pipeline setup before feature work
+
+It contains the ordered scaffold workflow in `skills/reatom-scaffold/references/scaffold.md`.
+
+### `reatom-feedback-loop`
+
+Use for:
+- user follow-up that says earlier Reatom guidance was wrong
+- explaining process deviation
+- course correction after a wrong turn
+- bootstrap pitfall summaries that should improve the skill itself
+
+It contains the correction workflow in `skills/reatom-feedback-loop/references/feedback-loop.md`.
 
 ## Validating / contributing
 
-If you change SKILL.md or any reference, **re-validate against the upstream repo**. The intended workflow:
+If you change any skill or reference, re-validate claims against the upstream repo:
 
 ```bash
-# Clone reatom alongside this skill
 git clone https://github.com/reatom/reatom ../reatom
 cd ../reatom && git checkout v1001
 
-# When editing the skill, grep the upstream source for anything you're claiming
 grep -rn 'export.*<symbol>' packages/core/src
 ```
 
-Pin GitHub source links to a specific branch (`v1001`) or commit SHA. Avoid `main`/`master` — Reatom doesn't use those branch names for active development.
+Prefer links pinned to `v1001` or a commit SHA, not floating default branches.
 
-## Versioning
+## Future evolution: possible move to approach B
 
-This skill targets the `v1001` branch of Reatom. When v1001 ships as the new `latest` on npm:
+This repo intentionally stops at approach A for now.
 
-1. Bump the `compatibility` field in SKILL.md frontmatter.
-2. Move `references/meta/v1001.md` content into the main flow and create a fresh `vNext.md` for the next pre-release.
-3. Re-spot-check all source links against the new branch.
+A later **approach B** could split the broad `reatom` skill further into narrower specialist skills such as:
+- `reatom-routing`
+- `reatom-forms`
+- `reatom-react`
+- `reatom-migration`
+
+### Pros of moving later
+- smaller per-skill context
+- more precise triggering for narrow tasks
+- easier topic-specific evals and description tuning
+
+### Cons of moving later
+- more trigger overlap
+- more maintenance and reference duplication
+- greater risk that vague prompts undertrigger or choose the wrong specialist
+
+For now, the package prefers one broad expert skill plus two focused workflow skills.
 
 ## License
 
 MIT — see `LICENSE`.
-
-## Credits
-
-- [Reatom](https://github.com/reatom/reatom) by [@artalar](https://github.com/artalar) and contributors.
-- [Agent Skills](https://agentskills.io/specification) standard.
-- [pi coding agent](https://github.com/earendil-works/pi-coding-agent) by mariozechner.

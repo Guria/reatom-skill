@@ -1,7 +1,7 @@
 {
   "name": "reatom-skill",
   "version": "0.1.0",
-  "description": "Pi/Agent-Skills skill: production-ready Reatom v1000+ guidance with on-demand reference loading and verified GitHub source links.",
+  "description": "Pi/Agent-Skills package: Reatom expert guidance plus dedicated scaffold and feedback-loop skills.",
   "keywords": [
     "pi-package",
     "agent-skill",
@@ -11,18 +11,17 @@
   ],
   "license": "MIT",
   "files": [
-    "SKILL.md",
-    "references/",
+    "skills/",
     "README.md",
     "LICENSE"
   ],
   "pi": {
     "skills": [
-      "."
+      "./skills"
     ]
   },
   "agentSkills": [
-    "."
+    "./skills"
   ],
   "repository": {
     "type": "git",

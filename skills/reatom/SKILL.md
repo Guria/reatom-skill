@@ -29,7 +29,7 @@ In-document sections (read top-to-bottom for orientation, jump for lookup):
 
 Reference files are loaded on demand — see the [reference table](#reference-files--read-on-demand) below.
 
-> **🚀 Setup reading rule:** any task that creates or bootstraps a new Reatom project — production app, example, demo, prototype, standalone package, or scaffold inside another repo — must read [`references/setup/start-from-scratch.md`](references/setup/start-from-scratch.md) first and treat it as the **default ordered plan**, not as background reading. The point is to stop the common failure mode of jumping into feature code too early, not to override explicit user constraints or common sense. By default, do not hand-write `package.json`, install app dependencies, or start feature files before Step 1/Step 2 are done unless the user explicitly narrowed the scope or rejected the scaffold flow. Do not treat examples or demos as automatic exemptions. The pipeline (lint, format, dead-code detection, strict context, browser smoke test, Storybook runtime validation, validate script) is not a production luxury; it anchors conventions from line one and catches the class of runtime failures (missing `wrap()`, circular imports, stale context) that accumulate silently when skipped. For lightweight questions to an existing project ("which packages?", "how do I add X?"), answer minimally and mention the setup guide as a reference without forcing a full bootstrap.
+> **🚀 Greenfield/bootstrap work lives in the sibling `reatom-scaffold` skill.** Use this `reatom` skill for existing-code guidance, debugging, reviews, architecture decisions, migrations, and API usage. If a task is primarily about creating a new project, scaffold inside another repo, or establishing the validation pipeline from zero, prefer the scaffold skill's ordered workflow instead of improvising setup steps here.
 
 > **⚠️ v1000+ only — do not rely on any v3 or earlier packages.** The v3 ecosystem (`@reatom/lens`, `@reatom/hooks`, `@reatom/effects`, `@reatom/persist-web-storage`, etc.) is completely separate and incompatible. v1000+ consolidated everything into `@reatom/core` and `@reatom/react`. When researching, always target the `v1000+` / `v1001` branches — v3 docs will mislead you.
 
@@ -59,18 +59,15 @@ references/
 ├── core/         core primitives, extensions, sampling, architectural patterns
 ├── features/     forms, routing, persistence (built into @reatom/core)
 ├── integrations/ framework adapters: React, native JSX runtime, Storybook
-├── meta/         package index, version delta, migration
-└── setup/        starting a new project from scratch
+└── meta/         package index, version delta, migration
 ```
 
 | File | Read when |
 |---|---|
-| `references/setup/start-from-scratch.md` | **Read first for full greenfield/bootstrap/setup tasks**: new TypeScript + Vite + Reatom project, package selection, lint/format/test pipeline, browser smoke test, opinionated production defaults, post-bootstrap pitfall summary |
 | `references/meta/v1001.md` | Comparing v1001 to v1000, deciding whether an API is v1001-only, migrations from v1000 |
 | `references/meta/packages.md` | Looking up which @reatom/* package to install, checking if a v3 package is deprecated |
 | `references/meta/reusables.md` | Browsing the [reatom/reusables](https://github.com/reatom/reusables) jsrepo catalog — form helpers, history/undo, logger, test harness, tweakpane integration, etc. |
 | `references/meta/migration.md` | Migrating code from v3 to v1000+, mapping old APIs to new |
-| `references/meta/feedback-loop.md` | User follow-up/steering suggests this skill led the agent in a wrong Reatom direction |
 | `references/core/extensions.md` | Using built-in extensions: `withAsyncData`, `withAbort`, `withChangeHook`, `withConnectHook`, `withComputed`, `withSuspense`, `withRollback`, `withTransaction`, `framePromise` |
 | `references/core/writing-extensions.md` | Writing custom `.extend()` helpers, lifecycle/resource integration, middleware, hooks, type-safe extension APIs |
 | `references/core/sampling.md` | Debounce/throttle, `take()`, `onEvent()`, `race()`, `abortVar`, checkpoint pattern |
@@ -381,7 +378,7 @@ Reatom creates a default global context on import. `clearStack()` is optional an
 
 For greenfield apps and debugging tasks, encourage enabling `connectLogger()` in the earliest setup import during development. It traces Reatom atoms/actions/computeds with useful call stacks and pairs with the built-in `log` action for source-level debug points that are silent in production. Keep it behind a dev-only guard (`import.meta.env.MODE === 'development'` or equivalent) and register it before feature atoms/actions are created so it observes the app from startup. The setup guide contains the canonical snippet.
 
-Use the project’s existing context style when editing an app. Do not add or remove `clearStack()` casually: adding it makes host callbacks require `wrap()`, removing it weakens isolation and can hide missing async boundaries. Details and bootstrap code live in [`references/setup/start-from-scratch.md`](references/setup/start-from-scratch.md).
+Use the project’s existing context style when editing an app. Do not add or remove `clearStack()` casually: adding it makes host callbacks require `wrap()`, removing it weakens isolation and can hide missing async boundaries. For greenfield bootstrap defaults and full setup code, use the sibling `reatom-scaffold` skill.
 
 After `clearStack()`, module scope must stay declarative: create primitives and attach declaration-time extensions, but do not read/write atoms or install live observers at import time. Top-level `effect()` and equivalent live subscribers are the common trap.
 
@@ -401,7 +398,7 @@ Read [`references/core/testing.md`](references/core/testing.md) for source-backe
 
 ## High-priority Gotchas
 
-If user follow-up reveals wrong Reatom guidance, read `references/meta/feedback-loop.md` after fixing the task.
+If user follow-up reveals wrong Reatom guidance, prefer the sibling `reatom-feedback-loop` skill after fixing the task.
 
 Keep this section as the always-loaded warning list. For detail, read the linked reference before implementing that area.
 
