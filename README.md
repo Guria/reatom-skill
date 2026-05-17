@@ -60,6 +60,29 @@ mkdir -p ~/.pi/agent/skills
 git clone <this-repo> ~/.pi/agent/skills/reatom
 ```
 
+### Via `skills.sh` / `npx skills`
+
+This repository is a **single-skill repo** with `SKILL.md` at the repository root. That layout is intentionally compatible with `skills.sh` discovery.
+
+```bash
+# Local path
+npx skills add /path/to/reatom-skill
+
+# Git URL
+npx skills add https://gitlab.com/workhuman/reatom-skill.git
+
+# Explicit skill selection (optional because this repo contains one skill)
+npx skills add https://gitlab.com/workhuman/reatom-skill.git --skill reatom
+```
+
+Validated locally with:
+
+```bash
+npx skills add . --list
+```
+
+which discovers the root `reatom` skill correctly.
+
 ### Via pi package manager
 
 If you publish this as an npm or git pi-package:
@@ -79,7 +102,7 @@ Place the directory at any of:
 - `~/.agents/skills/reatom/`
 - `.agents/skills/reatom/`
 
-The format follows the [Agent Skills standard](https://agentskills.io/specification) and is portable.
+The format follows the [Agent Skills standard](https://agentskills.io/specification) and is portable. `skills.sh` also discovers root-level `SKILL.md` files, so a dedicated `skills/reatom/` wrapper directory is not required for this repository.
 
 ## When the skill triggers
 
