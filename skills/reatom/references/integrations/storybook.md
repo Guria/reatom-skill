@@ -94,7 +94,7 @@ Keep the config boring unless the project has a real reason not to. Storybook sh
 The core Reatom requirement is a **fresh frame per story**.
 
 ```tsx
-import '../src/setup' // first, if the project uses clearStack()
+import '../src/setup' // must stay the first import if the project uses clearStack()
 
 import { context, noop, urlAtom } from '@reatom/core'
 import { reatomContext } from '@reatom/react'
@@ -153,7 +153,7 @@ export default preview
 
 Why this shape matters:
 
-- `import '../src/setup'` stays first when the app relies on strict setup.
+- `import '../src/setup'` stays first when the app relies on strict setup; configure import sorters/organize-import tools so they do not move it.
 - `context.start()` creates story isolation.
 - `urlAtom.routes = {}` clears prior route registrations for routed stories.
 - `urlAtom.sync.set(() => noop)` prevents routed stories from fighting Storybook's own iframe URL.
@@ -364,7 +364,7 @@ If the stories use named viewports, keep the browser test viewport aligned with 
 ## Pitfalls
 
 - **No fresh frame per story** — atoms, route state, and subscriptions leak between stories.
-- **Strict setup imported too late** — if `clearStack()` is part of the app setup, the setup module must load before story modules that create atoms.
+- **Strict setup imported too late** — if `clearStack()` is part of the app setup, the setup module must load before story modules that create atoms, and formatter/linter import sorting must not reorder it below normal imports.
 - **Routed stories fighting the iframe URL** — stub or bridge `urlAtom.sync`; do not let Storybook and Reatom both own `window.location`.
 - **MSW enabled by default without need** — it adds moving parts; keep it optional.
 - **Stale `mockServiceWorker.js`** — regenerate it after `msw` updates.

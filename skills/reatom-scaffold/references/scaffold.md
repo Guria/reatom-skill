@@ -344,7 +344,7 @@ Keep typecheck and emit separate: either set `"noEmit": true` in the TypeScript 
 ## Step 9 — Reatom app entry (strict context + dev logger, recommended)
 
 ```ts
-// src/setup.ts — import this file BEFORE any atoms or components
+// src/setup.ts — import this file as early as possible, before any atoms, routes, or components
 import { clearStack, connectLogger, context, log } from '@reatom/core'
 
 clearStack()
@@ -364,7 +364,7 @@ globalThis.LOG = log
 
 ```tsx
 // src/main.tsx
-import './setup'           // must be first
+import './setup' // must stay the first import
 import { createRoot } from 'react-dom/client'
 import { reatomContext } from '@reatom/react'
 import { rootFrame } from './setup'
@@ -378,6 +378,8 @@ createRoot(document.getElementById('root')!).render(
 ```
 
 See `../../reatom/SKILL.md` → "App Setup — context options" for when to use this strict setup vs the default global context.
+
+Treat this import order as runtime behavior, not style. `src/setup.ts` must load as soon as possible, and the side-effect import (`import './setup'`) must stay first in every app entrypoint that depends on strict setup: `src/main.tsx`, Storybook preview/bootstrap files, test bootstraps, and similar roots. Configure linters, formatters, and import-sort/organize-import tools so they do **not** move that import into the middle of the block.
 
 `connectLogger()` is strongly recommended for new apps while the model and file boundaries are still forming. It makes atom/action/computed flow visible in the console, traces relative call stacks, and helps catch accidental duplicate work or missing async boundaries before the app grows. Keep it dev-only and register it in `src/setup.ts` before importing modules that create Reatom primitives. For noisy apps, filter or highlight logs:
 
