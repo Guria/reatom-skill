@@ -4,6 +4,22 @@
 >
 > Source: [`packages/core/src/routing`](https://github.com/reatom/reatom/tree/v1001/packages/core/src/routing) plus [`packages/core/src/web/url.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/web/url.ts). Per-section source links inline below.
 
+## Table of contents
+
+- [Basic routes](#basic-routes)
+- [Nested routes](#nested-routes)
+- [Layout routes with render (v1001+ semantics)](#layout-routes-with-render-v1001-semantics)
+- [Protected routes - auth guard](#protected-routes---auth-guard)
+- [Dynamic route collisions with literal siblings](#dynamic-route-collisions-with-literal-siblings)
+  - [Parent params and child schemas](#parent-params-and-child-schemas)
+- [Modal gate - state in memory, no URL](#modal-gate---state-in-memory-no-url)
+- [Search-only routes](#search-only-routes)
+  - [Route search schemas vs withSearchParams](#route-search-schemas-vs-withsearchparams)
+- [URL codecs (v1001+)](#url-codecs-v1001)
+- [Relative navigation (v1001+)](#relative-navigation-v1001)
+- [urlAtom and global state](#urlatom-and-global-state)
+  - [Default redirect with urlAtom.extend(withChangeHook(...))](#default-redirect-with-urlatomextendwithchangehook)
+
 ## Basic routes
 
 [`reatomRoute` source](https://github.com/reatom/reatom/blob/v1001/packages/core/src/routing/route.ts) · [Tests](https://github.com/reatom/reatom/blob/v1001/packages/core/src/routing/route.test.browser.ts)

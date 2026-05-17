@@ -4,6 +4,17 @@
 >
 > Source: [`routing/route.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/routing/route.ts) (loader option), [`routing/route.types.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/routing/route.types.ts) (`RouteLoader`), [`async/withAsyncData.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/async/withAsyncData.ts) (used internally), [`route.security.test.browser.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/routing/route.security.test.browser.ts) (guards/collisions). Per-section links inline below.
 
+## Table of contents
+
+- [Route loaders - data fetching](#route-loaders---data-fetching)
+  - [Identity-changing routes, parent loader data, and clean scoped state](#identity-changing-routes-parent-loader-data-and-clean-scoped-state)
+    - [Index child loaders under layout routes](#index-child-loaders-under-layout-routes)
+- [Route loaders - factory pattern (forms + actions)](#route-loaders---factory-pattern-forms--actions)
+  - [Separate routes for create vs edit](#separate-routes-for-create-vs-edit)
+  - [Form factory functions](#form-factory-functions)
+  - [Auth redirects and concrete loader payloads](#auth-redirects-and-concrete-loader-payloads)
+  - [Pre-fill settings form from persisted atoms](#pre-fill-settings-form-from-persisted-atoms)
+
 ## Route loaders - data fetching
 
 [`loader` option in `route.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/routing/route.ts) · [`RouteLoader` type in `route.types.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/routing/route.types.ts) · [`withAsyncData` (used internally)](https://github.com/reatom/reatom/blob/v1001/packages/core/src/async/withAsyncData.ts)

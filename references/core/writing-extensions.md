@@ -4,6 +4,26 @@
 
 Use this when creating custom `.extend(...)` helpers for Reatom atoms, actions, forms, routes, or third-party integrations. For built-in extension APIs, read `../core/extensions.md` first.
 
+## Table of contents
+
+- [Core model](#core-model)
+- [When to write an extension](#when-to-write-an-extension)
+- [Design workflow](#design-workflow)
+- [Extension shapes](#extension-shapes)
+- [Common patterns](#common-patterns)
+  - [Add a method/action](#add-a-methodaction)
+  - [Add derived state](#add-derived-state)
+  - [Intercept calls with middleware](#intercept-calls-with-middleware)
+  - [Connect an external resource lazily](#connect-an-external-resource-lazily)
+  - [Manage imperative instances with automatic disposal](#manage-imperative-instances-with-automatic-disposal)
+  - [Extend nested actions or atoms exposed by a target](#extend-nested-actions-or-atoms-exposed-by-a-target)
+  - [Dynamic hooks inside withConnectHook — lifecycle-scoped reactivity](#dynamic-hooks-inside-withconnecthook--lifecycle-scoped-reactivity)
+- [Lifecycle and cleanup rules](#lifecycle-and-cleanup-rules)
+- [TypeScript guidance](#typescript-guidance)
+- [Composition guidelines](#composition-guidelines)
+- [Gotchas](#gotchas)
+- [Validation checklist](#validation-checklist)
+
 ## Core model
 
 A Reatom extension is a function applied to an atom/action/form-like target:

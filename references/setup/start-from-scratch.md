@@ -4,6 +4,26 @@ Use this when bootstrapping a brand-new project around Reatom. The default stack
 
 > Always run `npm view <pkg> version` (or `dist-tags`) right before scaffolding. Versions in this file are verified examples, not pins.
 
+## Table of contents
+
+- [Default stack (verify before installing)](#default-stack-verify-before-installing)
+- [Step 1 — Scaffold](#step-1--scaffold)
+- [Step 2 — Install the validate pipeline FIRST](#step-2--install-the-validate-pipeline-first)
+- [Step 3 — `tsconfig.json`](#step-3--tsconfigjson)
+- [Step 4 — `vite.config.ts`](#step-4--viteconfigts)
+- [Step 5 — oxlint configuration (`.oxlintrc.json`)](#step-5--oxlint-configuration-oxlintrcjson)
+- [Step 6 — oxfmt configuration](#step-6--oxfmt-configuration)
+- [Step 7 — fallow (code intelligence)](#step-7--fallow-code-intelligence)
+- [Step 8 — npm scripts (`package.json`)](#step-8--npm-scripts-packagejson)
+- [Step 9 — Pre-commit hook (lefthook)](#step-9--pre-commit-hook-lefthook)
+- [Step 10 — Reatom app entry (strict context, recommended)](#step-10--reatom-app-entry-strict-context-recommended)
+- [Step 11 — First `validate` run](#step-11--first-validate-run)
+- [Step 12 — Smoke test for runtime boot errors (browser test runner)](#step-12--smoke-test-for-runtime-boot-errors-browser-test-runner)
+  - [Vitest browser mode (recommended default)](#vitest-browser-mode-recommended-default)
+  - [Playwright standalone](#playwright-standalone)
+- [Reading list for the next steps](#reading-list-for-the-next-steps)
+- [After bootstrap — report pitfalls back to the user](#after-bootstrap--report-pitfalls-back-to-the-user)
+
 ## Default stack (verify before installing)
 
 | Layer | Package | Verified latest at writing time |
@@ -14,10 +34,10 @@ Use this when bootstrapping a brand-new project around Reatom. The default stack
 | State | `@reatom/core` | `1001.0.0` (`latest` dist-tag) |
 | React adapter | `@reatom/react` | `1001.0.0` (`latest` dist-tag) |
 | Native JSX adapter | `@reatom/jsx` | `1000.1.0` (`latest` dist-tag) |
-| Vue adapter | `@reatom/vue` | `1000.0.0-alpha.2` (`latest` dist-tag) |
-| Solid adapter | `@reatom/solid-js` | not published on npm |
+| Vue adapter | `@reatom/vue` | `1000.0.0-alpha.31` in v1001 source; verify npm dist-tag before install |
+| Solid adapter | `@reatom/solid-js` | `1000.0.0-alpha.30` in v1001 source; verify npm dist-tag before install |
 | Preact adapter | `@reatom/preact` | `1000.0.0` (`latest` dist-tag) |
-| Lit adapter | `@reatom/lit` | `1000.0.0-alpha.4` (`latest` dist-tag) |
+| Lit adapter | `@reatom/lit` | `1000.0.0-alpha.32` in v1001 source; verify npm dist-tag before install |
 | Linter | `oxlint` | `1.65.0` ([oxc-project/oxc](https://github.com/oxc-project/oxc)) |
 | Formatter | `oxfmt` | `0.50.0` (`oxc-project/oxc` formatter; alpha — track upstream) |
 | Code intelligence | `fallow` | `2.75.0` ([fallow-rs/fallow](https://github.com/fallow-rs/fallow)) |

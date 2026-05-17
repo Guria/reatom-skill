@@ -6,12 +6,13 @@ A pi [skill](https://agentskills.io/specification) bundling expert guidance for 
 
 ```
 reatom/
-├── SKILL.md                          # Always-loaded body: core APIs, gotchas, anti-patterns
+├── SKILL.md                          # Always-loaded orientation: routing, quick APIs, priority warnings
 └── references/                       # Loaded on demand via the read tool
     ├── core/
     │   ├── extensions.md             # withAsyncData, withAbort, withChangeHook, …
     │   ├── writing-extensions.md     # Authoring custom .extend() helpers
     │   ├── sampling.md               # debounce/throttle, take, onEvent, race, abortVar
+    │   ├── testing.md                # context.reset, clearStack/context.start, mock
     │   └── patterns.md               # Atomization, scoped factories, file org
     ├── features/
     │   ├── forms.md                  # reatomForm, bindField, validation
@@ -32,15 +33,15 @@ reatom/
         └── start-from-scratch.md     # Bootstrap a new TS+Vite+Reatom project
 ```
 
-**High-priority reference:** `references/setup/start-from-scratch.md` should be read first for any greenfield app, project bootstrap, package/tooling choice, TS/Vite setup, lint/format/test pipeline, or production skeleton request.
+**High-priority reference:** `references/setup/start-from-scratch.md` should be read first for full greenfield apps, project bootstraps, package/tooling choices, TS/Vite setup, lint/format/test pipelines, or production skeleton requests. For minimal examples or existing-app additions, answer narrowly and point to the setup guide as the production checklist.
 
-Every reference file links back to the canonical source on `github.com/reatom/reatom@v1001` so the agent can verify behavior against the upstream code, not just docs.
+Reference files link back to canonical source on `github.com/reatom/reatom@v1001` so the agent can verify behavior against upstream code, not just docs. SKILL.md stays mostly citation-light by design and points to those source-backed references for details.
 
 ## Design principles
 
-1. **Progressive disclosure.** SKILL.md stays under ~600 lines and covers the surface every Reatom task needs; deep topics live in `references/` and are read on demand.
-2. **Validate against source.** Every API claim, default, and gotcha was checked against `github.com/reatom/reatom` at the v1001 branch tip used during authoring.
-3. **Production defaults.** The setup guide picks toolchain that is verifiable today (`oxlint` + `oxfmt` + `fallow`, TS 6, Vite 8, lefthook) and locks in a `no-restricted-imports` rule that prevents React-owned app state from creeping in.
+1. **Progressive disclosure.** SKILL.md stays under ~500 lines and covers orientation plus highest-priority warnings; deep topics live in `references/` and are read on demand.
+2. **Validate against source.** API claims, defaults, and gotchas should be checked against `github.com/reatom/reatom` at the v1001 branch tip used during authoring.
+3. **Opinionated setup defaults.** The setup guide suggests a verifiable production toolchain (`oxlint` + `oxfmt` + `fallow`, TS 6, Vite 8, lefthook) and an optional `no-restricted-imports` rule to discourage React-owned app state. These are defaults, not Reatom requirements.
 4. **Version-sensitive.** Routing, action subscription shape, and `reatomComponent` defaults differ between v1000 and v1001; the skill flags every such API explicitly.
 
 ## Installation
@@ -85,11 +86,11 @@ The format follows the [Agent Skills standard](https://agentskills.io/specificat
 Pi loads the skill based on its `description` field. It triggers on:
 
 - Any file importing from `@reatom/*`
-- Reactive/atom patterns (`atom(...)`, `computed(...)`, `action(...)`)
+- Explicit Reatom API usage (`atom`/`computed`/`action` imported from `@reatom/core`, `reatomComponent`, `reatomRoute`, `reatomForm`, `withAsyncData`, `withChangeHook`, `wrap()` in Reatom context)
 - Errors mentioning `ReatomError` or "missing async stack"
 - Direct questions about Reatom, migrating from v3, choosing adapters, etc.
 
-The description is intentionally broad — Reatom's surface area is large enough that under-triggering is the bigger risk.
+The description is anchored to Reatom-specific imports, APIs, adapters, and errors to avoid triggering on unrelated atom libraries such as Jotai or Nanostores.
 
 ## Validating / contributing
 
