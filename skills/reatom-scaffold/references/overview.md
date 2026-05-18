@@ -25,13 +25,22 @@ The bootstrap order matters more than any single package choice:
 5. only after the first green pipeline, use the referenced routing material for a routing-only pass with placeholders and outlets
 6. only after routing is validated, continue the parked implementation work
 
+For full greenfield bootstraps, use this stoplight:
+
+- **Red:** no `GOAL.md` yet. After scaffold succeeds, create `GOAL.md` next; do not run package installs/lookups, read feature references, install feature dependencies, or write feature files.
+- **Yellow:** `GOAL.md` exists, but `npm run validate` has not passed on the scaffolded baseline. Work only on validation tooling and the browser smoke test.
+- **Blue:** validation is green. Add only routing placeholders and `outlet()` composition; keep UI-library shells, loaders, forms, backend mocks, and product pages parked.
+- **Green:** routing skeleton validates. Resume the parked original request.
+
 This prevents the common failure mode of writing routes, forms, and state code before the project can prove its basic runtime shape.
 
 Installing tools is not enough by itself. A bootstrap is still incomplete if the tools the agent chose are present in `package.json` but not configured, not exposed through scripts, or never actually executed.
 
-`GOAL.md` is the parking place for the original request and the source of truth for later stages. Once it is written, the agent should stop following the raw user request directly and stay inside the scaffold flow until the bootstrap gate is green. After that, `GOAL.md` should drive the routing pass first and only then the parked product work.
+`GOAL.md` is the parking place for the original request, the source of truth for later stages, and an honest state ledger. Its checkboxes are not a preview of intended work: only mark a box complete after verifying the corresponding exit artifact or command output. Once it is written, the agent should stop following the raw user request directly and stay inside the scaffold flow until the bootstrap gate is green. After that, `GOAL.md` should drive the routing pass first and only then the parked product work.
 
 ## Reading strategy
+
+Do not preload feature references for routing, forms, persistence, React integration, or async extensions during the red/yellow bootstrap phases. Treat `read` calls as part of the process, not harmless preparation. The original request belongs in `GOAL.md`; early feature reading makes implementation details feel urgent before the gate allows them.
 
 ### Read the full scaffold reference when
 - the user wants an end-to-end new project bootstrap
@@ -58,10 +67,10 @@ Suggested entry points in `scaffold.md`:
 
 ## Completion reminder
 
-Before saying the bootstrap is done, make sure the answer includes evidence that the pipeline was actually wired and run, not merely installed.
+Before saying the bootstrap is done, make sure the answer includes evidence that the pipeline was actually wired and run, not merely installed. The evidence is files, scripts, command output, and checked gates.
 
 For the default path, the expected proof points are:
-- `GOAL.md` exists as a staged todo list
+- `GOAL.md` exists as a staged todo list with no pre-checked future work
 - the selected validation commands are wired and runnable
 - a browser smoke test passes on the scaffolded baseline
 - `npm run validate` passes

@@ -7,6 +7,8 @@
 [Source: `reatomComponent.ts`](https://github.com/reatom/reatom/blob/v1001/packages/react/src/reatomComponent.ts) · [Tests](https://github.com/reatom/reatom/blob/v1001/packages/react/src/reatomComponent.test.tsx)
 
 
+For greenfield Reatom pages, layouts, and examples, prefer `reatomComponent` as the default style unless the user or existing codebase has already chosen hook-style integration. It keeps the mental model uniform: read atoms/computeds/routes directly during render, and use `wrap(...)` for ordinary handlers inside that reactive boundary. Reach for `useAtom`/`useAction` when matching an established hook-style codebase or when you intentionally need hook-level subscription/control.
+
 Wrap any React component that reads atom values with `reatomComponent`. Under strict setup (`clearStack()`), extend that rule to components that create Reatom callbacks during render too — for example `wrap(...)` handlers, route checks, or other render-time reads of Reatom primitives. `reatomComponent` establishes the reactive boundary the render needs, and the component re-renders when the read atoms change.
 
 ```tsx
@@ -50,6 +52,8 @@ const LegacyUnmountAbort = reatomComponent(
 ### Read atoms under the provider boundary
 
 [Source: `useFrame` in `reatomComponent.ts`](https://github.com/reatom/reatom/blob/v1001/packages/react/src/reatomComponent.ts)
+
+Before writing the first React root/bootstrap file, verify the exact context/frame creation API from the installed `@reatom/core` / `@reatom/react` exports, the local source, or the setup quick reference. Do not invent names from memory such as `createCtx` unless you have verified they exist in the installed version. The riskiest point in a fresh app is the seam between framework root code and Reatom's frame/provider.
 
 `useFrame()` reads `reatomContext` and falls back to `STACK[0]`; if neither exists, it throws that the root/provider is not set. In React structure terms, this means the first component that reads atoms must render **under** `<reatomContext.Provider>` (or another established frame source). Under strict setup, avoid making the top-level wrapper both provide the frame and read atoms before the provider exists.
 
@@ -125,6 +129,8 @@ const [value, setValue] = useAtom(0)
 
 `useAtom` also accepts an optional `options` argument for `name` and `subscribe` (pass `{ subscribe: false }` to read without subscribing).
 
+A value destructured from `useAtom` is a plain React value, not an atom getter. Do not call it like `isOpen()`, `isReady()`, or `selectedEntity()`. TypeScript errors such as `Boolean has no call signatures`, `String has no call signatures`, or `Entity has no call signatures` usually mean hook-return values were mixed with direct atom-call style. Either remove the `()` or convert the file back to `reatomComponent` and read the original atoms directly.
+
 ### useAction
 
 ```tsx
@@ -170,7 +176,7 @@ For callback wrapping, the default rule is:
 
 This distinction matters because `wrap()` captures the current frame at call time. In `reatomComponent`, render already runs inside a Reatom boundary, so creating `wrap(...)` handlers during render is normally fine. In a plain function component under strict setup, render-time `wrap(...)` can capture the wrong context; `useWrap(...)` fixes that by binding to the frame through React hooks.
 
-Both styles are valid. `reatomComponent` is more concise when reading many atoms; hook APIs give more control and may feel more natural in codebases that prefer explicit hook-style composition. Check existing components to see which pattern the project already uses and follow it. If there's no clear pattern, ask the user before standardizing on one style.
+Both styles are valid. `reatomComponent` is more concise when reading many atoms; hook APIs give more control and may feel more natural in codebases that prefer explicit hook-style composition. Check existing components to see which pattern the project already uses and follow it. In a greenfield example or newly generated app with no existing convention, start with `reatomComponent`; if you choose hooks, keep the entire file in hook semantics and treat hook results as plain values.
 
 ## React-specific rules
 

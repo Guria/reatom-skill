@@ -1,0 +1,45 @@
+{
+  "skill_name": "reatom-feedback-loop",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "A previous model read the Reatom scaffold checklist, scaffolded a Vite app, then immediately read routing/forms/patterns references before writing GOAL.md. The user asks: identify what already went wrong and improve the skill so this does not repeat.",
+      "expected_output": "The agent identifies the missing GOAL.md gate and early feature-reference reads as process failures, avoids saying only 'next time I will follow it', explains the instruction-shape failure, and proposes concrete skill edits such as next-tool-call GOAL.md, read calls treated as phase actions, and eval coverage.",
+      "assertions": [
+        {
+          "name": "no_future_promise_as_fix",
+          "text": "The response does not treat a future promise or apology as sufficient; it proposes durable skill text or eval changes."
+        },
+        {
+          "name": "instruction_shape_analyzed",
+          "text": "The response explains why existing guidance failed to constrain behavior, such as being too advisory, too buried, or missing a concrete artifact/tool-call gate."
+        },
+        {
+          "name": "concrete_skill_edits",
+          "text": "The response names target skill files/sections and preventive mechanisms, not only local recovery steps."
+        }
+      ],
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "A previous Reatom dashboard run used useAtom throughout new pages, then called hook-return values like isOpen(), isReady(), selectedEntity(), tried route.render assignment, guessed a version-pinned UI library's APIs, and added casts/search-replace rewrites while typecheck was red. Analyze misconceptions and suggest skill improvements.",
+      "expected_output": "The agent categorizes misconceptions by mental model: route render mutability, hook-return plain values vs atom getters, form binding with third-party controls, async data shape, UI-library guessing, and bad recovery strategy. It proposes specific improvements to routing, React, forms, scaffold phase gates, and feedback-loop evals.",
+      "assertions": [
+        {
+          "name": "misconception_categories_named",
+          "text": "The analysis names the wrong mental models, not just individual TypeScript errors."
+        },
+        {
+          "name": "reatom_component_default_identified",
+          "text": "The response explains why greenfield pages/layouts should usually prefer reatomComponent and why mixing hook and atom-call styles causes Boolean/String has no call signatures errors."
+        },
+        {
+          "name": "recovery_rule_included",
+          "text": "The response includes a stop-and-restore-green rule instead of recommending broad rewrites, casts, suppressions, or commits while typecheck is red."
+        }
+      ],
+      "files": []
+    }
+  ]
+}

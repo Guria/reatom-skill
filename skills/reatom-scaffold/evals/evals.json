@@ -1,0 +1,49 @@
+{
+  "skill_name": "reatom-scaffold",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Build a new Reatom dashboard-style example in the current empty folder. Use a version-pinned third-party UI component library. Demonstrate public/private routing, forms, actions, side effects, async fetches, persistence, error handling, fake backend delays, practical app structure, and idiomatic Reatom patterns. Commit at reasonable bootstrap steps.",
+      "expected_output": "The agent treats this as a full greenfield bootstrap: reads scaffold overview/checklist, runs the scaffold, writes GOAL.md as the next normal project tool call, does not read routing/forms/persistence/React feature references before GOAL.md and a green validation baseline, installs/configures/runs validation tooling before Reatom runtime or UI-library feature work, and commits only after a validated Step 12 baseline if committing at all.",
+      "assertions": [
+        {
+          "name": "goal_immediately_after_scaffold",
+          "text": "After the scaffold command succeeds, the next normal project action is creating GOAL.md, not git init/npm install/npm view/package inspection/feature-reference reads."
+        },
+        {
+          "name": "honest_goal_checkboxes",
+          "text": "GOAL.md does not pre-check future validation/routing/feature work; checkboxes are marked complete only after verified exit artifacts or passing commands."
+        },
+        {
+          "name": "no_feature_reference_reads_during_red_yellow",
+          "text": "The run does not read routing, forms, persistence, React integration, patterns, or extensions references before GOAL.md exists and npm run validate is green."
+        },
+        {
+          "name": "validation_before_runtime_features",
+          "text": "The run wires and executes typecheck, lint, browser test, format check, code-intelligence, and npm run validate before adding @reatom runtime code, UI-library setup, routes, forms, fake backend, or product pages."
+        }
+      ],
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "The Vite + validation baseline is green and GOAL.md says routing scheme is next. Add the first Reatom routing skeleton for a React app, then continue toward the requested dashboard-style example.",
+      "expected_output": "The agent keeps the blue phase routing-only: installs only needed Reatom runtime/adapter packages, reads routing and React integration references, verifies root/provider exports before App.tsx/main.tsx, creates placeholder routes/layouts with outlet() composition in .tsx files and RouteChild declaration, validates the skeleton, and does not install/configure the UI library, loaders, forms, fake backend, persistence, or product pages until routing is green.",
+      "assertions": [
+        {
+          "name": "routing_only_blue_phase",
+          "text": "The routing phase adds placeholder routes/layouts only and does not start a UI-library shell, loaders, forms, fake backend, persistence, or product pages."
+        },
+        {
+          "name": "route_preflight_obeyed",
+          "text": "Route render is defined in reatomRoute options, JSX route modules use .tsx, RouteChild is declared once, and outlet() array semantics are handled."
+        },
+        {
+          "name": "root_bootstrap_verified",
+          "text": "The exact Reatom React root/provider/context API is verified from installed exports/source/reference before being written."
+        }
+      ],
+      "files": []
+    }
+  ]
+}

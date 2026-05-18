@@ -6,6 +6,7 @@
 
 ## Table of contents
 
+- [First routing-pass preflight](#first-routing-pass-preflight)
 - [Basic routes](#basic-routes)
 - [Nested routes](#nested-routes)
 - [Layout routes with render (v1001+ semantics)](#layout-routes-with-render-v1001-semantics)
@@ -20,6 +21,17 @@
 - [Relative navigation (v1001+)](#relative-navigation-v1001)
 - [urlAtom and global state](#urlatom-and-global-state)
   - [Default redirect with urlAtom.extend(withChangeHook(...))](#default-redirect-with-urlatomextendwithchangehook)
+
+## First routing-pass preflight
+
+Use this compact check before writing the first route file in a new app or after a scaffold handoff:
+
+- `render` goes inside `reatomRoute({ ... })` options. If you are about to write `route.render = ...`, stop and rebuild the route definition.
+- Inline JSX in a route module means the file extension must be `.tsx` / `.jsx`, not `.ts` / `.js`.
+- `self.outlet()` returns an array of route children. Wrap or place it where an array is valid; do not hide duplicate matches with `outlet().at(0)`.
+- Declare `RouteChild` once for the target framework before expecting route output and outlets to type-check.
+- For the first post-bootstrap pass, keep routes as placeholders. Do not add loaders, forms, fake backend calls, persistence, UI-library shells, or product pages until the routing skeleton typechecks and validates.
+- For React roots, verify the installed context/provider exports before writing the root wrapper; do not guess bootstrap API names from memory.
 
 ## Basic routes
 

@@ -89,6 +89,19 @@ const LoginForm = reatomComponent(() => {
 
 `bindField(field)` returns the field's bound `value`/`checked`, `onChange`, `onBlur`, `onFocus`, **and** `error`. Spread it directly into ordinary inputs and avoid passing a second `error` prop from `field.validation().error` unless you are intentionally overriding the bound one.
 
+### Binding third-party UI controls
+
+Decide the binding shape before writing a form UI. Do not mix `bindField`, ad-hoc casts, and guessed field methods in the same form just to silence types.
+
+| Control shape | Default binding |
+|---|---|
+| Native-like `input` / `textarea` that passes a DOM event | `...bindField(field)` |
+| Checkbox-like control with `checked` and DOM event | `...bindField(field)` if the component accepts those props unchanged |
+| Select/date/UI-library control whose `onChange` receives a raw value | Manual `value={field.value()}` and `onChange={wrap((value) => field.change(value))}` |
+| Component has a separate `error` prop | Prefer `bindField` only if it already maps the prop correctly; otherwise pass `field.validation().error` manually with the control's expected type |
+
+If the first UI-library binding attempt fails, pause and classify the component shape. Do not respond by casting the whole field to `any` or rewriting unrelated form/model code. Type errors like "possibly undefined" under `noUncheckedIndexedAccess` should be solved by preserving the typed field set shape, not by search-and-replace casts that can corrupt JSX.
+
 ## Form field access patterns
 
 [`reatomField` source](https://github.com/reatom/reatom/blob/v1001/packages/core/src/form/reatomField.ts) · [`reatomFieldArray` source](https://github.com/reatom/reatom/blob/v1001/packages/core/src/form/reatomFieldArray.ts) · [`reatomFieldSet` source](https://github.com/reatom/reatom/blob/v1001/packages/core/src/form/reatomFieldSet.ts)

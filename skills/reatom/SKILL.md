@@ -153,8 +153,10 @@ These are the frequent failure modes worth keeping always loaded. The full prese
 - **`wrap()` belongs at async boundaries that touch atoms**, not inside plain framework-agnostic API helpers.
 - **Under strict setup, handwritten callbacks that touch Reatom state need `wrap()`**, even when third-party UI libraries make the callback look innocent.
 - **Route work is version-sensitive** and should read the routing references first.
+- **Prefer `reatomComponent` for greenfield React pages/layouts/examples**; hook APIs are valid when matching an existing hook-style codebase. `useAtom` returns plain values, not callable atom getters — `Boolean/String/... has no call signatures` usually means hook style and atom-call style were mixed.
 - **`reatomComponent` is required for React components that read atoms during render**; inside `reatomComponent`, plain `wrap(...)` is often enough for ordinary handlers, while `useWrap(...)` is useful in hook-style components or when callback identity needs to stay stable.
 - **`reatomForm` usage is subtle enough that form edits should read the forms reference first.**
+- **When a Reatom type/API mismatch appears, freeze scope before adding more files.** Do not answer with broad casts, `ts-expect-error`, sed rewrites, or unrelated tsconfig churn. Re-read the relevant reference, repair the smallest failing layer, and restore the validation command to green before continuing.
 - **When something feels surprising, load `references/meta/gotchas.md` before improvising.**
 
 ## Escalation / handoff

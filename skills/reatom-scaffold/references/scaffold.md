@@ -6,6 +6,15 @@ For greenfield work, treat this as the default sequence: scaffold, write `GOAL.m
 
 This pipeline is intentionally **shift-left**: it is designed to surface tooling and runtime-integration mistakes as early as possible, while the app is still cheap to correct. Until the first green `npm run validate`, the only active goal is the validation pipeline; no Reatom code should be written yet.
 
+Bootstrap gate rail: treat every step below as a gate with an exit artifact. This does not rely on the model recognizing whether it needs help; if the artifact is missing, the next action is to create or verify that artifact, not to continue toward the product request.
+
+- scaffold command just succeeded and `GOAL.md` is missing → create `GOAL.md` next; do not run `git init`, `npm install`, `npm view`, package inspection, or feature-reference reads first unless you genuinely need to locate the root.
+- `GOAL.md` missing → create it before any feature dependency, feature file, or feature-reference read.
+- validation scripts/config missing → wire them before runtime app work.
+- browser smoke test missing or failing → fix the scaffolded baseline before Reatom setup.
+- `npm run validate` not yet green → do not add `@reatom/*`, routes, pages, forms, mocked backend code, rich UI, or UI-library setup.
+- routing placeholders not validated → do not add loaders/business logic, forms, fake backend data, UI-library shells, or product pages yet.
+
 > **This applies to examples and demos too.** The validation pipeline is not ceremony for "later" or only for "real apps". It catches failures that `tsc --noEmit` and `vite build` will happily miss, especially strict-context runtime errors such as `missing async stack`, invalid async-status assumptions, and browser-only mount problems. If you deliberately want a lighter bootstrap, say what confidence is being traded away.
 
 > Prefer `npm create vite@latest` for the scaffold itself when practical. For packages installed after scaffolding, run `npm view <pkg> version` (or `dist-tags`) first.
@@ -14,10 +23,12 @@ This pipeline is intentionally **shift-left**: it is designed to surface tooling
 
 Use this as the **default sequence** for new apps/examples/packages. It exists to counter a common agent failure mode — jumping into feature code before the scaffold and validation harness exist. It should make the workflow harder to accidentally skip, not override explicit user constraints or common sense.
 
+Before each read, command, or file edit, run this quick self-check in your head: current phase is one of `scaffold`, `validation`, `routing-skeleton`, or `feature`. If the next tool call belongs to a later phase, stop and complete the current phase's gate first. This is especially important after reading the user's original request, because detailed product requirements make later-phase work feel immediately relevant.
+
 By default:
 
 1. **Do not hand-write `package.json` or app entry files first.** Run the scaffold step first unless the user explicitly asked for manual scaffolding.
-2. **As soon as the scaffold root exists, write `GOAL.md` as a checkbox todo list.** It should park the original request, list the later stages, and become the only roadmap after that point.
+2. **As soon as the scaffold root exists, write `GOAL.md` as a checkbox todo list.** It should park the original request, list the later stages, and become the only roadmap after that point. The next normal tool call after a successful scaffold is `write GOAL.md`; do not initialize git, read routing/forms/patterns references, verify runtime/UI package versions, or run `npm install` before this gate unless the scaffold root is ambiguous.
 3. **Once `GOAL.md` exists, ignore the original request until the checklist brings it back.** The current job is now the validation pipeline only.
 4. **Keep broader Reatom guidance subordinate to this checklist.** Use the targeted references this file points to, but do not let general feature guidance pull the bootstrap out of order.
 5. **Do not install feature dependencies first.** Install the requested validation/tooling dependencies immediately after the scaffold.
@@ -26,7 +37,10 @@ By default:
 8. **Do not treat examples, demos, or standalone packages as automatic exceptions.** They teach by example, so the bootstrap quality bar often matters more, not less.
 9. **If the user gave target-path constraints, preserve them while still following the sequence.** For example, a standalone package inside `./examples/...` still starts with the scaffold step inside that directory.
 10. **If the user intentionally wants a lighter path, say what is being skipped and why.** Adapt deliberately instead of drifting out of order by accident.
-If you catch yourself planning pages, routes, models, or Reatom app entry before Step 12, you are probably out of order. Stop, check whether the user explicitly narrowed the scope, and otherwise resume the checklist from the earliest incomplete step.
+11. **Do not preload feature references during the validation phase.** Routing, forms, persistence, React integration, and async-extension references are useful later, but reading them before the gate is green primes implementation instead of bootstrap.
+12. **Do not install or configure requested UI libraries during validation or routing-skeleton by default.** A design-system shell is feature/UI work. The routing skeleton should compile with plain placeholders unless the user explicitly narrowed the task to UI-library bootstrap.
+
+If you catch yourself planning pages, routes, models, Reatom app entry, fake backend data, UI-library setup, or UI feature composition before Step 12, you are out of order unless the user explicitly narrowed the scope. Stop, name the crossed gate, and resume the checklist from the earliest incomplete step.
 
 Before substantial feature work, verify this gate explicitly:
 
@@ -43,6 +57,8 @@ Before substantial feature work, verify this gate explicitly:
 If any box is unchecked, the next task is still bootstrap work, not routing or feature work.
 
 A package install alone does not count. Validation, formatting, analysis, and optional preview tools only matter if they are configured, reachable through scripts or documented commands, and actually executed.
+
+Out-of-order recovery is part of the process. If feature code was already written too early, do not keep patching symptoms from that premature code. Either roll it back, move it aside, or ask the user before preserving it; then re-enter the checklist at the first missing gate. This avoids turning one process violation into a long debugging session.
 
 ## Table of contents
 
@@ -100,6 +116,8 @@ Immediately after the scaffold root exists, create `GOAL.md` in that root as a c
 
 The checklist should:
 - make **validation pipeline** the only active goal at first;
+- keep checkboxes honest: future work starts unchecked, and a box is checked only after its exit artifact has been verified;
+- never mark a parent stage complete until all of its child gates are complete and the stage's final validation command has passed;
 - explicitly park **routing scheme** as the next stage after a green pipeline;
 - explicitly park **finish original request** after routing is validated;
 - include a pointer to the routing reference bundled with the skill set;
@@ -139,18 +157,19 @@ For the default React stack:
 ```bash
 npm create vite@latest my-app -- --template react-ts
 cd my-app
-npm install
+# Next tool call: write GOAL.md in this directory.
+# Then run npm install and continue the validation pipeline.
 ```
 
-For other adapters, pick the closest TypeScript template (`vanilla-ts`, `vue-ts`, `preact-ts`, etc.) and then install the matching `@reatom/*` adapter in Step 2. Vite's current docs list `npm create vite@latest` as the scaffold command and note that modern Vite requires Node `20.19+` or `22.12+`; upgrade Node first if the CLI warns.
+For other adapters, pick the closest TypeScript template (`vanilla-ts`, `vue-ts`, `preact-ts`, etc.). Install the matching `@reatom/*` adapter during the routing-skeleton stage, not before the first green validation baseline. Vite's current docs list `npm create vite@latest` as the scaffold command and note that modern Vite requires Node `20.19+` or `22.12+`; upgrade Node first if the CLI warns.
 
-If the project should have its own git repo and the parent is not already one, initialize it after scaffolding:
+If the project should have its own git repo and the parent is not already one, initialize it after `GOAL.md` exists:
 
 ```bash
 git rev-parse --is-inside-work-tree >/dev/null 2>&1 || git init -b main
 ```
 
-Do not stage or commit unless the user explicitly asks. If they do want a baseline commit, do it after Step 12 so the validated bootstrap state is captured before feature work begins.
+Do not stage or commit unless the user explicitly asks. If they do want a baseline commit, do it after Step 12 so the validated bootstrap state is captured before feature work begins. If a GOAL subtask says "initialize git", mark it complete only after this command succeeds.
 
 Verify non-template packages right before installing them:
 
@@ -251,6 +270,8 @@ If the scaffold already ships with ESLint, decide explicitly whether ESLint stay
   "plugins": ["typescript", "react", "import"],
   "rules": {
     "typescript/no-explicit-any": "error",
+    "import/no-unassigned-import": "off",
+    "react/react-in-jsx-scope": "off",
     "eslint/no-restricted-imports": [
       "error",
       {
@@ -280,7 +301,7 @@ If the scaffold already ships with ESLint, decide explicitly whether ESLint stay
 }
 ```
 
-Why these specific names? Each one represents React owning state, effects, memoization, or identity that Reatom should own instead. See `../../reatom/references/core/patterns.md` and the **React-owned app state** anti-pattern in `../../reatom/SKILL.md` for the rationale. If you intentionally need one of these for *view-only* concerns (e.g. `useRef` for DOM focus), add a narrow `// oxlint-disable-next-line` with a comment justifying the carve-out.
+`import/no-unassigned-import` is disabled because asset and setup imports are often intentional in app scaffolds, and `react/react-in-jsx-scope` is disabled because modern JSX runtimes do not require a manual `React` import. Why these restricted names? Each one represents React owning state, effects, memoization, or identity that Reatom should own instead. See `../../reatom/references/core/patterns.md` and the **React-owned app state** anti-pattern in `../../reatom/SKILL.md` for the rationale. If you intentionally need one of these for *view-only* concerns (e.g. `useRef` for DOM focus), add a narrow `// oxlint-disable-next-line` with a comment justifying the carve-out.
 
 Keep `typescript/no-explicit-any` enabled as `error`. If a boundary value is genuinely unknown, model it as `unknown`, validate or narrow it, and only then pass it into state or actions. That keeps the type guarantees intact instead of bypassing them with local suppressions.
 
@@ -510,7 +531,7 @@ A common weak finish is: dependencies installed, files written, but the pipeline
 Another common weak finish is: runtime/type/lint/build are green, but the code-intelligence check still reports duplicate or unused-code issues and the agent waves them off because the app works. Treat that as unfinished too unless the user explicitly accepted a lighter code-health bar.
 
 Before the final response, confirm all promised quality gates were both wired and executed:
-- `GOAL.md` exists and `postvalidate` can echo it back
+- `GOAL.md` exists, has honest checkbox state, and `postvalidate` can echo it back
 - `npm run lint` uses `oxlint`
 - `npm run format:check` uses `oxfmt`
 - `npm run intel` uses `fallow`
@@ -541,15 +562,19 @@ At this point `postvalidate` should echo `GOAL.md`. Follow it literally.
 
 The next stage is **not** the original feature request yet. It is a routing-only pass:
 
-1. install the needed Reatom runtime packages for the chosen adapter;
+1. install the needed Reatom runtime packages for the chosen adapter; do not install requested UI-library packages yet unless the user explicitly made UI-library bootstrap the current phase;
 2. read [`../../reatom/references/features/routing/routes.md`](../../reatom/references/features/routing/routes.md) before writing route code, including its route-option gotchas;
-3. design the route tree with placeholder pages/layouts only;
-4. when using layout routes, have their `render(self)` return placeholder shell content plus `self.outlet()` composition;
-5. keep loaders/forms/business logic out of this pass;
-6. validate the routing skeleton, then mark the routing checkbox in `GOAL.md`;
-7. only after that, resume the parked original request.
+3. read the adapter integration reference needed to mount the route output (for React, [`../../reatom/references/integrations/react.md`](../../reatom/references/integrations/react.md)), then verify the exact root/provider exports from installed packages or source before writing `App.tsx` / `main.tsx`;
+4. design the route tree with placeholder pages/layouts only, using plain framework markup for shells and pages;
+5. when using layout routes, have their `render(self)` return placeholder shell content plus `self.outlet()` composition;
+6. keep UI-library shells, loaders, forms, fake backend data, persistence, and business logic out of this pass;
+7. if route typecheck turns red, stop at the routing skeleton and restore green status before adding any new page/feature files;
+8. validate the routing skeleton, then mark the routing checkbox in `GOAL.md`;
+9. only after that, resume the parked original request.
 
-A good first routing pass proves structure, nesting, and outlet composition without conflating them with product logic.
+A good first routing pass proves structure, nesting, outlet composition, and root/provider wiring without conflating them with product logic or UI-library APIs.
+
+When the routing skeleton is green and `GOAL.md` unlocks feature work, handle version-pinned UI libraries as their own small integration step before broad page generation: verify package names and the risky primitives (provider, shell/layout, navigation, inputs/forms) from current docs or installed types; add a minimal provider/shell; validate; then continue to product pages. Do not guess packages such as build plugins or component names from memory just because the UI library is familiar.
 
 ## Reading list for the next steps
 
