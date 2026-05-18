@@ -295,6 +295,8 @@ Full patterns reference — atomization, scoped factories, loader-as-SSOT, file 
 
 **Page model typing.** When a component receives a `model` prop, prefer inferring that type from the factory that creates it (`ReturnType<typeof reatomXPageModel>`, or `Awaited<ReturnType<...>>` for async factories) instead of maintaining a parallel structural object type by hand. Keep route-owned view callbacks separate, or wrap the model near the route boundary, so the reusable model alias stays focused on the model itself.
 
+**Route decomposition tiers.** Extracting `reatom*Model` factories and shared atoms is usually the safe default. Extracting full route-builder functions that accept parent routes is an advanced step because `reatomRoute` carries parent path typing. Prefer models/forms/shared atoms first, route-local helpers/config next, and route-builder modules only when the route tree is stable.
+
 **Boolean state as a lifecycle switch.** When a boolean controls a background resource, model it as `reatomBoolean` and attach lifecycle with `withChangeHook(isEnabled => isEnabled ? run() : run.abort())`. Expose the atom itself so callers use `.setTrue()`/`.setFalse()`/`.toggle()`; add semantic actions only when they enforce extra rules. Change hooks run after atom updates — make cleanup idempotent.
 
 ## Retrying Computeds & Resetting Dependencies
@@ -506,6 +508,7 @@ These are not API traps; they are design choices to question. Read the relevant 
 - Unmounting on background refresh (`!status.isFulfilled`) and losing focus/stale UI; use status flags that preserve settled data during refresh, and treat empty arrays as fulfilled data requiring empty-state UI.
 - Module-level forms/actions for route-owned lifecycle; create scoped models in route loaders/factories.
 - Hand-written structural page `*Model` prop types when a `reatom*` factory already exists or can be trivially extracted. Prefer an inferred alias such as `ReturnType<typeof reatomXModel>` and keep route-only callbacks separate.
+- Pulling route-builder functions across module boundaries too early. Extract models/forms/shared atoms first; parent-route typing makes route builders a higher-risk cleanup.
 - Syncing atoms with `withChangeHook`; use `computed` / `withComputed` for derivation.
 - Atom + effect bridges for one-shot commands (`latestEventAtom` + `effect()`); call the imperative API from the action unless the value is real rendered/persisted state.
 - Boot-only `start*Effects()` helpers; attach stable reactions to sources or put scoped work in loaders/factories/hooks.

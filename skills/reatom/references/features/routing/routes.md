@@ -89,6 +89,18 @@ usersRoute()     // { }
 usersRoute.exact() // false (child is active)
 ```
 
+### Route decomposition warning — parent-route typing is real
+
+If you later split routes across modules, do not assume `typeof rootRoute.reatomRoute` means "any route parent". Reatom route methods carry concrete path typing through the parent route, so a builder function typed from one parent can reject another parent even when the runtime API shape is compatible.
+
+Prefer this order when refactoring:
+- keep route creation in the composition root first;
+- extract loader/render/model helpers next;
+- extract config factories before full parent-route builder functions;
+- treat route-builder functions that accept parent routes as an advanced extraction step.
+
+If you still extract parent-route builders and hit generic friction, keep the workaround local to the composition root. A localized cast there is a tradeoff you can make deliberately; do not spread route-boundary casts through feature modules.
+
 ## Layout routes with render (v1001+ semantics)
 
 [`layout` option in `route.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/routing/route.ts#L237) · [Type docs in `route.types.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/routing/route.types.ts#L222)

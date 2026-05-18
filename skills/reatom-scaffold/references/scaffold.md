@@ -549,7 +549,7 @@ A good first routing pass proves structure, nesting, and outlet composition with
 
 ## Reading list for the next steps
 
-**When `GOAL.md` enters feature implementation, keep the main `../../reatom/SKILL.md` active and read these in order:**
+**When the scaffold checklist is complete and `GOAL.md` enters feature implementation, return to the main `../../reatom/SKILL.md` as the primary guide and read these in order:**
 
 1. [`../../reatom/references/core/patterns.md`](../../reatom/references/core/patterns.md) — atomization, scoped factories (`reatom*`), file organization, boolean-as-lifecycle-switch. **Skip this and the codebase will drift** toward identity actions, module-level forms, and React-owned state.
 2. The Gotchas + Anti-patterns sections of `../../reatom/SKILL.md` — most production bugs come from violating these.

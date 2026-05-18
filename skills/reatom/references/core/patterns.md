@@ -179,6 +179,36 @@ Two rules keep this pattern clean:
 - Avoid passthrough actions whose only job is to rename or forward an existing model method just to shape the prop type. Keep the model surface honest.
 - If the route adds view-only callbacks, keep them as separate props or create a tiny route-owned wrapper near the route. Do not pollute a reusable inferred model alias with route-bound navigation concerns. The routing loader guide already treats navigation, retry, and refresh behavior as route-bound logic — see [`../features/routing/loaders.md`](../features/routing/loaders.md).
 
+## Route decomposition: config factories vs route builders
+
+Route extraction has a different risk profile than model extraction.
+
+- **Low-risk extraction** — shared atoms, `reatom*Model` factories, forms, helpers.
+- **Medium-risk extraction** — feature-owned route-local atoms such as search-param state or invalidation counters.
+- **High-risk extraction** — route-builder functions that accept a parent route and create child routes across module boundaries.
+
+Why the difference: `reatomRoute` carries path-aware typing through the parent route. A builder typed from one route parent is not automatically a neutral "any route parent" abstraction.
+
+Prefer this order:
+
+1. keep route creation local to the composition root at first;
+2. extract model/form/shared-state factories first;
+3. extract route-local loader/render helpers or route config factories next;
+4. only extract full route-builder functions when the route boundary is stable and the typing story is clear.
+
+Three practical route-splitting options:
+
+**Option A — safest default:** composition-root-local route creation plus extracted loader/render/model helpers.
+
+**Option B — moderate complexity:** feature route config factories; the composition root still calls `.reatomRoute(...)`.
+
+**Option C — advanced:** feature route builders that accept parent routes. Most modular, but the parent-route typing can become the hardest part.
+
+If route-builder extraction hits parent-route generic friction, prefer one of these before reaching for broad type work:
+- keep the route creation in the composition root and extract only helpers;
+- switch to config-factory style instead of passing route parents around;
+- if the runtime API is genuinely compatible and the alternative is disproportionate, isolate a localized cast at the composition root rather than leaking casts through feature code.
+
 ## Component pattern — route render narrows, components receive models
 
 Route loaders should be the source of route-specific forms/actions/data, while the route `render(self)` should own loader status branching and route composition. Keep `render(self)` thin: branch on pending/error/no-data/refresh states, wire retry/navigation callbacks, and pass typed concrete model/data props to route-neutral components. Page components should receive a typed model/data prop, not a `loader` prop, and should own substantial markup plus section-level empty states. This keeps routing and async lifecycle concerns at the route boundary without turning route declarations into page components or letting `any` creep into form/model props. With concrete loader return types (no `undefined` branches), TypeScript narrows `status.data` to the full type in the refresh branch — no extra guards needed.
