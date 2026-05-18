@@ -8,6 +8,8 @@ description: >
   project-specific leakage, and maintain repo-local guidance. Git may be used
   only for read-only exploration; never touch the index, staged changes, or
   commits.
+metadata:
+  internal: true
 allowed-tools: read Bash edit write
 ---
 
