@@ -80,6 +80,26 @@
         }
       ],
       "files": []
+    },
+    {
+      "id": 5,
+      "prompt": "A previous run removed a local type assertion from form initial state, generalized that instinct into advice about withAsyncData({ initState: null as Result | null }), and suggested typed constants or explicit generics without clearly framing when initState is optional or when a nullable prerequisite should be handled before the async boundary. The user asks for a reusable skill fix.",
+      "expected_output": "The agent distinguishes local assertion cleanup from async-resource contract design, explains that initState is optional, warns against assertion-shaped initState and generic-forcing overload workarounds, recommends short-circuiting nullable prerequisites before the async boundary, and suggests a skill update in the async/extensions guidance plus gotchas list.",
+      "assertions": [
+        {
+          "name": "initstate_optional_not_reflexive",
+          "text": "The response states that withAsyncData initState is optional and should be chosen intentionally, not added by reflex just because the payload type includes null."
+        },
+        {
+          "name": "no_generic_overload_escape",
+          "text": "The response warns against forcing withAsyncData generics to escape the overload trap, preferring inference from initState or a typed constant/return type."
+        },
+        {
+          "name": "sync_prerequisite_gate_preferred",
+          "text": "The response recommends handling a synchronous nullable prerequisite before relying on async ready/data state to carry that distinction."
+        }
+      ],
+      "files": []
     }
   ]
 }

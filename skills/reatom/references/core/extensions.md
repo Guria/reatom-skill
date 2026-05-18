@@ -62,6 +62,31 @@ status.data             // the current data value (only with withAsyncData)
 status.reset()          // reset to initial state, clearing history flags
 ```
 
+### Choosing `initState` intentionally
+
+`initState` is optional. Use it when consumers genuinely benefit from a stable non-`undefined` `.data()` value before the first fulfillment. Do not add it by reflex just because the payload type includes `null`.
+
+Practical rules:
+
+- If `undefined` usefully means “not fulfilled yet”, omit `initState`.
+- If the domain really wants an initial value (`[]`, `''`, cached object shell, deliberate `null`), provide one intentionally.
+- Avoid assertion-shaped initial values such as `null as Result | null`; prefer an explicitly typed constant or an explicit async return type when the meaning matters.
+- When the async computation depends on a nullable prerequisite, short-circuit before the API boundary instead of widening the downstream API call to nullable input.
+- When bootstrap flow already has a synchronous prerequisite source, branch there instead of forcing async `.ready()` / `.data()` to represent every precondition state.
+
+```typescript
+const initialResult: Result | null = null
+
+const resource = computed(async (): Promise<Result | null> => {
+  const prerequisite = source()
+  if (!prerequisite) return null
+
+  return await wrap(loadResult(prerequisite))
+}, 'resource').extend(withAsyncData({ initState: initialResult, status: true }))
+```
+
+If you pass `initState`, let TypeScript infer from that value or its typed constant. Do not force a `withAsyncData<State>(...)` generic just to steer overload resolution — that is the overload trap from the gotchas list.
+
 ## withAbort — race condition prevention
 
 [Source: `extensions/withAbort.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/extensions/withAbort.ts) · [Tests](https://github.com/reatom/reatom/blob/v1001/packages/core/src/extensions/withAbort.test.ts)
