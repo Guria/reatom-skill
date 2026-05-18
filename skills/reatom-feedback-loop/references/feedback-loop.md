@@ -69,6 +69,16 @@ Use this checklist when the mistake was caused by skipping a process the agent h
 
 Turn at least one unchecked item into a suggested skill edit or eval case. If all items are checked, propose tightening wording, adding an example of the failure, or moving the gate closer to the top-level skill file.
 
+### Wrapper-ceremony smell
+
+Name this explicitly when the bad code wraps a Reatom primitive in the same shape without adding real semantics. Common examples:
+
+- `action(() => wrap(form.submit()))`
+- `computed(() => someAtom())` with no transformation or scoping reason
+- `wrap(wrap(x))`
+
+Treat this as a mental-model failure, not harmless style drift. Either the inner primitive was already the right API and the wrapper should be deleted, or the outer wrapper needs a one-sentence justification that names the extra workflow it owns. If you cannot state that sentence, propose a skill update that teaches the simpler shape directly.
+
 ### Misconception taxonomy
 
 When analyzing a failed Reatom run, name the wrong mental model, not only the broken line of code. Useful categories:

@@ -90,6 +90,13 @@ test('counter increments', () =>
 
 For async tests, return/await the `context.start(async () => { ... })` promise and keep Reatom-touching timers, event callbacks, and promise continuations wrapped with `wrap()` when they cross host boundaries.
 
+Two strict-test traps often appear together:
+
+- `context.reset()` also needs an active frame after `clearStack()`, so call it inside `context.start(...)` (or use a reusable helper that already does this) instead of in a bare `beforeEach`.
+- `await` exits the active frame. If the next step reads/writes atoms, either pre-import the module synchronously before entering the frame or `wrap(...)` the continuation after the `await`.
+
+If a strict test tries `context.start(async () => { await import(...); atom.set(...) })` and then throws `missing async stack`, the fix is usually the combination above rather than removing strict setup.
+
 ## `mock()` usage
 
 `mock(target, cb)` reads the active frame via `top()`, so call it inside an active context. Always restore it with the unsubscribe it returns:

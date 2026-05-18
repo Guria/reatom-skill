@@ -128,6 +128,26 @@
         }
       ],
       "files": []
+    },
+    {
+      "id": 7,
+      "prompt": "A previous run built a route-loader form for create/edit pages, then added `const save = action(() => wrap(form.submit())).extend(withAsync(), withAbort())` and navigated from the page component after awaiting `save()`. The user asks for a reusable skill fix and wants to know why this shape was wrong.",
+      "expected_output": "The agent calls out the wrapper as ceremony around `form.submit()`, explains that route-specific navigation/notifications belong on the created form instance in the loader via `form.submit.onFulfill` / `onReject` hooks (or direct `await form.submit()` when kept inline), and proposes concrete updates to the forms guidance and eval coverage.",
+      "assertions": [
+        {
+          "name": "submit_wrapper_called_ceremony",
+          "text": "The response says a `save` action whose body is only `wrap(form.submit())` is ceremony unless it owns a clearly named extra workflow step."
+        },
+        {
+          "name": "loader_owns_route_reactions",
+          "text": "The response recommends attaching route-specific navigation/notification/focus with `form.submit.onFulfill` / `onReject` in the consuming loader instead of the page component or form factory."
+        },
+        {
+          "name": "no_double_async_extensions_on_submit_alias",
+          "text": "The response warns against reflexively adding `withAsync()` / `withAbort()` to a submit alias just to mirror the same pending/error state already owned by `form.submit()`."
+        }
+      ],
+      "files": []
     }
   ]
 }

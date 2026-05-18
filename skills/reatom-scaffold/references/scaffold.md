@@ -601,8 +601,9 @@ The next stage is **not** the original feature request yet. It is a routing-only
 5. when using layout routes, have their `render(self)` return placeholder shell content plus `self.outlet()` composition;
 6. keep UI-library shells, loaders, forms, fake backend data, persistence, and business logic out of this pass;
 7. if route typecheck turns red, stop at the routing skeleton and restore green status before adding any new page/feature files;
-8. validate the routing skeleton, then mark the routing checkbox in `GOAL.md`;
-9. only after that, resume the parked original request.
+8. make sure placeholder routes are actually consumed (typically through a navigation config, explicit `route.go()` calls, or another real route-layer usage) so code-intelligence checks do not correctly flag the route module as mostly dead exports during the skeleton phase;
+9. validate the routing skeleton, then mark the routing checkbox in `GOAL.md`;
+10. only after that, resume the parked original request.
 
 A good first routing pass proves structure, nesting, outlet composition, and root/provider wiring without conflating them with product logic or UI-library APIs.
 

@@ -135,13 +135,9 @@ submit.retry()    // retry last submission
 
 ## Submit wrapper pattern
 
-A common route-loader shape is: the form owns validation and submit semantics, while a separate semantic action (`save`, `create`, `publish`) exists only to expose UI-friendly async helpers or a clearer intent name.
-
-Keep that action as a thin wrapper around `form.submit()`.
+Default to `form.submit()` directly. A common temptation is to create a separate `save` / `create` / `publish` action whose body is only `wrap(form.submit())` so the page gets another async-looking command name. Treat that as ceremony, not the default shape.
 
 ```typescript
-import { action, reatomForm, withAbort, withAsync, wrap } from '@reatom/core'
-
 const form = reatomForm(
   { title: '', description: '' },
   {
@@ -159,17 +155,15 @@ const form = reatomForm(
   },
 )
 
-const save = action(async () => {
-  return await wrap(form.submit())
-}, 'entityForm.save').extend(withAsync(), withAbort())
-
 onClick={wrap(async () => {
-  const saved = await wrap(save())
+  const saved = await wrap(form.submit())
   navigateToEntity(saved.id)
 })}
 ```
 
-This keeps one submit pipeline: validation runs first, `onSubmit` owns the mutation, and callers can use the resolved payload for one-shot follow-up work without inventing a parallel raw-value save path.
+`form.submit()` already owns validation, async state, retry, and error handling. If your extra action's body is effectively `wrap(form.submit())`, delete it and use `form.submit()` or a loader-side `form.submit.onFulfill` / `onReject` hook instead.
+
+Only introduce a separate semantic action when it adds real workflow beyond submit itself — for example, a wider orchestration step that submits, then triggers another command or invalidation that would be noisy in the UI callback. Even then, the wrapper should explain that extra behavior clearly; do not re-extend `form.submit()` with `withAsync()` / `withAbort()` just to mirror the same pending/error state under another name.
 
 ## Consumer-side submit hooks
 
@@ -235,7 +229,7 @@ Prefer `withCallHook` on `form.submit.onFulfill` / `onReject` when command compl
 - `form()` is the field set atom (returns values), not `form.getValues()`
 - `form.reset()` resets to initial values, not to empty state
 - `form.init({ ... })` updates initial values (affects reset)
-- **Put submit mutations on `reatomForm({ onSubmit })` and call `form.submit()`.** A separate action that does `api.save(form())` reads raw values and bypasses the form's submit validation pipeline unless it manually triggers validation. If you expose a semantic command such as `save`/`create`, make it an alias or wrapper around `form.submit()`, not a parallel raw-value submit path. If route-specific retry, navigation, or focus work would make `onSubmit` noisy, attach that behavior from the consuming loader via `form.submit.onFulfill` / `form.submit.onReject` hooks instead of pushing route knowledge back into the factory.
+- **Put submit mutations on `reatomForm({ onSubmit })` and call `form.submit()`.** A separate action that does `api.save(form())` reads raw values and bypasses the form's submit validation pipeline unless it manually triggers validation. If route-specific retry, navigation, or focus work would make `onSubmit` noisy, attach that behavior from the consuming loader via `form.submit.onFulfill` / `form.submit.onReject` hooks instead of pushing route knowledge back into the factory. If a proposed `save` action body is only `wrap(form.submit())`, that is ceremony, not architecture — use `form.submit()` directly unless the wrapper adds a clearly named extra workflow step.
 - **When the submit flow needs “validate form, then call another async Reatom action”, prefer a dedicated orchestration action over hiding that second action call in a fragile async callback path.** Good shape: a render-time wrapped UI handler calls `submitFormFlow()`, and `submitFormFlow` does `await wrap(form.submit())`, reads validated state, then `await wrap(runCommand(...))`. Use this when the second action is a reusable semantic command or wider workflow step rather than the form's own direct API call.
 - **Handwritten form handlers still need `wrap()` under `clearStack()`.** `bindField` returns pre-wrapped field handlers, but a handwritten `<form onSubmit={...}>` callback is still your callback. Wrap it when it calls `form.submit()`, `field.change(...)`, or any other Reatom primitive.
 - **Only reset after submit when staying in the same form lifetime.** If a route-loader-created form successfully submits and navigation leaves that route, route lifecycle disposes the form; `form.reset()` is redundant. Use `form.reset()` after submit when the intended UX is to remain on the same form and prepare another entry, or when the user explicitly cancels/restarts within the same route.

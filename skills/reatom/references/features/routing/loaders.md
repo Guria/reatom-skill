@@ -309,7 +309,7 @@ const deleteRecord = action(async (id: string) => {
 
 This pattern is especially useful for list pages that stay on the same search/filter URL after delete, create, or edit. Without an explicit invalidation signal, the loader has no reason to recompute.
 
-When debugging abort-heavy route behavior, keep `connectLogger()` or equivalent visibility on until ownership and invalidation rules are proven correct. Repeated loader aborts are often telling you that a broad route is matching and unmatching, not that the logger itself is the problem. Reduce noise only after proving the route shape is correct on the nearby URLs it can affect.
+When debugging abort-heavy route behavior, keep `connectLogger()` or equivalent visibility on until ownership and invalidation rules are proven correct. Repeated loader aborts are often telling you that a broad route is matching and unmatching, not that the logger itself is the problem. Logged `AbortError` lines during navigation are often normal loader cancellation telemetry, not uncaught production failures. Reduce noise only after proving the route shape is correct on the nearby URLs it can affect.
 
 ### Precompute component links in loaders
 
