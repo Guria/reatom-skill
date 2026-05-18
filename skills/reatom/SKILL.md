@@ -87,6 +87,7 @@ references/
 | `references/meta/v1001.md` | Comparing v1001 to v1000, deciding whether an API is v1001-only, migrations from v1000 |
 | `references/meta/packages.md` | Looking up which `@reatom/*` package to install, checking if a v3 package is deprecated |
 | `references/meta/reusables.md` | Browsing the `reatom/reusables` jsrepo catalog before inventing generic helpers |
+| `references/meta/validators.md` | Choosing a Standard Schema validator, translating schema examples, and applying repo default vs existing-project preference |
 | `references/meta/migration.md` | Migrating code from v3 to v1000+, mapping old APIs to new |
 | `references/meta/quick-reference.md` | Need compact syntax/examples for core primitives, forms, routing, persistence, React, JSX, sampling, setup, or testing |
 | `references/meta/gotchas.md` | Need the full preserved pitfall list and architectural smells before editing risky code or debugging surprises |
@@ -123,6 +124,7 @@ Load these references proactively based on task shape:
 - **Generic repeated helper pattern** → `references/meta/reusables.md`, then `references/core/writing-extensions.md`
 - **Routing / loaders / auth redirects / nested routes** → `references/features/routing/routes.md` and `references/features/routing/loaders.md`
 - **Forms / bindField / validation / submit flow** → `references/features/forms.md`
+- **Choosing or translating a Standard Schema validator** → `references/meta/validators.md`
 - **Persistence / search params / storage adapters** → `references/features/persistence.md`
 - **React adapter / `reatomComponent` / StrictMode / hook usage** → `references/integrations/react.md`
 - **Native JSX runtime** → `references/integrations/jsx.md`
@@ -156,7 +158,7 @@ These are the frequent failure modes worth keeping always loaded. The full prese
 - **Prefer `reatomComponent` for greenfield React pages/layouts/examples**; hook APIs are valid when matching an existing hook-style codebase. `useAtom` returns plain values, not callable atom getters — `Boolean/String/... has no call signatures` usually means hook style and atom-call style were mixed.
 - **`reatomComponent` is required for React components that read atoms during render**; inside `reatomComponent`, plain `wrap(...)` is often enough for ordinary handlers, while `useWrap(...)` is useful in hook-style components or when callback identity needs to stay stable.
 - **Before writing React `main.tsx` / `App.tsx`, cite the frame/provider pattern you are following.** In greenfield strict/bootstrap setups the reference-first default is `src/setup.ts` with `clearStack()`, `export const frame = context.start()`, and dev-time logger wiring (`frame.run(connectLogger)`), then `import './setup'` first and `<reatomContext.Provider value={frame}>`; if the reference still feels ambiguous, re-read the React integration reference and quick reference, then verify against installed exports/source.
-- **`reatomForm` usage is subtle enough that form edits should read the forms reference first.** Preserve the codebase's existing Standard Schema choice; if no validator preference exists yet, default to Valibot unless the user explicitly asks for something else.
+- **`reatomForm` usage is subtle enough that form edits should read the forms reference first.** For validator choice or schema translation, read `references/meta/validators.md`: preserve the codebase's existing validator, and only fall back to the repo default when no validator preference exists yet.
 - **`form.submit()` is already the async submit action.** Do not reflexively wrap it in `action(() => wrap(form.submit()))` or re-extend it with `withAsync()` / `withAbort()` just to get a `save` name. Use `form.submit()` directly, or attach route-specific navigation/notification/focus via `form.submit.onFulfill` / `onReject` in the consuming loader.
 - **When a Reatom type/API mismatch appears, freeze scope before adding more files.** Do not answer with broad casts, `ts-expect-error`, sed rewrites, or unrelated tsconfig churn. Re-read the relevant reference, repair the smallest failing layer, and restore the validation command to green before continuing.
 - **When something feels surprising, load `references/meta/gotchas.md` before improvising.**

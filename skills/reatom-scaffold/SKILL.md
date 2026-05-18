@@ -78,7 +78,7 @@ This skill is not the best fit for ordinary bug fixing or API lookup in an exist
 - Do not stop at dependency installation. The job is only complete when the tools are configured, exposed through scripts, and actually run successfully.
 - A test edit is not a test fix until the narrow proving command has been rerun and passed. Report the command and result, not the expectation.
 - Do not stage or commit a baseline unless the user explicitly asked for it, and even then prefer the validated Step 12 baseline.
-- After the first green pipeline, keep following `GOAL.md` and this scaffold flow. Use the referenced routing material for the routing-only pass, validate the skeleton, prove the routes are navigable with browser tests, and only then resume broader implementation guidance.
+- After the first green pipeline, keep following `GOAL.md` and this scaffold flow. Use the referenced routing material for the routing-only pass, validate the skeleton, add browser checks that prove the routes are navigable, and only then resume broader implementation guidance.
 - When bootstrap finishes, switch to the `reatom-feedback-loop` skill's pitfall summary flow so the run improves the skill, not only the project.
 
 ## Completion contract
@@ -89,14 +89,14 @@ For the default recommended flow, that means the agent should normally complete 
 - `GOAL.md` exists as a staged todo list and preserves the parked original request
 - the promised validation commands are wired and pass
 - a browser-level smoke check passes on the scaffolded baseline
-- once routes exist, browser tests prove the important routes are navigable, stay updated with the evolving route tree, and do not emit unexpected routing/setup `AbortError` noise
+- once routes exist, browser tests prove the important routes are navigable and stay aligned with the evolving route tree
 - the project's single validation entry point passes
 - any additional runtime harness promised during bootstrap also runs successfully
 - only after that, a separate routing-scheme pass driven by `GOAL.md`
 
 If one of these is intentionally omitted, say that explicitly and explain what confidence is being traded away. Do not silently downgrade the pipeline.
 
-For the default scaffold posture, browser-level route/runtime tests usually deserve priority over detailed business-logic test expansion. Add deeper business-logic coverage when the user explicitly asks for it or when a specific invariant is risky enough to justify the extra test surface.
+For the default scaffold posture, prioritize route-level browser checks during bootstrap over broader business-logic test expansion. Add deeper behavioral coverage when the user explicitly asks for it or when a specific invariant is risky enough to justify it.
 
 ## Reference files
 

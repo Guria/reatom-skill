@@ -111,7 +111,7 @@ priority.set('low')
 
 See [../features/routing/routes.md](../features/routing/routes.md) for complete routing API: routes, nested routes, loaders, layout/page routes, protected routes, modal gates, and search-only routes.
 
-Routing accepts any [Standard Schema](https://github.com/standard-schema/standard-schema) compliant library for params and search validation. Preserve the existing validator choice when the project already has one; if there is no validator preference yet, default to Valibot unless the user asks for something else.
+Routing accepts any [Standard Schema](https://github.com/standard-schema/standard-schema) compliant library for params and search validation. Preserve the existing validator choice when the project already has one. If the project has no validator preference yet, use the repo default from [`validators.md`](validators.md).
 
 Quick reference:
 
@@ -130,7 +130,7 @@ userRoute.path({ userId: '123' }) // build URL without navigating
 
 See [../features/forms.md](../features/forms.md) for complete forms API: `reatomForm`, React binding with `bindField`, field access patterns, and form factories.
 
-Forms accept any [Standard Schema](https://github.com/standard-schema/standard-schema) compliant library for validation. Preserve the existing validator choice when the project already has one; if there is no validator preference yet, default to Valibot unless the user asks for something else.
+Forms accept any [Standard Schema](https://github.com/standard-schema/standard-schema) compliant library for validation. Preserve the existing validator choice when the project already has one. If the project has no validator preference yet, use the repo default from [`validators.md`](validators.md).
 
 Quick reference:
 
