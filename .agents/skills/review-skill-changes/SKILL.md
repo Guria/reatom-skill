@@ -71,6 +71,7 @@ For every review pass, check these in order:
    - README summaries, skill descriptions, references, and evals should not contradict each other
    - if a new skill is added, update package overview/counts and any nearby lists that describe the repo structure
    - validate JSON after editing
+   - validate local markdown reference paths when docs link to sibling reference files; nested files should use file-relative links, not skill-root-relative `references/...` shortcuts unless the path really resolves from that file
 
 ## Working method
 
@@ -115,6 +116,7 @@ After editing:
 - re-read the touched sections
 - confirm the wording still flows in context
 - validate any changed JSON files
+- if `.md` links were touched, verify sibling reference links resolve from the file that contains them
 
 ## Review checklist
 
@@ -128,6 +130,7 @@ Use this checklist before reporting back:
 - [ ] wording cleaned of session-specific leakage
 - [ ] no unrelated library/project-only details left behind
 - [ ] JSON parsed if edited
+- [ ] sibling reference-file `.md` links validated when docs changed
 - [ ] no git-mutating commands run
 
 ## Reporting format

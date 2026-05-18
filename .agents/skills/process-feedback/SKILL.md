@@ -142,7 +142,8 @@ Before editing a distributed skill/reference/eval file:
 5. Avoid leaking one-off session specifics: model names, local paths, app names, commit hashes, package choices that are not the actual topic.
 6. Use `edit` for precise changes and `write` only for new local files or complete rewrites.
 7. Validate JSON eval files after editing.
-8. Do not run git-mutating commands. Report changed paths and ask for review.
+8. If `.md` links were added or changed, verify sibling reference links resolve from the file that contains them; nested reference docs should not quietly rely on skill-root-relative `references/...` paths.
+9. Do not run git-mutating commands. Report changed paths and ask for review.
 
 ## Where fixes usually belong
 
@@ -201,6 +202,7 @@ Coverage:
 
 Validated:
 - JSON eval files parsed successfully / not applicable
+- Markdown sibling-reference links checked when `.md` files changed / not applicable
 - No git-mutating commands run
 
 Next options:
