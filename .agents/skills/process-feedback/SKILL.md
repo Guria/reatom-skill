@@ -19,6 +19,8 @@ Use this local-only skill when a user provides one or more sessions/transcripts 
 
 This skill is for maintaining this repository's skill text. It is intentionally stored under `.agents/skills/` so it is available in this repo only and is not distributed as part of the packaged Reatom skills.
 
+If the failure is in this maintenance workflow itself — for example partial transcript processing, stopping at analysis when the user asked for edits, or skipping the user's final corrections/candidate fixes — update this local skill first as part of the repair.
+
 ## Non-negotiable repository safety
 
 Git is read-only exploration here.
@@ -56,14 +58,15 @@ A useful feedback response does not say "next time the model will follow the ins
 
 When a feedback session arrives:
 
-1. **Preserve the user's evidence.** Do not reinterpret the transcript as a vague complaint. Extract the actual action sequence.
+1. **Read the whole evidence set.** Preserve the user's transcript, corrections, and any final pitfall summary exactly enough to recover the real sequence. Do not stop at the first obvious mistake.
 2. **Identify the phase.** Examples: scaffold, validation, routing skeleton, feature implementation, forms, tests, extension extraction, feedback-loop analysis.
 3. **Separate claim from proof.** Note every place the model claimed completion, checked a box, reported success, or committed before a proof command/artifact existed.
 4. **Name the misconception.** Prefer mental-model labels over line-by-line bug lists.
 5. **Find the instruction-shape failure.** Ask why the existing skill text did not stop the action before it happened.
-6. **Propose a durable change.** Name the target file/section and the preventive mechanism.
-7. **Generalize wording before editing.** Do not paste model names, project paths, one-off library names, or incidental app details into distributed skill docs unless the topic truly belongs there.
-8. **Add or update evals when the failure is reproducible.** Evals should describe the failure pattern generically enough to catch future regressions.
+6. **Extract explicit fix candidates from the session.** If the transcript already contains a pitfall summary or proposed skill updates, treat each one as an input to verify against the repo — not as truth, but not as optional garnish either.
+7. **Propose a durable change.** Name the target file/section and the preventive mechanism.
+8. **Generalize wording before editing.** Do not paste model names, project paths, one-off library names, or incidental app details into distributed skill docs unless the topic truly belongs there.
+9. **Add or update evals when the failure is reproducible.** Evals should describe the failure pattern generically enough to catch future regressions.
 
 ## Misconception taxonomy
 
@@ -113,6 +116,20 @@ Use this structure when the user asks what went wrong:
 ```
 
 Avoid filler apologies. If the user is angry, acknowledge the concrete failure and move directly to prevention.
+
+## Transcript coverage protocol
+
+When the user asks to **apply** feedback to this repo, the default deliverable is repository edits plus a coverage report, not only analysis.
+
+Before reporting back:
+
+1. Build a checklist covering all concrete items from the session tail-to-head: user complaints, technical bugs, process failures, explicit proposed skill updates, and any user corrections to the feedback itself (for example "ignore X", "that detail is wrong", or "note:").
+2. For each checklist item, choose one outcome explicitly:
+   - **Applied** — edited the relevant skill/reference/eval file.
+   - **Already covered** — verified the repo already says this strongly enough.
+   - **Rejected with reason** — not reusable, contradicted by source, or superseded by a better generalized rule.
+3. If the transcript contains the previous model's own "Suggested skill updates", verify each against current files and either apply/merge/reject it. Do not stop after the first reasonable batch if uncovered items remain.
+4. When a user says this local maintenance skill failed to do the intended work, include edits to this `.agents/skills/process-feedback/SKILL.md` if needed.
 
 ## Editing workflow
 
@@ -176,6 +193,11 @@ Use a concise report:
 Updated:
 - `<path>` — <what changed and why>
 - `<path>` — <what changed and why>
+
+Coverage:
+- Applied: <session items converted into edits>
+- Already covered: <items verified in current files>
+- Rejected with reason: <items intentionally not applied>
 
 Validated:
 - JSON eval files parsed successfully / not applicable
