@@ -427,12 +427,17 @@ const form = reatomForm(init, options).extend(
 
 Avoid extensions that create unrelated UI, persistence, network, and validation behavior at once. Independent extensions are easier to test, reorder, omit, and reuse.
 
-When a pattern appears only once, inline hooks may be enough. Extract an extension when:
+When a pattern appears only once, inline hooks may be enough. A generic-looking side effect is not automatically a shared extension candidate. Keep one-off behavior inline on the target unless it isolates a substantial external resource, has an immediate second planned use, or needs a named/tested API surface.
+
+Extract an extension when:
 
 - The same behavior appears in several places.
 - The behavior has clear options.
 - The behavior belongs to the primitive itself rather than a component.
 - Tests would be simpler against a reusable helper.
+- The helper still belongs in `shared` if the example or feature had one fewer page.
+
+For a single atom driving one imperative sink, prefer inline `.extend((target) => target.extend(withConnectHook(...)))` next to the atom. For example, a single computed title atom updating `document.title` can stay colocated with that computed; repeated form submit binding or repeated first-error projections are stronger local extension candidates.
 
 Start narrow before going generic. A tiny host-binding helper or small derived/helper extension often pays off immediately, while a broad async side-effect extension can introduce more type and lifecycle complexity than the duplication it removes.
 
@@ -458,3 +463,4 @@ Before finalizing a custom extension:
 - [ ] Types expose the added API without losing the original target type.
 - [ ] It composes with other extensions in either order, or documents the required order.
 - [ ] Tests cover connection/disconnection, repeated calls, and cleanup if lifecycle is involved.
+- [ ] If it is used only once, the extraction is explicitly justified; otherwise the behavior stays inline on the target.
