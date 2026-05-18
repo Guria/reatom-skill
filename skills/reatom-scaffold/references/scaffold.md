@@ -2,9 +2,9 @@
 
 Use this when bootstrapping a brand-new project around Reatom. The default stack below is opinionated for production use; **adjust any layer if the user already specified a preference**. If the user has not, **use this default and verify current package versions with the available tooling before pinning** (`npm view <pkg> dist-tags`).
 
-For greenfield work, treat this as the default sequence: scaffold, install the validation pipeline, configure quality gates, run validation, then write feature code. Existing examples are useful for local style and package shape, but sample them narrowly so they do not replace the bootstrap sequence.
+For greenfield work, treat this as the default sequence: scaffold, write `GOAL.md`, install the validation pipeline, configure quality gates, run validation on the untouched Vite scaffold, then let the staged checklist in `GOAL.md` unlock routing work and later feature code. Existing examples are useful for local style and package shape, but sample them narrowly so they do not replace the bootstrap sequence.
 
-This pipeline is intentionally **shift-left**: it is designed to surface tooling, context, and runtime-integration mistakes as early as possible, while the app is still cheap to correct.
+This pipeline is intentionally **shift-left**: it is designed to surface tooling and runtime-integration mistakes as early as possible, while the app is still cheap to correct. Until the first green `npm run validate`, the only active goal is the validation pipeline; no Reatom code should be written yet.
 
 > **This applies to examples and demos too.** The validation pipeline is not ceremony for "later" or only for "real apps". It catches failures that `tsc --noEmit` and `vite build` will happily miss, especially strict-context runtime errors such as `missing async stack`, invalid async-status assumptions, and browser-only mount problems. If you deliberately want a lighter bootstrap, say what confidence is being traded away.
 
@@ -17,26 +17,30 @@ Use this as the **default sequence** for new apps/examples/packages. It exists t
 By default:
 
 1. **Do not hand-write `package.json` or app entry files first.** Run the scaffold step first unless the user explicitly asked for manual scaffolding.
-2. **As soon as the scaffold root exists, write `GOAL.md` with the original user request.** This is the parking place for the requested product work; after that, intentionally stop thinking about feature implementation until the scaffold is proven green.
-3. **Do not install feature dependencies first.** Install the validation/tooling pipeline immediately after the scaffold.
-4. **Do not write substantial feature code before the bootstrap is green.** No routes, pages, forms, or backend mocks before the validate pipeline, smoke test, Storybook/runtime harness, and post-validate feedback loop are in place.
-5. **Do not treat examples, demos, or standalone packages as automatic exceptions.** They teach by example, so the bootstrap quality bar often matters more, not less.
-6. **If the user gave target-path constraints, preserve them while still following the sequence.** For example, a standalone package inside `./examples/...` still starts with the scaffold step inside that directory.
-7. **If the user intentionally wants a lighter path, say what is being skipped and why.** Adapt deliberately instead of drifting out of order by accident.
+2. **As soon as the scaffold root exists, write `GOAL.md` as a checkbox todo list.** It should park the original request, list the later stages, and become the only roadmap after that point.
+3. **Once `GOAL.md` exists, ignore the original request until the checklist brings it back.** The current job is now the validation pipeline only.
+4. **Do not install feature dependencies first.** Install the requested validation/tooling dependencies immediately after the scaffold.
+5. **Do not write Reatom code before the bootstrap is green.** No routes, pages, forms, loaders, or state code before the validate pipeline, smoke test, Storybook/runtime harness, and post-validate reminder are in place.
+6. **If the Vite template ships ESLint, clean it up in favor of `oxlint` after the requested dependencies are installed** unless the user explicitly wants both.
+7. **Do not treat examples, demos, or standalone packages as automatic exceptions.** They teach by example, so the bootstrap quality bar often matters more, not less.
+8. **If the user gave target-path constraints, preserve them while still following the sequence.** For example, a standalone package inside `./examples/...` still starts with the scaffold step inside that directory.
+9. **If the user intentionally wants a lighter path, say what is being skipped and why.** Adapt deliberately instead of drifting out of order by accident.
 
-If you catch yourself planning pages, routes, or models before Step 8, you are probably out of order. Stop, check whether the user explicitly narrowed the scope, and otherwise resume the checklist from the earliest incomplete step.
+If you catch yourself planning pages, routes, models, or Reatom app entry before Step 12, you are probably out of order. Stop, check whether the user explicitly narrowed the scope, and otherwise resume the checklist from the earliest incomplete step.
 
 Before substantial feature work, verify this gate explicitly:
 
 - [ ] scaffold exists and installs cleanly;
-- [ ] `GOAL.md` exists and preserves the original request;
+- [ ] `GOAL.md` exists as a staged todo list;
 - [ ] validation tooling is installed;
+- [ ] ESLint was removed or deliberately retained;
 - [ ] `npm run typecheck` passes;
 - [ ] `npm run lint` passes;
 - [ ] browser smoke test passes;
+- [ ] Storybook smoke for `App.tsx` passes;
 - [ ] `npm run validate` is green.
 
-If any box is unchecked, the next task is still bootstrap work, not feature work.
+If any box is unchecked, the next task is still bootstrap work, not routing or feature work.
 
 A package install alone does not count. `oxlint`, `oxfmt`, `fallow`, and Storybook only matter if they are configured, reachable through scripts or documented commands, and actually executed.
 
@@ -51,10 +55,11 @@ A package install alone does not count. `oxlint`, `oxfmt`, `fallow`, and Storybo
 - [Step 6 — oxfmt configuration](#step-6--oxfmt-configuration)
 - [Step 7 — fallow (code intelligence)](#step-7--fallow-code-intelligence)
 - [Step 8 — npm scripts (`package.json`)](#step-8--npm-scripts-packagejson)
-- [Step 9 — Reatom app entry (strict context + dev logger, recommended)](#step-9--reatom-app-entry-strict-context--dev-logger-recommended)
+- [Step 9 — Phase boundary: no Reatom code yet](#step-9--phase-boundary-no-reatom-code-yet)
 - [Step 10 — Vitest browser smoke test](#step-10--vitest-browser-smoke-test)
 - [Step 11 — Storybook](#step-11--storybook)
 - [Step 12 — Final validation run](#step-12--final-validation-run)
+- [After first green validate — routing scheme only](#after-first-green-validate--routing-scheme-only)
 - [Reading list for the next steps](#reading-list-for-the-next-steps)
 - [After bootstrap — report pitfalls back to the user](#after-bootstrap--report-pitfalls-back-to-the-user)
 
@@ -91,19 +96,41 @@ Keep validation proportional, but do not silently drop quality gates just becaus
 
 By default, do this step before creating `package.json`, `tsconfig.json`, `vite.config.ts`, or feature files by hand unless the user explicitly asked for manual scaffolding.
 
-Immediately after the scaffold root exists, create `GOAL.md` in that root and copy the original user request into it. Keep it short but faithful. The purpose is to preserve the requested app/package outcome while forcing the agent to finish the validation pipeline before acting on that goal.
+Immediately after the scaffold root exists, create `GOAL.md` in that root as a checkbox todo list. Keep it short but faithful. The purpose is to preserve the requested app/package outcome while forcing the agent to finish the validation pipeline before acting on that goal.
+
+The checklist should:
+- make **validation pipeline** the only active goal at first;
+- explicitly park **routing scheme** as the next stage after a green pipeline;
+- explicitly park **finish original request** after routing is validated;
+- include a link to the Reatom routing reference, using the local path available in the environment (for example `@skills/reatom/references/features/routing/routes.md` or the resolved local skill path);
+- tell the later routing pass to start with placeholder layouts/pages and `outlet()` rendering only.
 
 Example:
 
 ```md
-# Goal
+# GOAL
 
-Build a new Reatom app for <user request here>.
+- [ ] Initial validation pipeline
+  - Scaffold with the Vite CLI.
+  - Install the requested dev dependencies.
+  - If the Vite template ships ESLint, remove or neutralize it in favor of oxlint.
+  - Add `validate` / `postvalidate` scripts.
+  - Configure the installed tools.
+  - Add minimal browser + Storybook coverage for `App.tsx`.
+  - Make the pipeline pass on the Vite-scaffolded `src` without writing Reatom code yet.
 
-## Original request
+- [ ] Routing scheme
+  - Read the routing reference: [Reatom routing reference](../../skills/reatom/references/features/routing/routes.md)
+  - Start by architecting route placeholders only.
+  - Layout routes should render placeholders plus `outlet()` composition in their `render`.
+  - Validate the routing skeleton before moving on.
 
-<copy the user's request here, verbatim or near-verbatim>
+- [ ] Finish original request
+  - Resume the parked request only after the routing scheme is validated.
+  - Original request: <copy the user's request here, verbatim or near-verbatim>
 ```
+
+If the example link path does not fit the current environment, resolve it to the actual local Reatom skill path before writing `GOAL.md`.
 
 Use the official latest Vite CLI with a TypeScript template when it fits the task. It bakes in current Vite defaults and reduces hand-written config mistakes. Manual file-by-file scaffolding is acceptable if the user explicitly requests it or has a strong opinion on how to scaffold the app — in that case, say why you're deviating and verify the result with the same install/typecheck/lint/test/build pipeline before treating it as equivalent to the CLI output.
 
@@ -154,13 +181,11 @@ npm i -D oxlint@latest oxfmt@latest fallow@latest \
         vitest@latest @vitest/browser@latest @vitest/browser-playwright@latest \
         playwright@latest
 npx playwright install chromium
-
-npm i @reatom/core@latest
-# Pick one framework adapter:
-npm i @reatom/react@latest    # or @reatom/jsx, @reatom/vue, @reatom/solid-js, @reatom/preact, @reatom/lit
 ```
 
-For v1001-only APIs (layout routes, URL codecs, action `(payload, params)` subscribe shape, `withMiddleware('read'|'computed'|'invalidation')`, etc.), install `@reatom/core@latest` and the matching adapter version. See `../meta/v1001.md` for the full delta.
+Install Reatom runtime packages later, when the checklist reaches the routing stage. The first pass is intentionally about proving the validation/tooling harness on the untouched Vite scaffold.
+
+For v1001-only APIs (layout routes, URL codecs, action `(payload, params)` subscribe shape, `withMiddleware('read'|'computed'|'invalidation')`, etc.), install `@reatom/core@latest` and the matching adapter version during the routing stage. See [`../../reatom/references/meta/v1001.md`](../../reatom/references/meta/v1001.md) for the full delta.
 
 ## Step 3 — `tsconfig.json`
 
@@ -215,7 +240,7 @@ If using `@reatom/jsx` instead of React, drop `@vitejs/plugin-react` and configu
 
 oxlint reads `.oxlintrc.json` (or `oxlint.json`). The `eslint/no-restricted-imports` rule below is the **non-negotiable Reatom default** — it stops React app state from leaking into the codebase. The lint baseline should also keep `any` out of day-to-day code, because once `any` becomes acceptable it quickly erodes the inference the rest of the model relies on. Adjust other rules to taste.
 
-If the scaffold already ships with ESLint, decide explicitly whether ESLint stays. The default recommendation in this skill is **one primary linter** (`oxlint`). Keep both only when the project truly depends on ESLint-only rules/plugins and you can explain why the overlap is worth it.
+If the scaffold already ships with ESLint, decide explicitly whether ESLint stays. The default recommendation in this skill is **one primary linter** (`oxlint`), so after the requested dependencies are installed, clean up the scaffolded ESLint setup unless the project truly depends on ESLint-only rules/plugins and you can explain why the overlap is worth it.
 
 ```jsonc
 {
@@ -337,87 +362,42 @@ Use this as the recommended shape for a single validation entry point, then twea
     "test": "vitest run",
 
     "validate": "npm run typecheck && npm run lint && npm run test && npm run format:check && npm run intel",
-    "postvalidate": "echo '\u23f5  validate green. Resume from GOAL.md:' && cat GOAL.md && echo '' && echo '\u23f5  Then read the reatom-feedback-loop skill and include its bootstrap pitfall summary.'"
+    "postvalidate": "echo '\u23f5  validate green. Resume from GOAL.md:' && cat GOAL.md && echo '' && echo '\u23f5  Do not resume the original request directly. Follow GOAL.md: routing placeholders next, then the parked feature work.' && echo '\u23f5  Then read the reatom-feedback-loop skill and include its bootstrap pitfall summary.'"
   }
 }
 ```
 
-`npm run validate` is the single entry point for CI and local validation. The bootstrap is not complete until the full validate command passes, and the `postvalidate` hook serves two purposes: it re-surfaces `GOAL.md` so the agent can resume the original request only after the scaffold is proven green, and it reminds the agent to switch into the `reatom-feedback-loop` skill for the bootstrap pitfall summary.
+`npm run validate` is the single entry point for CI and local validation. The bootstrap is not complete until the full validate command passes, and the `postvalidate` hook serves three purposes: it re-surfaces `GOAL.md`, it prevents the agent from jumping straight back to the original request, and it reminds the agent to switch into the `reatom-feedback-loop` skill for the bootstrap pitfall summary.
 
-Treat `postvalidate` as part of the workflow, not cosmetic output. It is the mechanism that routes the agent back into the skill's feedback loop after a green run, which helps the next attempt start with sharper guidance instead of repeating the same mistakes.
+Treat `postvalidate` as part of the workflow, not cosmetic output. It is the mechanism that routes the agent back into the staged checklist after a green run, which helps the next attempt start with sharper guidance instead of repeating the same mistakes.
 
 If the scaffold still has an ESLint setup, either replace it with this oxlint-first baseline or keep both with a deliberate note about why ESLint remains. Avoid drifting into a redundant two-linter setup by accident.
 
 Keep typecheck and emit separate: either set `"noEmit": true` in the TypeScript config or pass `--noEmit` in typecheck/build scripts.
 
-## Step 9 — Reatom app entry (strict context + dev logger, recommended)
+## Step 9 — Phase boundary: no Reatom code yet
 
-```ts
-// src/setup.ts — import this file as early as possible, before any atoms, routes, or components
-import { clearStack, connectLogger, context, log } from '@reatom/core'
+Do not add `@reatom/*`, route definitions, `src/setup.ts`, strict-context wiring, loaders, or forms in the first pass. The objective of the bootstrap phase is narrower: prove the validation pipeline on the Vite-generated app first.
 
-clearStack()
-export const rootFrame = context.start()
+That means:
+- keep `src/main.*` and `src/App.*` close to the Vite scaffold until `npm run validate` is green;
+- make the tooling pass on the scaffolded source instead of silently rewriting the app into a Reatom shell;
+- use Storybook and browser smoke tests against the current `App.tsx`, not against an early route tree;
+- let `postvalidate` echo `GOAL.md`, then follow its routing stage.
 
-if (import.meta.env.MODE === 'development') {
-  connectLogger()
-}
+Reatom runtime setup belongs to the next phase, not this one. After the first green pipeline, start the routing-scheme pass by reading [`../../reatom/references/features/routing/routes.md`](../../reatom/references/features/routing/routes.md) and introducing only placeholder routes/layouts whose `render` methods compose `outlet()`.
 
-declare global {
-  // Handy source-level debug helper: LOG('label', value)
-  var LOG: typeof log
-}
-
-globalThis.LOG = log
-```
-
-```tsx
-// src/main.tsx
-import './setup' // must stay the first import
-import { createRoot } from 'react-dom/client'
-import { reatomContext } from '@reatom/react'
-import { rootFrame } from './setup'
-import { App } from './App'
-
-createRoot(document.getElementById('root')!).render(
-  <reatomContext.Provider value={rootFrame}>
-    <App />
-  </reatomContext.Provider>,
-)
-```
-
-See `../../reatom/SKILL.md` → "App Setup — context options" for when to use this strict setup vs the default global context.
-
-Treat this import order as runtime behavior, not style. `src/setup.ts` must load as soon as possible, and the side-effect import (`import './setup'`) must stay first in every app entrypoint that depends on strict setup: `src/main.tsx`, Storybook preview/bootstrap files, test bootstraps, and similar roots. Configure linters, formatters, and import-sort/organize-import tools so they do **not** move that import into the middle of the block.
-
-`connectLogger()` is strongly recommended for new apps while the model and file boundaries are still forming. It makes atom/action/computed flow visible in the console, traces relative call stacks, and helps catch accidental duplicate work or missing async boundaries before the app grows. Keep it dev-only and register it in `src/setup.ts` before importing modules that create Reatom primitives. For noisy apps, filter or highlight logs:
-
-```ts
-connectLogger({
-  match: (name, { state }) => {
-    if (name.includes('internal')) return false
-    if (name.includes('error')) return state?.code === 403 ? 'orange' : 'red'
-    return true
-  },
-})
-```
-
-The exported `LOG` helper is the built-in Reatom `log` action. Prefer it over ad-hoc `console.log` inside Reatom code because it participates in Reatom tracing and can remain in source; with the dev-only logger guard, these logs stay out of production output.
-
-**Cost of the strict setup**: with `clearStack()` in place, every host-scheduled callback that touches Reatom (UI event handlers, timers, third-party listeners, etc.) must be wrapped with `wrap()` so it re-enters a reactive frame. Adapter helpers that produce callbacks for you wrap internally; ones you author by hand do not. If the discipline is too heavy for an exploratory codebase or one with a large hand-written event surface, drop `clearStack()` and use the default global context: you trade strict early-failure mode for ergonomics.
-
-**Do not skip the validate pipeline for prototypes, examples, or demos.** The pipeline is intentionally Step 2 — before any feature code — because the issues it catches (missing `wrap()` boundaries, circular imports, React state leaking into the Reatom layer, stale async context) are invisible at first and expensive to retrofit. An example that skips lint/format/testing/strict-context teaches patterns that break in any real app following the recommended setup. If the project scope is intentionally small, the pipeline still applies — just keep the initial smoke test and lint config proportionally simple.
+This keeps the first checkpoint honest: if the toolchain fails, the agent fixes tooling. It does not blur the failure by changing the app architecture at the same time.
 
 ## Step 10 — Vitest browser smoke test
 
-The validation pipeline should include one real-browser test from the start. Keep it intentionally small: render the app at `/` and assert the initial page appears. This catches both broken Vite/browser setup and the canonical strict-context runtime failures that only surface once the app mounts.
+The validation pipeline should include one real-browser test from the start. Keep it intentionally small: render the Vite-generated app at `/` and assert the initial page appears. This catches broken Vite/browser setup before any Reatom architecture is introduced.
 
 Why this test matters even before feature work:
 
-- it proves the app can mount in a real browser, not just type-check or bundle;
-- it catches `missing async stack` failures caused by atom reads or render-time `wrap(...)` calls outside a reactive boundary;
-- it catches mistaken async-status assumptions that only throw once UI code runs;
-- it gives you a cheap regression check to rerun after adding the first route shell, form, or atom-driven component in a new layer.
+- it proves the scaffold can mount in a real browser, not just type-check or bundle;
+- it proves the validation harness is wired to the actual app entry;
+- it gives you a cheap regression check before the later routing pass starts.
 
 Give the initial page a stable heading or text marker, for example:
 
@@ -460,11 +440,11 @@ test('renders the initial page at root', async () => {
 })
 ```
 
-Replace `My App` with the actual stable text for the generated landing page. If the project plans to write meaningful Reatom unit tests beyond this browser smoke check, also pull the `test` utility from the reusables registry (`npx jsrepo add test` after initializing jsrepo against [reatom/reusables](https://github.com/reatom/reusables)). It bundles a Vitest wrapper with automatic Reatom context lifecycle and mock-subscription helpers. See [`../../reatom/references/meta/reusables.md`](../../reatom/references/meta/reusables.md) for the wider catalog.
+Replace `My App` with the actual stable text for the generated landing page. Do not introduce Reatom-only testing helpers yet; this first pass is still validating the plain scaffold. If the project later needs meaningful Reatom unit tests beyond this browser smoke check, pull the `test` utility from the reusables registry (`npx jsrepo add test` after initializing jsrepo against [reatom/reusables](https://github.com/reatom/reusables)) during the routing/feature stage. See [`../../reatom/references/meta/reusables.md`](../../reatom/references/meta/reusables.md) for the wider catalog.
 
 ## Step 11 — Storybook
 
-For this bootstrap flow, Storybook is part of the runtime validation harness, not just a design convenience. The point is to prove the generated app actually renders and survives interaction in a realistic browser environment on the first run. After the app is verified and the user wants a leaner surface area, offer to clean Storybook back out deliberately.
+For this bootstrap flow, Storybook is part of the runtime validation harness, not just a design convenience. The point is to prove the generated app actually renders in a realistic browser environment on the first run. In this phase, keep it minimal and point it at the existing `App.tsx`. After the app is verified and the user wants a leaner surface area, offer to clean Storybook back out deliberately.
 
 **Read [`../../reatom/references/integrations/storybook.md`](../../reatom/references/integrations/storybook.md) in full before starting this step.** It covers the Reatom-specific parts that matter here: fresh frame per story, routed story URL ownership, optional MSW setup, browser-test integration, and pitfalls.
 
@@ -489,7 +469,26 @@ npm view storybook dist-tags
 
 ### Follow the reference
 
-Set up the Storybook files your project actually needs (typically `main.ts`, `preview.tsx`, optional routed-story helpers, optional viewport helpers, and `vitest.config.ts`) by following [`../../reatom/references/integrations/storybook.md`](../../reatom/references/integrations/storybook.md). Then add the scripts to `package.json`:
+Set up the Storybook files your project actually needs (typically `main.ts`, `preview.tsx`, and the Vite integration files) by following [`../../reatom/references/integrations/storybook.md`](../../reatom/references/integrations/storybook.md) only as far as the current phase needs. For the first pass, add a minimal story that exercises `App.tsx`, for example:
+
+```tsx
+// src/App.stories.tsx
+import type { Meta, StoryObj } from '@storybook/react-vite'
+import { App } from './App'
+
+const meta = {
+  component: App,
+  title: 'App',
+} satisfies Meta<typeof App>
+
+export default meta
+
+type Story = StoryObj<typeof meta>
+
+export const Default: Story = {}
+```
+
+Then add the scripts to `package.json`:
 
 ```jsonc
 {
@@ -511,7 +510,8 @@ Before the final response, confirm all promised quality gates were both wired an
 - `npm run lint` uses `oxlint`
 - `npm run format:check` uses `oxfmt`
 - `npm run intel` uses `fallow`
-- browser smoke test passes
+- browser smoke test passes on the Vite scaffold
+- Storybook coverage exists for `App.tsx`
 - `npm run validate` passes
 - Storybook smoke validation passes when Storybook is part of the requested bootstrap
 
@@ -528,7 +528,24 @@ Also verify Storybook starts and renders the first story:
 npx storybook dev --smoke-test
 ```
 
-If it fails, fix the reported issue and rerun `npm run validate`. These checks are the runtime side of the shift-left pipeline: they are meant to catch mount-time/context errors before manual app exploration. Only after a passing run should you give the final bootstrap response and the pitfall summary below.
+If it fails, fix the reported issue and rerun `npm run validate`. These checks are the runtime side of the shift-left pipeline: they are meant to prove the tooling against the plain scaffold before architecture work begins.
+
+Only after a passing run should you move to the next stage below: routing design from `GOAL.md`.
+
+## After first green validate — routing scheme only
+
+At this point `postvalidate` should echo `GOAL.md`. Follow it literally.
+
+The next stage is **not** the original feature request yet. It is a routing-only pass:
+
+1. install the needed Reatom runtime packages for the chosen adapter;
+2. read [`../../reatom/references/features/routing/routes.md`](../../reatom/references/features/routing/routes.md) before writing route code;
+3. design the route tree with placeholder pages/layouts only;
+4. when using layout routes, have their `render(self)` return placeholder shell content plus `self.outlet()` composition;
+5. keep loaders/forms/business logic out of this pass;
+6. validate the routing skeleton, then mark the routing checkbox in `GOAL.md` and only then resume the parked original request.
+
+A good first routing pass proves structure, nesting, and outlet composition without conflating them with product logic.
 
 ## Reading list for the next steps
 

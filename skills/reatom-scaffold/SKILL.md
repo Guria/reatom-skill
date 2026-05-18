@@ -13,7 +13,7 @@ allowed-tools: read Bash edit write
 
 Use this skill when the task is primarily about creating a new Reatom codebase or establishing a clean bootstrap baseline.
 
-The goal is not just to list packages. The important part is the **order**: scaffold first, install the validation pipeline early, prove the app mounts, and only then start feature work.
+The goal is not just to list packages. The important part is the **order**: scaffold first, write `GOAL.md`, finish the validation pipeline on the untouched Vite scaffold, and only then let later stages resume from the checklist in `GOAL.md`.
 
 The common failure mode is that an agent installs tooling such as `oxlint`, `oxfmt`, `fallow`, and Storybook but never actually wires them into a working pipeline. Treat that as an incomplete bootstrap, not as a minor omission.
 
@@ -41,10 +41,13 @@ This skill is not the best fit for ordinary bug fixing or API lookup in an exist
 
 - Decide first whether the user needs the full scaffold flow or only a slice of it.
 - Treat the full scaffold reference as an ordered checklist, not background reading.
-- As soon as the scaffold root exists, write the original user request verbatim or near-verbatim to `GOAL.md` in that project/package root. Treat it as parked future work, not as the current implementation checklist.
-- Until the validation pipeline is green, focus on scaffold work and intentionally defer the contents of `GOAL.md`.
+- As soon as the scaffold root exists, write `GOAL.md` as a checkbox todo list. It should park the original request, list the staged follow-up work, and become the only source of truth for what happens after bootstrap.
+- Once `GOAL.md` exists, intentionally ignore the original request until `GOAL.md` tells you to resume it.
+- Before the first green `npm run validate`, the only active goal is the validation pipeline on the Vite-scaffolded source. Do not write Reatom code yet.
 - Preserve explicit user constraints, but do not drift into feature work before the bootstrap gate is green unless the user knowingly asked for a lighter path.
+- If the Vite template ships ESLint, remove or neutralize it in favor of the installed `oxlint` setup unless the user explicitly asked to keep ESLint.
 - Do not stop at dependency installation. The job is only complete when the tools are configured, exposed through scripts, and actually run successfully.
+- After the first green pipeline, follow `GOAL.md`: architect the routing scheme with placeholders and layout/page outlets first, validate again, and only then continue to the original product request.
 - When bootstrap finishes, switch to the `reatom-feedback-loop` skill's pitfall summary flow so the run improves the skill, not only the project.
 
 ## Completion contract
@@ -52,13 +55,15 @@ This skill is not the best fit for ordinary bug fixing or API lookup in an exist
 Do not report bootstrap work as done until all relevant parts of the promised pipeline exist and have been executed successfully.
 
 For the default recommended flow, that means the agent should normally complete and report evidence for:
-- `GOAL.md` exists and preserves the original request for post-bootstrap work
+- `GOAL.md` exists as a staged todo list and preserves the parked original request
 - `npm run lint` using `oxlint`
 - `npm run format:check` using `oxfmt`
 - `npm run intel` using `fallow`
-- browser smoke test
+- browser smoke test on the Vite-scaffolded app
+- minimal Storybook coverage for `App.tsx`
 - `npm run validate`
 - Storybook smoke validation when Storybook is part of the requested bootstrap
+- only after that, a separate routing-scheme pass driven by `GOAL.md`
 
 If one of these is intentionally omitted, say that explicitly and explain what confidence is being traded away. Do not silently downgrade the pipeline.
 
