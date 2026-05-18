@@ -207,12 +207,16 @@ For v1001-only APIs (layout routes, URL codecs, action `(payload, params)` subsc
 
 ## Step 3 — `tsconfig.json`
 
-Reatom leans heavily on TypeScript inference and typed composition, so the type system should be treated as part of the app architecture rather than optional polish. Reatom also requires an `es2017+` TypeScript target so `wrap()` keeps native async/await microtask semantics. In an existing or freshly scaffolded `tsconfig.json`, check at least these options:
+Reatom leans heavily on TypeScript inference and typed composition, so the type system should be treated as part of the app architecture rather than optional polish. Reatom also requires an `es2017+` TypeScript target so `wrap()` keeps native async/await microtask semantics.
+
+Treat that version as a **floor, not a normalization target**. If the scaffold already uses a newer compliant target/lib pair, keep it unless a concrete tool/runtime incompatibility is proven. Do not downgrade a working scaffold target just to match an example snippet in this skill.
+
+In an existing or freshly scaffolded `tsconfig.json`, check at least these options:
 
 ```jsonc
 {
   "compilerOptions": {
-    "target": "es2022", // any es2017+ target is acceptable
+    "target": "es2022", // example floor; preserve a newer scaffold target if already es2017+
     "strict": true,
     "noImplicitAny": true,
     "noUncheckedIndexedAccess": true,
@@ -235,7 +239,7 @@ import { playwright } from '@vitest/browser-playwright'
 export default defineConfig({
   plugins: [react()],
   build: {
-    target: 'es2022', // Reatom needs es2017+; align with tsconfig
+    target: 'es2022', // example floor; keep a higher scaffold target and stay aligned with tsconfig
   },
   test: {
     browser: {

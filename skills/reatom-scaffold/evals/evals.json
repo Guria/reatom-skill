@@ -25,6 +25,10 @@
         {
           "name": "meaningful_initial_browser_smoke_test",
           "text": "The initial Browser Mode smoke test imports the app entry once, waits for rendering, asserts visible stable page content, restores console spies, and does not weaken the assertion to root existence or an empty wrapper."
+        },
+        {
+          "name": "preserve_higher_scaffold_targets",
+          "text": "During validation bootstrap, `es2017+` targets are treated as a floor. If the scaffold already uses a newer compliant target such as `es2023`, the run keeps it unless a concrete incompatibility is shown instead of downgrading it to match an example snippet."
         }
       ],
       "files": []
