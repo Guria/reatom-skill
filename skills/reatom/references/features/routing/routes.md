@@ -260,6 +260,16 @@ Before declaring a guard or default redirect done, verify these points explicitl
 
 This checklist follows directly from the runtime shape in source: layout routes render on `match()`, leaf routes render on `exact()`, and pathless/layout-style wrappers can participate more broadly than a local file structure may suggest.
 
+### Anti-pattern: sibling pathless guards with cross-redirects
+
+If you split public/private routing into sibling `layout: true` guards that both omit `path`, do not write redirects keyed to the negated match of some default private page such as `if (!dashboardRoute.match()) dashboardRoute.go(...)`. A pathless guard reevaluates on every URL change, so that predicate is true from `/users`, `/settings`, and every other non-dashboard URL too. The result is a "can only visit the default page" loop plus a trail of loader abort noise from routes that briefly matched and were redirected away.
+
+Safer shapes:
+
+- prefer one guard route that handles both unauthenticated redirects and "already signed in on the public page" redirects;
+- if you keep two sibling pathless guards, tie each redirect to the concrete page it owns (for example `if (loginRoute.match() && !defaultPrivateRoute.match()) ...`), not to the negated match of some sibling page;
+- ownership checks like `pathname.startsWith('/dashboard')` only work when every protected child really shares that URL prefix. If private pages live at several top-level URLs, either give the private area a real path segment or use a route-based guard keyed to the actual public page instead of inventing a fake base path.
+
 ```typescript
 // The `params` function enables protected routes:
 // - Return null to block the route (and all children)

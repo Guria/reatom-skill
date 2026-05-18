@@ -102,6 +102,8 @@ Decide the binding shape before writing a form UI. Do not mix `bindField`, ad-ho
 
 If the first UI-library binding attempt fails, pause and classify the component shape. Do not respond by casting the whole field to `any` or rewriting unrelated form/model code. Type errors like "possibly undefined" under `noUncheckedIndexedAccess` should be solved by preserving the typed field set shape, not by search-and-replace casts that can corrupt JSX.
 
+If you wire a control manually — even a native checkbox or select because the component shape no longer fits `bindField(...)` cleanly — the callback is still yours. Under strict setup, wrap that handler before it calls `field.change(...)`, `field.set(...)`, or other Reatom APIs.
+
 ## Form field access patterns
 
 [`reatomField` source](https://github.com/reatom/reatom/blob/v1001/packages/core/src/form/reatomField.ts) · [`reatomFieldArray` source](https://github.com/reatom/reatom/blob/v1001/packages/core/src/form/reatomFieldArray.ts) · [`reatomFieldSet` source](https://github.com/reatom/reatom/blob/v1001/packages/core/src/form/reatomFieldSet.ts)

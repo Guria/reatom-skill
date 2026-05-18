@@ -60,6 +60,26 @@
         }
       ],
       "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "The routed skeleton is already green. Continue the Reatom app with one public entry page plus several protected pages at different top-level URLs, add a literal create route beside a dynamic `:id` route, and use at least one manually wired select or checkbox control.",
+      "expected_output": "The agent reads the routing and forms references before implementation, keeps guard ownership explicit, avoids sibling pathless guard redirects keyed to the negated match of another protected page, constrains dynamic `:id` routes when literal siblings like `new` exist, and wraps handwritten manual control handlers under strict setup.",
+      "assertions": [
+        {
+          "name": "pathless_guard_redirects_scoped",
+          "text": "If public/private guards omit `path`, redirects are scoped to the concrete page each guard owns (for example the public sign-in page) rather than to `!somePrivateRoute.match()`, and fake prefix checks are not used when private pages live at multiple top-level URLs."
+        },
+        {
+          "name": "dynamic_literal_sibling_constrained",
+          "text": "A dynamic route beside a literal sibling such as `new` is constrained with a params schema or equivalent match predicate so the literal URL does not trigger the `:id` loader."
+        },
+        {
+          "name": "manual_control_handlers_wrapped",
+          "text": "Handwritten select/checkbox/raw-value control handlers that call form fields or other Reatom APIs are wrapped under strict setup instead of assuming `bindField` or the component library handled it."
+        }
+      ],
+      "files": []
     }
   ]
 }

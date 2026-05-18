@@ -153,7 +153,7 @@ These are the frequent failure modes worth keeping always loaded. The full prese
 - **`status` is disabled by default** on `withAsync` / `withAsyncData`; do not call `.status()` unless status was enabled explicitly.
 - **Async helper atoms are getters** — call `.data()`, `.ready()`, `.error()`, `submit.error()`.
 - **`wrap()` belongs at async boundaries that touch atoms**, not inside plain framework-agnostic API helpers.
-- **Under strict setup, handwritten callbacks that touch Reatom state need `wrap()`**, even when third-party UI libraries make the callback look innocent.
+- **Under strict setup, handwritten callbacks that touch Reatom state need `wrap()`**, even when a third-party control or a manually wired checkbox/select makes the callback look innocent. If `bindField(...)` did not create the handler for you, treat it as a `wrap()` boundary.
 - **Route work is version-sensitive** and should read the routing references first.
 - **Prefer `reatomComponent` for greenfield React pages/layouts/examples**; hook APIs are valid when matching an existing hook-style codebase. `useAtom` returns plain values, not callable atom getters — `Boolean/String/... has no call signatures` usually means hook style and atom-call style were mixed.
 - **`reatomComponent` is required for React components that read atoms during render**; inside `reatomComponent`, plain `wrap(...)` is often enough for ordinary handlers, while `useWrap(...)` is useful in hook-style components or when callback identity needs to stay stable.
