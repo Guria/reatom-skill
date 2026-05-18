@@ -153,7 +153,7 @@ These are the frequent failure modes worth keeping always loaded. The full prese
 - **`wrap()` belongs at async boundaries that touch atoms**, not inside plain framework-agnostic API helpers.
 - **Under strict setup, handwritten callbacks that touch Reatom state need `wrap()`**, even when third-party UI libraries make the callback look innocent.
 - **Route work is version-sensitive** and should read the routing references first.
-- **`reatomComponent` is required for React components that read atoms during render**; hook-based components are the main exception.
+- **`reatomComponent` is required for React components that read atoms during render**; inside `reatomComponent`, plain `wrap(...)` is often enough for ordinary handlers, while `useWrap(...)` is useful in hook-style components or when callback identity needs to stay stable.
 - **`reatomForm` usage is subtle enough that form edits should read the forms reference first.**
 - **When something feels surprising, load `references/meta/gotchas.md` before improvising.**
 

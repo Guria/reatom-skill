@@ -77,12 +77,12 @@ const MyForm = reatomComponent(() => {
 })
 ```
 
-## useAtom and useAction
+## useAtom, useAction, and useWrap
 
-[Source: `hooks.ts`](https://github.com/reatom/reatom/blob/v1001/packages/react/src/hooks.ts) · [Tests](https://github.com/reatom/reatom/blob/v1001/packages/react/src/hooks.test.tsx)
+[Source: `hooks.ts`](https://github.com/reatom/reatom/blob/v1001/packages/react/src/hooks.ts) · [Tests](https://github.com/reatom/reatom/blob/v1001/packages/react/src/hooks.test.tsx) · [`useWrap` source: `reatomComponent.ts`](https://github.com/reatom/reatom/blob/v1001/packages/react/src/reatomComponent.ts)
 
 
-`@reatom/react` exports `useAtom` and `useAction` as hook-based alternatives to `reatomComponent`. They use `useSyncExternalStore` internally and manage their own subscriptions, so the component does **not** need `reatomComponent`.
+`@reatom/react` exports `useAtom` and `useAction` as hook-based alternatives to `reatomComponent`. It also exports `useWrap`, a hook for creating a stable wrapped callback bound to the current Reatom frame. `useAtom` / `useAction` use `useSyncExternalStore` internally and manage their own subscriptions, so the component does **not** need `reatomComponent`.
 
 ### useAtom
 
@@ -113,11 +113,40 @@ const handleIncrement = useAction(incrementAction)
 const handleSave = useAction(() => saveForm(form()), [form])
 ```
 
-### `useAtom` / `useAction` vs `reatomComponent`
+### useWrap
+
+```tsx
+import { useWrap } from '@reatom/react'
+
+function SaveButton() {
+  const onClick = useWrap(() => submit())
+  return <button onClick={onClick}>Save</button>
+}
+```
+
+`useWrap` is the adapter-level convenience for React callback boundaries. It reads the current frame with `useFrame()`, memoizes one stable wrapped function, and keeps the latest callback in a ref-like cell. Use it when you want both of these at once:
+
+- the callback must re-enter Reatom correctly, and
+- the callback identity should stay stable across renders.
+
+Typical reasons to prefer `useWrap`:
+
+- passing a handler to a memoized child,
+- integrating with a third-party widget that subscribes/unsubscribes by function identity,
+- avoiding unnecessary callback churn in hook-style components.
+
+### `useAtom` / `useAction` / `useWrap` vs `reatomComponent`
 
 `reatomComponent` wraps the entire component in a reactive boundary — any atom getter called inside automatically subscribes. `useAtom` / `useAction` are more granular: each hook manages its own subscription via `useSyncExternalStore`, and the component stays a plain React function component.
 
-Both are valid. `reatomComponent` is more concise when reading many atoms; `useAtom` hooks give more control and may feel more natural in codebases that prefer explicit hook-style composition. Check existing components to see which pattern the project already uses and follow it. If there's no clear pattern, ask the user and offer to persist the preference in `AGENTS.md` or `CLAUDE.md`.
+For callback wrapping, the default rule is:
+
+- **inside `reatomComponent`, plain `wrap(...)` is often enough for ordinary event handlers**;
+- **inside hook-style components, or whenever stable callback identity matters, use `useWrap(...)`**.
+
+This distinction matters because `wrap()` captures the current frame at call time. In `reatomComponent`, render already runs inside a Reatom boundary, so creating `wrap(...)` handlers during render is normally fine. In a plain function component under strict setup, render-time `wrap(...)` can capture the wrong context; `useWrap(...)` fixes that by binding to the frame through React hooks.
+
+Both styles are valid. `reatomComponent` is more concise when reading many atoms; hook APIs give more control and may feel more natural in codebases that prefer explicit hook-style composition. Check existing components to see which pattern the project already uses and follow it. If there's no clear pattern, ask the user before standardizing on one style.
 
 ## React-specific rules
 
@@ -152,7 +181,7 @@ UI event handlers, timers, and any host-scheduled callback run in a fresh execut
 
 Adapter helpers that *produce* callbacks for you (form binders, link/navigation generators, async sampling primitives like `take`/`onEvent`) wrap internally so you don't double-wrap. Callbacks you write by hand — custom buttons, link-style anchors, `setTimeout`, `requestAnimationFrame`, observers, message-port handlers, or any UI control whose `onChange` hands you a raw value — do not. The rule of thumb: if the callback was constructed by you and reads or writes a Reatom primitive, it needs `wrap()`.
 
-The place where you call `wrap(...)` matters too. `wrap()` captures the current Reatom frame at call time, so creating wrapped callbacks directly inside JSX is only safe when that render already runs inside a reactive boundary such as `reatomComponent`. In a plain function component, `onClick={wrap(doSomething)}` or `const handleClick = wrap(doSomething)` can fail under `clearStack()` because the `wrap(...)` call itself happens during a non-Reatom React render. Fix that by converting the component to `reatomComponent`, or by pre-wrapping the callback in a reactive caller and passing the wrapped function down as a prop.
+The place where you call `wrap(...)` matters too. `wrap()` captures the current Reatom frame at call time, so creating wrapped callbacks directly inside JSX is only safe when that render already runs inside a reactive boundary such as `reatomComponent`. In a plain function component, `onClick={wrap(doSomething)}` or `const handleClick = wrap(doSomething)` can fail under `clearStack()` because the `wrap(...)` call itself happens during a non-Reatom React render. Fix that by converting the component to `reatomComponent`, using `useWrap(...)`, or by pre-wrapping the callback in a reactive caller and passing the wrapped function down as a prop.
 
 ### React is only the view adapter
 
