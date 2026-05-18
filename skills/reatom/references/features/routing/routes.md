@@ -233,12 +233,26 @@ When a public-only route and a private/default route redirect to each other, pre
 
 Be careful with guard routes that omit `path`. In Reatom, omitting `path` means the route contributes no URL segment and can match as broadly as its parent; this is useful for cross-cutting layouts, but dangerous for auth redirects because the guard can observe public sibling routes too. Prefer a real private path segment when the product has a private area, or explicitly exempt public URLs before redirecting. If you mean "index page only", use `path: ''` plus an exact/pathname guard instead of omitting `path`.
 
+Treat this as a practical self-check: do not add a broad default redirect child (`path: ''` or omitted `path`) under a layout until you can show the exact ownership check that limits it to the intended URL. The route runtime matches broadly by design (`layout` uses `match()`, pathless routes inherit parent scope, and even `path: ''` children can remain matched for descendants), so habits borrowed from other routing systems are not a safe substitute here.
+
+### Verification checklist for broad guards and default redirects
+
+Before declaring a guard or default redirect done, verify these points explicitly:
+
+- the source route actually owns the current pathname, not just a broader parent scope;
+- the redirect is idempotent (`!targetRoute.match()` or a stricter predicate before `.go(...)`);
+- unaffected sibling URLs still stay where they should;
+- the parent default page and at least one deeper child page still behave correctly after the change.
+
+This checklist follows directly from the runtime shape in source: layout routes render on `match()`, leaf routes render on `exact()`, and pathless/layout-style wrappers can participate more broadly than a local file structure may suggest.
+
 ```typescript
 // The `params` function enables protected routes:
 // - Return null to block the route (and all children)
 // - Return an object to inject derived parameters
 // - Call .go(params, true) inside params for redirects that should replace history
 // - Guard .go() with ownership + !targetRoute.match() so params() is idempotent
+// - For broad guards, prefer a concrete pathname ownership check before redirecting
 
 const authToken = atom(localStorage.getItem('token'), 'authToken')
 
@@ -252,9 +266,14 @@ const protectedRoute = layoutRoute.reatomRoute({
   layout: true,
   params() {
     const token = authToken()
+    const pathname = urlAtom().pathname
+    const protectedBase = '/dashboard'
     // No-token is a synchronous auth decision; do not wait on user.ready().
     if (!token) {
-      if (!loginRoute.match()) loginRoute.go(undefined, true)
+      // This guard only owns one subtree; do not redirect unrelated sibling URLs.
+      if ((pathname === protectedBase || pathname.startsWith(`${protectedBase}/`)) && !loginRoute.match()) {
+        loginRoute.go(undefined, true)
+      }
       return null  // blocks this route and all children
     }
 
@@ -302,6 +321,8 @@ const projectDetailRoute = projectsRoute.reatomRoute({ path: ':projectId' })
 This is not just a rendering issue. If both routes match, both can appear in `outlet()` and the dynamic route loader can run with `projectId === 'new'`, often producing a confusing "not found" error below the intended page. Do not fix this by rendering only `outlet().at(0)` - that hides the duplicate match while the wrong route may still be active.
 
 Use the dynamic route's `params` as a match predicate. Prefer a direct Standard Schema over manual parsing in a function; decode failures make the route unmatched.
+
+After adding a new guard/default redirect or a dynamic/literal sibling split, manually verify every nearby sibling URL before declaring the route tree done. A minimal pass usually means: one unaffected sibling page, the parent default page, and at least one deeper child page. Do not treat a local render fix as sufficient if nearby URLs were not rechecked.
 
 ```typescript
 import { z } from 'zod/v4'

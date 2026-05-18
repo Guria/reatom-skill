@@ -270,6 +270,10 @@ const itemsIndexRoute = itemsRoute.reatomRoute({
 
 This keeps the index loader from running when a nested detail/edit route is active.
 
+Treat the same route shape as risky even when the child is more than a loader. A `path: ''` child used as a default page, redirect owner, or nav owner under a layout can still observe descendant URLs too broadly. If the page is really "the parent's exact screen", a safer default is often to let the parent route render that page when `self.exact()` is true and reserve child routes for real descendants. Reach for a separate index child only when it buys you something concrete and you also add the exact/pathname guard.
+
+When choosing between a parent exact page and a `path: ''` child, prefer the parent exact page when the child adds no separate URL semantics, no independent loader lifetime, and no distinct descendant behavior. The more the child is acting like a default owner rather than a real descendant, the more likely it should be folded back into the parent.
+
 ## Route loaders - factory pattern (forms + actions)
 
 Loaders are plain async functions — they can return atoms, forms, actions, computed factories. See [`reatomForm`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/form/reatomForm.ts) and [`computed`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/core/atom.ts) for the building blocks used below.
@@ -304,6 +308,8 @@ const deleteRecord = action(async (id: string) => {
 ```
 
 This pattern is especially useful for list pages that stay on the same search/filter URL after delete, create, or edit. Without an explicit invalidation signal, the loader has no reason to recompute.
+
+When debugging abort-heavy route behavior, keep `connectLogger()` or equivalent visibility on until ownership and invalidation rules are proven correct. Repeated loader aborts are often telling you that a broad route is matching and unmatching, not that the logger itself is the problem. Reduce noise only after proving the route shape is correct on the nearby URLs it can affect.
 
 ### Precompute component links in loaders
 
