@@ -2,7 +2,7 @@
 
 Use this when bootstrapping a brand-new project around Reatom. The default stack below is opinionated for production use; **adjust any layer if the user already specified a preference**. If the user has not, **use this default and verify current package versions with the available tooling before pinning** (`npm view <pkg> dist-tags`).
 
-For greenfield work, treat this as the default sequence: scaffold, write `GOAL.md`, install the validation pipeline, configure quality gates, run validation on the untouched Vite scaffold, then let the staged checklist in `GOAL.md` unlock routing work and later feature code. Existing examples are useful for local style and package shape, but sample them narrowly so they do not replace the bootstrap sequence.
+For greenfield work, treat this as the default sequence: scaffold, write `GOAL.md`, install the validation pipeline, configure quality gates, run validation on the untouched starter app, then let the staged checklist in `GOAL.md` unlock routing work and later feature code. Existing examples are useful for local style and package shape, but sample them narrowly so they do not replace the bootstrap sequence.
 
 This pipeline is intentionally **shift-left**: it is designed to surface tooling and runtime-integration mistakes as early as possible, while the app is still cheap to correct. Until the first green `npm run validate`, the only active goal is the validation pipeline; no Reatom code should be written yet.
 
@@ -22,7 +22,7 @@ By default:
 4. **Keep the broader implementation guidance out of the validation phase.** Stay inside this scaffold checklist and its tooling guidance until the bootstrap gate is green.
 5. **Do not install feature dependencies first.** Install the requested validation/tooling dependencies immediately after the scaffold.
 6. **Do not write Reatom code before the bootstrap is green.** No routes, pages, forms, loaders, or state code before the validate pipeline, browser smoke test, and post-validate reminder are in place.
-7. **If the Vite template ships ESLint, clean it up in favor of `oxlint` after the requested dependencies are installed** unless the user explicitly wants both.
+7. **If the starter ships overlapping validation tooling, reconcile it with the stack you chose** unless the user explicitly wants both.
 8. **Do not treat examples, demos, or standalone packages as automatic exceptions.** They teach by example, so the bootstrap quality bar often matters more, not less.
 9. **If the user gave target-path constraints, preserve them while still following the sequence.** For example, a standalone package inside `./examples/...` still starts with the scaffold step inside that directory.
 10. **If the user intentionally wants a lighter path, say what is being skipped and why.** Adapt deliberately instead of drifting out of order by accident.
@@ -33,7 +33,7 @@ Before substantial feature work, verify this gate explicitly:
 - [ ] scaffold exists and installs cleanly;
 - [ ] `GOAL.md` exists as a staged todo list;
 - [ ] validation tooling is installed;
-- [ ] ESLint was removed or deliberately retained;
+- [ ] overlapping starter tooling was reconciled deliberately;
 - [ ] `npm run typecheck` passes;
 - [ ] `npm run lint` passes;
 - [ ] browser smoke test passes;
@@ -42,7 +42,7 @@ Before substantial feature work, verify this gate explicitly:
 
 If any box is unchecked, the next task is still bootstrap work, not routing or feature work.
 
-A package install alone does not count. `oxlint`, `oxfmt`, `fallow`, and any optional Storybook layer only matter if they are configured, reachable through scripts or documented commands, and actually executed.
+A package install alone does not count. Validation, formatting, analysis, and optional preview tools only matter if they are configured, reachable through scripts or documented commands, and actually executed.
 
 ## Table of contents
 
@@ -103,7 +103,7 @@ The checklist should:
 - explicitly defer the main `reatom` skill until the routing stage;
 - explicitly park **routing scheme** as the next stage after a green pipeline;
 - explicitly park **finish original request** after routing is validated;
-- include a link to the Reatom routing reference, using the local path available in the environment (for example `@skills/reatom/references/features/routing/routes.md` or the resolved local skill path);
+- include a pointer to the routing reference bundled with the skill set;
 - tell the later routing pass to start with placeholder layouts/pages and `outlet()` rendering only.
 
 Example:
@@ -112,17 +112,17 @@ Example:
 # GOAL
 
 - [ ] Initial validation pipeline
-  - Scaffold with the Vite CLI.
-  - Install the requested dev dependencies.
-  - If the Vite template ships ESLint, remove or neutralize it in favor of oxlint.
+  - Scaffold the project with the chosen starter.
+  - Install the requested development dependencies.
+  - Reconcile any overlapping default tooling with the selected validation stack.
   - Add `validate` / `postvalidate` scripts.
   - Configure the installed tools.
-  - Add minimal browser coverage for the scaffolded `App.tsx`.
-  - Make the pipeline pass on the Vite-scaffolded `src` without writing Reatom code yet.
+  - Add a minimal browser smoke check for the starter app.
+  - Make the baseline pipeline pass without writing Reatom code yet.
 
 - [ ] Routing scheme
   - Bring in the main `reatom` skill.
-  - Read the routing reference: [Reatom routing reference](../../skills/reatom/references/features/routing/routes.md)
+  - Read the routing reference bundled with the skill set.
   - Start by architecting route placeholders only.
   - Layout routes should render placeholders plus `outlet()` composition in their `render`.
   - Validate the routing skeleton before moving on.
@@ -132,8 +132,6 @@ Example:
   - Resume the parked request only after the routing scheme is validated.
   - Original request: <copy the user's request here, verbatim or near-verbatim>
 ```
-
-If the example link path does not fit the current environment, resolve it to the actual local Reatom skill path before writing `GOAL.md`.
 
 Use the official latest Vite CLI with a TypeScript template when it fits the task. It bakes in current Vite defaults and reduces hand-written config mistakes. Manual file-by-file scaffolding is acceptable if the user explicitly requests it or has a strong opinion on how to scaffold the app — in that case, say why you're deviating and verify the result with the same install/typecheck/lint/test/build pipeline before treating it as equivalent to the CLI output.
 

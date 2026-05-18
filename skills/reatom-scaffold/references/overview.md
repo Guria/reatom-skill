@@ -21,13 +21,13 @@ The bootstrap order matters more than any single package choice:
 1. scaffold the app/package with the Vite CLI
 2. write `GOAL.md` as a staged todo list
 3. ignore the original request and focus only on the validation pipeline
-4. keep the broader implementation guidance out of the validation pass; wire the tooling into scripts/configs and run it successfully on the untouched Vite scaffold
+4. keep the broader implementation guidance out of the validation pass; wire the chosen tooling into scripts/configs and run it successfully on the untouched starter app
 5. only after the first green pipeline, let `GOAL.md` hand off to the main `reatom` skill for a routing-only pass with placeholders and outlets
 6. only after routing is validated, continue the parked implementation work with the main `reatom` skill
 
 This prevents the common failure mode of writing routes, forms, and state code before the project can prove its basic runtime shape.
 
-Installing `oxlint`, `oxfmt`, `fallow`, or optional Storybook is not enough by itself. A bootstrap is still incomplete if the tools the agent chose are present in `package.json` but not configured, not exposed through scripts, or never actually executed.
+Installing tools is not enough by itself. A bootstrap is still incomplete if the tools the agent chose are present in `package.json` but not configured, not exposed through scripts, or never actually executed.
 
 `GOAL.md` is the parking place for the original request and the source of truth for later stages. Once it is written, the agent should stop following the raw user request directly and stay inside the scaffold guidance until the validation pass is green. After validation completes, the echoed goal becomes the handoff into the main `reatom` skill for routing placeholders first, then back to the parked product work.
 
@@ -62,12 +62,10 @@ Before saying the bootstrap is done, make sure the answer includes evidence that
 
 For the default path, the expected proof points are:
 - `GOAL.md` exists as a staged todo list
-- lint script runs with `oxlint`
-- format-check runs with `oxfmt`
-- intelligence check runs with `fallow`
-- browser smoke test passes on the Vite scaffold
+- the selected validation commands are wired and runnable
+- a browser smoke test passes on the starter app
 - `npm run validate` passes
-- Storybook smoke check passes when Storybook is part of the promised setup
+- any promised isolated preview/runtime check passes too
 
 ## Cross-skill handoff
 
