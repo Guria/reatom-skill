@@ -1,0 +1,57 @@
+{
+  "skill_name": "reatom-debug",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "My app throws 'missing async stack' when I change a UI control. We use strict setup. Please debug it.",
+      "expected_output": "The agent identifies strict-context callback boundaries as the likely failing layer, checks whether observability/setup is in place first (including dev-time connectLogger in the earliest setup import), inspects the handwritten callback for missing wrap(), and proves the fix with the narrowest repro or test command instead of removing clearStack.",
+      "assertions": [
+        {
+          "name": "connect_logger_preflight",
+          "text": "The response verifies or asks to verify whether connectLogger is wired in the earliest development setup import before broad debugging changes."
+        },
+        {
+          "name": "wrap_boundary_focus",
+          "text": "The response treats the likely root cause as a host callback crossing back into Reatom without wrap(), not as a reason to remove strict setup."
+        },
+        {
+          "name": "narrow_proof_required",
+          "text": "The response requires a narrow proof command or concrete repro result before claiming the debug fix is complete."
+        }
+      ],
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "Our routed Reatom page keeps logging AbortError and redirecting back and forth. Can you debug it?",
+      "expected_output": "The agent keeps logger visibility on, treats the abort spam as route-ownership evidence, inspects guards/loaders/redirect ownership before muting logs, and narrows the issue to the smallest route boundary with proof.",
+      "assertions": [
+        {
+          "name": "logger_not_removed_first",
+          "text": "The response does not recommend silencing connectLogger or removing debug visibility as the first step."
+        },
+        {
+          "name": "route_ownership_focus",
+          "text": "The response focuses on route ownership, redirect idempotence, or loader matching/invalidation before generic cleanup."
+        }
+      ],
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "After adding clearStack to tests, several Reatom tests fail with missing async stack. Debug the test setup.",
+      "expected_output": "The agent matches the suite's strict context style, checks for context.start() or a reusable strict test helper, and repairs the test harness or host callback boundary instead of backing out strict setup blindly.",
+      "assertions": [
+        {
+          "name": "strict_test_harness_checked",
+          "text": "The response checks whether strict tests run inside context.start(...) or a reusable test helper."
+        },
+        {
+          "name": "no_blind_clearstack_removal",
+          "text": "The response does not treat removing clearStack as the default fix."
+        }
+      ],
+      "files": []
+    }
+  ]
+}

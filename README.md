@@ -3,7 +3,8 @@
 A multi-skill package for [Reatom](https://github.com/reatom/reatom) v1000+ guidance.
 
 It currently follows **approach A**:
-- `reatom` — the main expert skill for existing codebases, API usage, architecture, debugging, and migration
+- `reatom` — the main expert skill for existing codebases, API usage, architecture, and migration
+- `reatom-debug` — structured debugging workflow for runtime, routing, adapter, and test failures
 - `reatom-scaffold` — ordered bootstrap workflow for new projects
 - `reatom-feedback-loop` — correction / pitfall distillation workflow after wrong guidance or completed bootstrap
 
@@ -18,6 +19,10 @@ skills/
 │       ├── features/
 │       ├── integrations/
 │       └── meta/
+├── reatom-debug/
+│   ├── SKILL.md
+│   └── references/
+│       └── debugging.md
 ├── reatom-scaffold/
 │   ├── SKILL.md
 │   └── references/
@@ -31,12 +36,13 @@ skills/
 
 ## Why this split
 
-This package keeps one broad `reatom` skill for everyday Reatom work, while extracting two workflow-heavy areas that do not need to load for ordinary debugging or code review:
+This package keeps one broad `reatom` skill for everyday Reatom work, while extracting focused workflows that do not need to load for every task:
 
+- **Debug** is an active troubleshooting procedure: preserve the symptom, verify observability, classify the failing boundary, and prove the fix.
 - **Scaffold** is a strict ordered process, not just background knowledge.
 - **Feedback loop** is a follow-up correction workflow, not a default concern for every task.
 
-This keeps the main skill broad and useful without carrying bootstrap/process instructions into every Reatom task.
+This keeps the main skill broad and useful without carrying every debug/process workflow into every Reatom task.
 
 ## Installation
 
@@ -91,6 +97,17 @@ Use for:
 - runtime errors like `ReatomError` or missing async stack
 
 This skill keeps the main source-backed references.
+
+### `reatom-debug`
+
+Use for:
+- active debugging of Reatom runtime or test failures
+- `missing async stack`, `AbortError`, or setup/root/provider issues
+- route ownership, redirect flicker, and loader abort investigation
+- verifying runtime observability in setup before broad edits
+- narrowing a bug to the smallest failing boundary and proving the fix
+
+It contains the debugging workflow in `skills/reatom-debug/references/debugging.md`.
 
 ### `reatom-scaffold`
 
@@ -147,7 +164,7 @@ A later **approach B** could split the broad `reatom` skill further into narrowe
 - more maintenance and reference duplication
 - greater risk that vague prompts undertrigger or choose the wrong specialist
 
-For now, the package prefers one broad expert skill plus two focused workflow skills.
+For now, the package prefers one broad expert skill plus three focused workflow skills.
 
 ## License
 
