@@ -23,6 +23,21 @@ Items default into `src/reatom/`; reconfigure paths in the generated `jsrepo.con
 - **Use a reusable** when the core covers the *primitive* but not a *common pattern* (history/undo, auto-submit forms, unsaved-changes warnings, a logger, dev tooling integrations, a Reatom-aware test harness).
 - **Author your own `reatom*` factory** when the pattern is domain-specific to your codebase. The reusables catalog deliberately stays generic; anything app-shaped should live next to the feature it serves (see `core/patterns.md` → "Scoped model factories").
 
+## Operational trigger list — check reusables first when you see…
+
+- repeated form host wiring such as native submit bridging or Enter-key submit behavior
+- repeated submit-error UX such as focus-the-first-invalid-field or first-error extraction
+- repeated dirty-form navigation warnings or auto-submit-on-change behavior
+- repeated reset/history/undo helpers across unrelated atoms
+- repeated Reatom-specific test harness or logger/devtool setup
+- repeated imperative-instance lifecycle wrappers that still look generic across features
+
+Heuristic:
+
+- repeated **generic** pattern in 2+ places → scan this catalog first
+- repeated **domain** workflow tied to one feature → prefer a local `reatom*` factory or local extension
+- nothing suitable in the catalog → continue with [`../core/writing-extensions.md`](../core/writing-extensions.md)
+
 ## Catalog (as of skill authoring)
 
 > Verify the live catalog with `npx jsrepo browse https://github.com/reatom/reusables` or by inspecting [`registry.json`](https://github.com/reatom/reusables/blob/main/registry.json) before relying on a specific item.

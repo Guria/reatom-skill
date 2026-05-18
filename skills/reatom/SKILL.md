@@ -66,10 +66,10 @@ references/
 |---|---|
 | `references/meta/v1001.md` | Comparing v1001 to v1000, deciding whether an API is v1001-only, migrations from v1000 |
 | `references/meta/packages.md` | Looking up which @reatom/* package to install, checking if a v3 package is deprecated |
-| `references/meta/reusables.md` | Browsing the [reatom/reusables](https://github.com/reatom/reusables) jsrepo catalog — form helpers, history/undo, logger, test harness, tweakpane integration, etc. |
+| `references/meta/reusables.md` | Browsing the [reatom/reusables](https://github.com/reatom/reusables) jsrepo catalog — check here first when repeated generic patterns appear (form helpers, history/undo, logger, test harness, tweakpane integration, etc.). |
 | `references/meta/migration.md` | Migrating code from v3 to v1000+, mapping old APIs to new |
 | `references/core/extensions.md` | Using built-in extensions: `withAsyncData`, `withAbort`, `withChangeHook`, `withConnectHook`, `withComputed`, `withSuspense`, `withRollback`, `withTransaction`, `framePromise` |
-| `references/core/writing-extensions.md` | Writing custom `.extend()` helpers, lifecycle/resource integration, middleware, hooks, type-safe extension APIs |
+| `references/core/writing-extensions.md` | Writing custom `.extend()` helpers after checking reusables first — lifecycle/resource integration, middleware, hooks, type-safe extension APIs, and extension-candidate heuristics |
 | `references/core/sampling.md` | Debounce/throttle, `take()`, `onEvent()`, `race()`, `abortVar`, checkpoint pattern |
 | `references/core/testing.md` | Testing contexts, `clearStack()`, `context.start()`, `context.reset()`, `mock()`, and source-backed examples |
 | `references/core/patterns.md` | Architectural decisions: atomization, computed factory/scoped models, standalone atoms vs lenses, file organization |
@@ -132,6 +132,13 @@ effect(() => {
 ## Extensions
 
 Extensions add capabilities via `.extend()`. See [references/core/extensions.md](references/core/extensions.md) for built-in APIs (`withAsyncData`, `withAsync`, `withAbort`, `withChangeHook`, `withConnectHook`, `withComputed`, `withSuspense`, `withRollback`, `withTransaction`, `framePromise`). When authoring reusable custom extensions, read [references/core/writing-extensions.md](references/core/writing-extensions.md).
+
+Extension decision ladder:
+
+1. **Built-in core first** — if `@reatom/core` already has the primitive or extension, use it directly.
+2. **Reusables second** — if the pattern is generic and repeated (form submit wiring, focus-on-error, unsaved-warning, history/reset/test helpers), scan [`references/meta/reusables.md`](references/meta/reusables.md) before inventing a new helper.
+3. **Custom extension third** — if there is an existing primitive to enrich but no reusable fits, add a narrow `.extend(...)` helper.
+4. **`reatom*` factory last** — if the pattern is domain-shaped or must create several primitives together, model it as a local `reatom*` factory instead of a generic extension.
 
 Quick reference — the two most common:
 

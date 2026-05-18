@@ -8,6 +8,7 @@ Use this when creating custom `.extend(...)` helpers for Reatom atoms, actions, 
 
 - [Core model](#core-model)
 - [When to write an extension](#when-to-write-an-extension)
+- [Check reusables before authoring](#check-reusables-before-authoring)
 - [Design workflow](#design-workflow)
 - [Extension shapes](#extension-shapes)
 - [Common patterns](#common-patterns)
@@ -17,6 +18,8 @@ Use this when creating custom `.extend(...)` helpers for Reatom atoms, actions, 
   - [Connect an external resource lazily](#connect-an-external-resource-lazily)
   - [Manage imperative instances with automatic disposal](#manage-imperative-instances-with-automatic-disposal)
   - [Extend nested actions or atoms exposed by a target](#extend-nested-actions-or-atoms-exposed-by-a-target)
+  - [Host-binding extensions for forms](#host-binding-extensions-for-forms)
+  - [View-helper extensions for forms](#view-helper-extensions-for-forms)
   - [Dynamic hooks inside withConnectHook — lifecycle-scoped reactivity](#dynamic-hooks-inside-withconnecthook--lifecycle-scoped-reactivity)
 - [Lifecycle and cleanup rules](#lifecycle-and-cleanup-rules)
 - [TypeScript guidance](#typescript-guidance)
@@ -61,7 +64,23 @@ Prefer an extension when you need to modify or enrich an existing Reatom primiti
 - Intercept reads/writes/calls with middleware.
 - Compose behavior onto forms/routes/resources without duplicating their factory signatures.
 
+Practical triggers that usually mean “consider an extension”:
+
+- repeated `if (enabledAtom()) imperativeCall()` gates around the same capability
+- repeated event-wrapper glue around forms or host callbacks
+- repeated success/error hooks on the same kind of async primitive
+- repeated retry/error/loading wrappers around loader-like resources
+- repeated view-only helpers like “first validation error”, “dirty summary”, or “can submit” projections
+
 Prefer a plain helper or factory when there is no existing primitive to extend, or when the whole unit must always be created together.
+
+## Check reusables before authoring
+
+Before writing a new extension, scan [`../meta/reusables.md`](../meta/reusables.md).
+
+Use a reusable when the pattern is already generic and catalog-shaped — especially for form UX/lifecycle helpers, history/reset behavior, logger/devtool glue, or test harness setup. Reatom’s own docs already demonstrate turning repeated form recipes into reusable extensions (`withFormAutoSubmit`, `withFormAutoFocusOnError`), so the right first question is often “does reusables already have this?” rather than “how do I write it from scratch?”.
+
+If the catalog does not fit, come back here and write the smallest local extension that serves the primitive you already have.
 
 ## Design workflow
 
@@ -263,6 +282,64 @@ export const withSubmitHandler =
 
 Constrain the target to the smallest type you need. If full exported types are too broad or hard to infer, define a local `FormLike`/`RouteLike`/`ResourceLike` subset containing only the members your extension uses.
 
+### Host-binding extensions for forms
+
+Some extensions exist mainly to adapt a Reatom primitive to host-environment semantics. Forms are the common case: the form already knows how to submit, but UI code keeps repeating DOM/event glue.
+
+```ts
+import { action, type Action, type Ext } from '@reatom/core'
+
+type SubmitHandlerExt = {
+  handleSubmit: Action<[event?: { preventDefault(): void }], void>
+}
+
+type FormLike = {
+  name: string
+  submit(): unknown
+}
+
+export const withFormSubmitHandler =
+  <Target extends FormLike>(): Ext<Target, SubmitHandlerExt> =>
+  (form) => ({
+    handleSubmit: action((event) => {
+      event?.preventDefault()
+      form.submit()
+    }, `${form.name}.handleSubmit`),
+  })
+```
+
+If the catalog already provides the same host-binding helper, prefer the reusable version from [`../meta/reusables.md`](../meta/reusables.md). Write a local one only when the binding rules are project-specific.
+
+### View-helper extensions for forms
+
+Not every extension needs middleware or lifecycle. A tiny computed helper can remove noisy UI repetition while keeping view logic close to the primitive.
+
+```ts
+import { computed, type AtomLike, type Ext } from '@reatom/core'
+
+type FormLike = AtomLike & {
+  name: string
+  validation(): {
+    errors: Array<{ message?: string }>
+  }
+}
+
+type FormErrorSummaryExt = {
+  firstErrorMessage: () => string | undefined
+}
+
+export const withFormErrorSummary =
+  <Target extends FormLike>(): Ext<Target, FormErrorSummaryExt> =>
+  (form) => ({
+    firstErrorMessage: computed(
+      () => form.validation().errors[0]?.message,
+      `${form.name}.firstErrorMessage`,
+    ),
+  })
+```
+
+This kind of helper is a good fit when several components keep projecting the same tiny piece of derived UI state from a form or fieldset.
+
 ### Dynamic hooks inside withConnectHook — lifecycle-scoped reactivity
 
 `addChangeHook` and `addCallHook` are the runtime companions to `withChangeHook` / `withCallHook`. Instead of permanently attaching a hook at definition time, they return an unsubscribe function so you can add and remove hooks dynamically. The core use case is **inside `withConnectHook`** to react to changes only while the atom has subscribers — when it disconnects, the hook is cleaned up.
@@ -356,6 +433,8 @@ When a pattern appears only once, inline hooks may be enough. Extract an extensi
 - The behavior has clear options.
 - The behavior belongs to the primitive itself rather than a component.
 - Tests would be simpler against a reusable helper.
+
+Start narrow before going generic. A tiny host-binding helper or small derived/helper extension often pays off immediately, while a broad async side-effect extension can introduce more type and lifecycle complexity than the duplication it removes.
 
 ## Gotchas
 
