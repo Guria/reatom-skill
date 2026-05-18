@@ -119,7 +119,7 @@ The checklist should:
 - keep checkboxes honest: future work starts unchecked, and a box is checked only after its exit artifact has been verified;
 - tie non-trivial boxes to proof when useful, for example `Artifact: src/__tests__/root.browser.test.tsx` and `Proof: npm run test -- src/__tests__/root.browser.test.tsx`;
 - never mark a parent stage complete until all of its child gates are complete and the stage's final validation command has passed;
-- explicitly park **routing scheme** as the next stage after a green pipeline;
+- explicitly park **routing scheme** as the next stage after a green pipeline, including strict setup + dev-time logger wiring;
 - explicitly park **finish original request** after routing is validated;
 - include a pointer to the routing reference bundled with the skill set;
 - tell the later routing pass to start with placeholder layouts/pages and `outlet()` rendering only.
@@ -140,6 +140,7 @@ Example:
 
 - [ ] Routing scheme
   - Read the routing reference bundled with the skill set.
+  - Add strict setup + dev-time `connectLogger()` wiring before product feature work.
   - Start by architecting route placeholders only.
   - Layout routes should render placeholders plus `outlet()` composition in their `render`.
   - Validate the routing skeleton before moving on.
@@ -397,6 +398,8 @@ Use this as the recommended shape for a single validation entry point, then twea
 
 Treat `postvalidate` as part of the workflow, not cosmetic output. It is the mechanism that routes the agent back into the staged checklist after a green run, which helps the next attempt start with sharper guidance instead of repeating the same mistakes.
 
+Treat the echoed `GOAL.md` as a proof surface, not celebratory output. If it still shows the current parent stage unchecked, do not narrate "Stage N complete" yet; update the ledger first and rerun the promised proof command.
+
 If the scaffold still has an ESLint setup, either replace it with this oxlint-first baseline or keep both with a deliberate note about why ESLint remains. Avoid drifting into a redundant two-linter setup by accident.
 
 Keep typecheck and emit separate: either set `"noEmit": true` in the TypeScript config or pass `--noEmit` in typecheck/build scripts.
@@ -478,7 +481,7 @@ test('renders the initial page at root', async () => {
 
 Replace `My App` with the actual stable text for the generated landing page. Keep the assertion meaningful: checking only that `#root` exists, that React created an empty wrapper, or that no exception was thrown is a false pass. The smoke test should prove visible app content rendered.
 
-This entrypoint-import smoke test is appropriate for the single plain-scaffold bootstrap check. Do not reuse it as the general pattern for multiple routed Browser Mode tests: repeated `import('../main')` relies on app-entry side effects and module caching, so later route tests should mount the app or route shell directly with a fresh framework root per test and clean it up afterwards.
+This entrypoint-import smoke test is appropriate for the single plain-scaffold bootstrap check. Do not reuse it as the general pattern for multiple routed Browser Mode tests: repeated `import('../main')` relies on app-entry side effects and module caching, so later route tests should mount the app or route shell directly with a fresh framework root per test and clean it up afterwards. Once routes/loaders/providers are involved, do not assume two `requestAnimationFrame` waits are enough either — prefer waiting for visible route content or another concrete settled signal rather than asserting immediately on injected styles or an empty shell.
 
 Initial smoke-test pitfall checklist:
 
@@ -593,7 +596,7 @@ The next stage is **not** the original feature request yet. It is a routing-only
 
 1. install the needed Reatom runtime packages for the chosen adapter; do not install requested UI-library packages yet unless the user explicitly made UI-library bootstrap the current phase;
 2. read [`../../reatom/references/features/routing/routes.md`](../../reatom/references/features/routing/routes.md) before writing route code, including its route-option gotchas;
-3. read the adapter integration reference needed to mount the route output (for React, [`../../reatom/references/integrations/react.md`](../../reatom/references/integrations/react.md)) and the setup quick reference before writing `App.tsx` / `main.tsx`; for greenfield React strict setup, say the exact pattern out loud first (`src/setup.ts`: `clearStack()` + `export const frame = context.start()`, then keep `import './setup'` first and use `<reatomContext.Provider value={frame}>`). If that guidance is genuinely ambiguous for the installed version, inspect installed exports/source before writing code;
+3. read the adapter integration reference needed to mount the route output (for React, [`../../reatom/references/integrations/react.md`](../../reatom/references/integrations/react.md)) and the setup quick reference before writing `App.tsx` / `main.tsx`; for greenfield React strict setup, say the exact pattern out loud first (`src/setup.ts`: `clearStack()`, `const frame = context.start()`, dev-time `frame.run(connectLogger)`, then export the frame, keep `import './setup'` first, and use `<reatomContext.Provider value={frame}>`). If that guidance is genuinely ambiguous for the installed version, inspect installed exports/source before writing code;
 4. design the route tree with placeholder pages/layouts only, using plain framework markup for shells and pages;
 5. when using layout routes, have their `render(self)` return placeholder shell content plus `self.outlet()` composition;
 6. keep UI-library shells, loaders, forms, fake backend data, persistence, and business logic out of this pass;

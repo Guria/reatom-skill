@@ -65,10 +65,14 @@ For greenfield strict setup, prefer this shape:
 
 ```tsx
 // src/setup.ts
-import { clearStack, context } from '@reatom/core'
+import { clearStack, connectLogger, context } from '@reatom/core'
 
 clearStack()
 export const frame = context.start()
+
+if (import.meta.env.DEV) {
+  frame.run(connectLogger)
+}
 ```
 
 ```tsx
@@ -91,6 +95,8 @@ const AppRoot = reatomComponent(() => {
 ```
 
 If the project already uses the default global context instead of strict setup, preserve that style; do not add or remove `clearStack()` casually. Avoid a top-level component that reads atoms or routes first and only later returns the provider wrapper. If the render needs Reatom state, split the file into a plain provider wrapper and an inner `reatomComponent` root.
+
+For greenfield strict setup and active debugging, treat missing dev-time logger wiring as an incomplete bootstrap. If runtime behavior is still surprising, first verify that the logger is still connected before broad rewrites or hook-style detours.
 
 ## bindField
 

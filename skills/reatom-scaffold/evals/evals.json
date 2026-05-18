@@ -3,8 +3,8 @@
   "evals": [
     {
       "id": 1,
-      "prompt": "Build a new Reatom dashboard-style example in the current empty folder. Use a version-pinned third-party UI component library. Demonstrate public/private routing, forms, actions, side effects, async fetches, persistence, error handling, fake backend delays, practical app structure, and idiomatic Reatom patterns. Commit at reasonable bootstrap steps.",
-      "expected_output": "The agent treats this as a full greenfield bootstrap: reads scaffold overview/checklist, runs the scaffold, writes GOAL.md as the next normal project tool call, does not read routing/forms/persistence/React feature references before GOAL.md and a green validation baseline, installs/configures/runs validation tooling before Reatom runtime or UI-library feature work, and commits only after a validated Step 12 baseline if committing at all.",
+      "prompt": "Build a new Reatom dashboard-style example in the current empty folder. Use a version-pinned third-party UI component library. Demonstrate public/private routing, forms, actions, side effects, async fetches, persistence, error handling, fake backend delays, practical app structure, and idiomatic Reatom patterns.",
+      "expected_output": "The agent treats this as a full greenfield bootstrap: reads scaffold overview/checklist, runs the scaffold, writes GOAL.md as the next normal project tool call, does not read routing/forms/persistence/React feature references before GOAL.md and a green validation baseline, installs/configures/runs validation tooling before Reatom runtime or UI-library feature work, keeps GOAL.md truthful when reporting phase progress, and carries strict setup/dev-time logger wiring forward into the routed phase plan.",
       "assertions": [
         {
           "name": "goal_immediately_after_scaffold",
@@ -13,6 +13,14 @@
         {
           "name": "honest_goal_checkboxes",
           "text": "GOAL.md does not pre-check future validation/routing/feature work; checkboxes are marked complete only after verified exit artifacts or passing commands."
+        },
+        {
+          "name": "goal_parks_strict_setup_logger",
+          "text": "GOAL.md parks the routed phase with explicit strict setup/dev-time connectLogger wiring instead of treating logger setup as an optional afterthought."
+        },
+        {
+          "name": "phase_claims_follow_goal_truth",
+          "text": "The run does not announce a stage complete while GOAL.md or postvalidate output still shows that stage or its parent gate unchecked; it repairs the ledger before claiming progress."
         },
         {
           "name": "no_feature_reference_reads_during_red_yellow",
@@ -48,7 +56,7 @@
         },
         {
           "name": "root_bootstrap_verified",
-          "text": "The React root/provider seam is taken from the React reference or quick-reference first — including the strict-setup split (`src/setup.ts` with `clearStack()` + `context.start()`, imported first) and `<reatomContext.Provider value={frame}>` shape — and only then, if needed, verified against installed exports/source."
+          "text": "The React root/provider seam is taken from the React reference or quick-reference first — including the strict-setup split (`src/setup.ts` with `clearStack()`, `context.start()`, dev-time logger wiring, imported first) and `<reatomContext.Provider value={frame}>` shape — and only then, if needed, verified against installed exports/source."
         }
       ],
       "files": []

@@ -104,7 +104,7 @@
     {
       "id": 6,
       "prompt": "A previous bootstrap run claimed completion, skipped development logging during strict setup, misdiagnosed missing async stack with broad rewrites, created wrap() lazily at event time, hid another async Reatom action inside a fragile form callback path, wrote a feedback summary into the target app repo, and committed multiple times without permission. The user asks for root causes and durable skill updates.",
-      "expected_output": "The agent names the false-completion, observability, wrap-timing, form-orchestration, and repo-safety failures; recommends concrete edits to integration/forms/quick-reference/feedback-loop guidance; and does not treat a future promise as the fix.",
+      "expected_output": "The agent names the false-completion, observability, wrap-timing, form-orchestration, and repo-safety failures; explains when the guidance already existed but was too skippable as an execution mechanism; recommends concrete edits to integration/forms/quick-reference/feedback-loop guidance; and does not treat a future promise as the fix.",
       "assertions": [
         {
           "name": "wrap_timing_called_out",
@@ -113,6 +113,10 @@
         {
           "name": "connect_logger_default_strengthened",
           "text": "The response recommends making connectLogger a stronger strict-bootstrap/dev-debug default instead of a skippable suggestion."
+        },
+        {
+          "name": "existing_guidance_skipped_not_missing",
+          "text": "The response distinguishes 'the skill already mentioned this' from 'the wording failed to constrain behavior' and names why it was skippable (buried, advisory, missing artifact gate, or not enforced by evals)."
         },
         {
           "name": "forms_orchestration_rule",

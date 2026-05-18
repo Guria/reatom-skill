@@ -25,7 +25,7 @@ For full greenfield apps/examples/packages, keep a visible phase ledger:
 
 1. **Scaffold phase** — create the starter project and `GOAL.md` only. After the scaffold command succeeds, the next normal tool call in that root is `write` for `GOAL.md`; do not run `npm install`, `npm view`, read `package.json`, or load feature references first unless you genuinely need to locate the scaffold root.
 2. **Validation phase** — wire and run the validation pipeline on the mostly untouched starter. No Reatom app code yet.
-3. **Routing-skeleton phase** — after the first green `npm run validate`, add only placeholder routes/layouts and `outlet()` composition.
+3. **Routing-skeleton phase** — after the first green `npm run validate`, add strict setup/dev-time logger wiring plus placeholder routes/layouts and `outlet()` composition.
 4. **Feature phase** — only after the routing skeleton validates, resume the parked original request.
 
 Before reading feature docs, writing files, or installing dependencies, ask: "Which phase am I in, and would this tool call cross the current gate?" Feature-reference reads are also phase actions: routing/forms/persistence/React integration docs are not harmless preparation during scaffold/validation. If the tool call would load feature docs or add routes, pages, forms, mocked backend code, rich UI, `@reatom/*` imports, or feature dependencies during the validation phase, stop and return to the earliest unchecked gate.
@@ -37,7 +37,7 @@ Concrete gate artifacts for the default path:
 - [ ] overlapping starter tooling has been deliberately kept or removed.
 - [ ] browser smoke test passes on the scaffolded baseline.
 - [ ] `npm run validate` passes before any Reatom runtime code is written.
-- [ ] only then, routing placeholders are added and validated.
+- [ ] only then, strict setup/dev-time logger wiring plus routing placeholders are added and validated.
 
 If you notice that feature code or `@reatom/core` was added before the first green validate, do not keep debugging the resulting TypeScript errors. Treat it as an out-of-order bootstrap: say which gate was crossed, roll back or isolate the premature feature changes if possible, and resume from the earliest incomplete gate.
 
@@ -68,7 +68,7 @@ This skill is not the best fit for ordinary bug fixing or API lookup in an exist
 - Decide first whether the user needs the full scaffold flow or only a slice of it.
 - Treat the full scaffold reference as an ordered checklist with exit artifacts, not background reading.
 - As soon as the scaffold root exists, write `GOAL.md` as a checkbox todo list. It should park the original request, list the staged follow-up work, and become the only source of truth for what happens after bootstrap. Treat "scaffold succeeded but no GOAL.md" as a red gate: the next normal project tool call is creating `GOAL.md`, not git initialization, package install, package-version lookup, or feature-reference reading.
-- `GOAL.md` is a state ledger, not an aspirational template. Do not pre-check future work. Mark a checkbox complete only after its exit artifact has been verified (file exists, script is wired, command passed, or user-requested commit exists).
+- `GOAL.md` is a state ledger, not an aspirational template. Do not pre-check future work. Mark a checkbox complete only after its exit artifact has been verified (file exists, script is wired, command passed, or user-requested commit exists). If `postvalidate` or the current `GOAL.md` view still shows a later phase unchecked, do not announce a stage complete yet; repair the ledger first and cite the proof command.
 - Once `GOAL.md` exists, intentionally ignore the original request until `GOAL.md` tells you to resume it.
 - Before the first green `npm run validate`, the only active goal is the validation pipeline on the scaffolded source. Do not write Reatom code yet.
 - Keep broader Reatom implementation guidance subordinate to the scaffold ordering. Use targeted references when this checklist points to them, but do not let general feature guidance pull the bootstrap out of sequence.

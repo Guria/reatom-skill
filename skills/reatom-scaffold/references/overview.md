@@ -22,14 +22,14 @@ The bootstrap order matters more than any single package choice:
 2. write `GOAL.md` as a staged todo list
 3. ignore the original request and focus only on the validation pipeline
 4. keep this scaffold guidance as the priority checklist while you wire the chosen tooling into scripts/configs and run it successfully on the untouched starter app
-5. only after the first green pipeline, use the referenced routing material for a routing-only pass with placeholders and outlets
+5. only after the first green pipeline, use the referenced routing material for a routing-only pass with strict setup/dev logger wiring, placeholders, and outlets
 6. only after routing is validated, continue the parked implementation work
 
 For full greenfield bootstraps, use this stoplight:
 
 - **Red:** no `GOAL.md` yet. After scaffold succeeds, create `GOAL.md` next; do not run package installs/lookups, read feature references, install feature dependencies, or write feature files.
 - **Yellow:** `GOAL.md` exists, but `npm run validate` has not passed on the scaffolded baseline. Work only on validation tooling and the browser smoke test.
-- **Blue:** validation is green. Add only routing placeholders and `outlet()` composition; keep UI-library shells, loaders, forms, backend mocks, and product pages parked.
+- **Blue:** validation is green. Add only strict setup/dev-time logger wiring, routing placeholders, and `outlet()` composition; keep UI-library shells, loaders, forms, backend mocks, and product pages parked.
 - **Green:** routing skeleton validates. Resume the parked original request.
 
 This prevents the common failure mode of writing routes, forms, and state code before the project can prove its basic runtime shape.

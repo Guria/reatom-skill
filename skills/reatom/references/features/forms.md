@@ -187,7 +187,11 @@ export const createEntityForm = (initialState: EntityDraft) =>
       return await wrap(api.saveEntity(values))
     },
   })
+
+export type EntityForm = ReturnType<typeof createEntityForm>
 ```
+
+Do not replace the created form with a hand-written loose interface just to pass it through page props. `bindField(...)` needs the real field atoms, so fake `{ fields: ... }` shapes tend to drift and hide the actual form API. Export `ReturnType<typeof createEntityForm>` (or `Awaited<ReturnType<...>>` for async model factories) and keep route-only callbacks separate in the consuming loader/model.
 
 ```typescript
 // route loader
@@ -215,7 +219,7 @@ const save = action(() => wrap(form.submit()), 'entityForm.save').extend(
 )
 ```
 
-This keeps route knowledge out of the factory. The factory owns submit semantics; the consumer owns what should happen after success or failure in that particular route.
+This keeps route knowledge out of the factory. The factory owns submit semantics; the consumer owns what should happen after success or failure in that particular route. A successful submit does not navigate or refetch by magic just because another atom changed; if the route should move, refresh, or focus after success, do it explicitly by awaiting `form.submit()` in the UI flow or attaching `form.submit.onFulfill` / `onReject` hooks on the created instance.
 
 Prefer `withCallHook` on `form.submit.onFulfill` / `onReject` when command completion is the thing you care about. Reach for `addCallHook` only when the hook truly needs runtime attach/detach behavior.
 
