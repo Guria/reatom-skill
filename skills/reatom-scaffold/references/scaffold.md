@@ -19,14 +19,14 @@ By default:
 1. **Do not hand-write `package.json` or app entry files first.** Run the scaffold step first unless the user explicitly asked for manual scaffolding.
 2. **As soon as the scaffold root exists, write `GOAL.md` as a checkbox todo list.** It should park the original request, list the later stages, and become the only roadmap after that point.
 3. **Once `GOAL.md` exists, ignore the original request until the checklist brings it back.** The current job is now the validation pipeline only.
-4. **Do not install feature dependencies first.** Install the requested validation/tooling dependencies immediately after the scaffold.
-5. **Do not write Reatom code before the bootstrap is green.** No routes, pages, forms, loaders, or state code before the validate pipeline, browser smoke test, and post-validate reminder are in place.
-6. **If the Vite template ships ESLint, clean it up in favor of `oxlint` after the requested dependencies are installed** unless the user explicitly wants both.
-7. **Do not treat examples, demos, or standalone packages as automatic exceptions.** They teach by example, so the bootstrap quality bar often matters more, not less.
-8. **If the user gave target-path constraints, preserve them while still following the sequence.** For example, a standalone package inside `./examples/...` still starts with the scaffold step inside that directory.
-9. **If the user intentionally wants a lighter path, say what is being skipped and why.** Adapt deliberately instead of drifting out of order by accident.
-
-If you catch yourself planning pages, routes, models, or Reatom app entry before Step 12, you are probably out of order. Stop, check whether the user explicitly narrowed the scope, and otherwise resume the checklist from the earliest incomplete step.
+4. **Keep the broader implementation guidance out of the validation phase.** Stay inside this scaffold checklist and its tooling guidance until the bootstrap gate is green.
+5. **Do not install feature dependencies first.** Install the requested validation/tooling dependencies immediately after the scaffold.
+6. **Do not write Reatom code before the bootstrap is green.** No routes, pages, forms, loaders, or state code before the validate pipeline, browser smoke test, and post-validate reminder are in place.
+7. **If the Vite template ships ESLint, clean it up in favor of `oxlint` after the requested dependencies are installed** unless the user explicitly wants both.
+8. **Do not treat examples, demos, or standalone packages as automatic exceptions.** They teach by example, so the bootstrap quality bar often matters more, not less.
+9. **If the user gave target-path constraints, preserve them while still following the sequence.** For example, a standalone package inside `./examples/...` still starts with the scaffold step inside that directory.
+10. **If the user intentionally wants a lighter path, say what is being skipped and why.** Adapt deliberately instead of drifting out of order by accident.
+If you catch yourself planning pages, routes, models, Reatom app entry, or pulling in the main `reatom` skill before Step 12, you are probably out of order. Stop, check whether the user explicitly narrowed the scope, and otherwise resume the checklist from the earliest incomplete step.
 
 Before substantial feature work, verify this gate explicitly:
 
@@ -100,6 +100,7 @@ Immediately after the scaffold root exists, create `GOAL.md` in that root as a c
 
 The checklist should:
 - make **validation pipeline** the only active goal at first;
+- explicitly defer the main `reatom` skill until the routing stage;
 - explicitly park **routing scheme** as the next stage after a green pipeline;
 - explicitly park **finish original request** after routing is validated;
 - include a link to the Reatom routing reference, using the local path available in the environment (for example `@skills/reatom/references/features/routing/routes.md` or the resolved local skill path);
@@ -120,12 +121,14 @@ Example:
   - Make the pipeline pass on the Vite-scaffolded `src` without writing Reatom code yet.
 
 - [ ] Routing scheme
+  - Bring in the main `reatom` skill.
   - Read the routing reference: [Reatom routing reference](../../skills/reatom/references/features/routing/routes.md)
   - Start by architecting route placeholders only.
   - Layout routes should render placeholders plus `outlet()` composition in their `render`.
   - Validate the routing skeleton before moving on.
 
 - [ ] Finish original request
+  - Keep that skill active and read the relevant references only when the checklist reaches those features.
   - Resume the parked request only after the routing scheme is validated.
   - Original request: <copy the user's request here, verbatim or near-verbatim>
 ```
@@ -377,7 +380,7 @@ Keep typecheck and emit separate: either set `"noEmit": true` in the TypeScript 
 
 ## Step 9 — Phase boundary: no Reatom code yet
 
-Do not add `@reatom/*`, route definitions, `src/setup.ts`, strict-context wiring, loaders, or forms in the first pass. The objective of the bootstrap phase is narrower: prove the validation pipeline on the Vite-generated app first.
+Do not add `@reatom/*`, route definitions, `src/setup.ts`, strict-context wiring, loaders, or forms in the first pass. Keep the broader Reatom implementation guidance out of this phase too. The objective of the bootstrap phase is narrower: prove the validation pipeline on the Vite-generated app first.
 
 That means:
 - keep `src/main.*` and `src/App.*` close to the Vite scaffold until `npm run validate` is green;
@@ -385,7 +388,7 @@ That means:
 - use the browser smoke test against the current `App.tsx`, not against an early route tree;
 - let `postvalidate` echo `GOAL.md`, then follow its routing stage.
 
-Reatom runtime setup belongs to the next phase, not this one. After the first green pipeline, start the routing-scheme pass by reading [`../../reatom/references/features/routing/routes.md`](../../reatom/references/features/routing/routes.md) and introducing only placeholder routes/layouts whose `render` methods compose `outlet()`.
+Reatom runtime setup belongs to the next phase, not this one. After the first green pipeline, hand work off to the main `../../reatom/SKILL.md`, then begin the routing-scheme pass by reading [`../../reatom/references/features/routing/routes.md`](../../reatom/references/features/routing/routes.md) and introducing only placeholder routes/layouts whose `render` methods compose `outlet()`.
 
 This keeps the first checkpoint honest: if the toolchain fails, the agent fixes tooling. It does not blur the failure by changing the app architecture at the same time.
 
@@ -539,26 +542,27 @@ At this point `postvalidate` should echo `GOAL.md`. Follow it literally.
 
 The next stage is **not** the original feature request yet. It is a routing-only pass:
 
-1. install the needed Reatom runtime packages for the chosen adapter;
-2. read [`../../reatom/references/features/routing/routes.md`](../../reatom/references/features/routing/routes.md) before writing route code;
-3. design the route tree with placeholder pages/layouts only;
-4. when using layout routes, have their `render(self)` return placeholder shell content plus `self.outlet()` composition;
-5. keep loaders/forms/business logic out of this pass;
-6. validate the routing skeleton, then mark the routing checkbox in `GOAL.md` and only then resume the parked original request.
+1. bring in the main `../../reatom/SKILL.md`;
+2. install the needed Reatom runtime packages for the chosen adapter;
+3. read [`../../reatom/references/features/routing/routes.md`](../../reatom/references/features/routing/routes.md) before writing route code;
+4. design the route tree with placeholder pages/layouts only;
+5. when using layout routes, have their `render(self)` return placeholder shell content plus `self.outlet()` composition;
+6. keep loaders/forms/business logic out of this pass;
+7. validate the routing skeleton, then mark the routing checkbox in `GOAL.md` and only then resume the parked original request.
 
 A good first routing pass proves structure, nesting, and outlet composition without conflating them with product logic.
 
 ## Reading list for the next steps
 
-**Must-read before writing the first feature** (in order):
+**When `GOAL.md` enters feature implementation, keep the main `../../reatom/SKILL.md` active and read these in order:**
 
 1. [`../../reatom/references/core/patterns.md`](../../reatom/references/core/patterns.md) — atomization, scoped factories (`reatom*`), file organization, boolean-as-lifecycle-switch. **Skip this and the codebase will drift** toward identity actions, module-level forms, and React-owned state.
 2. The Gotchas + Anti-patterns sections of `../../reatom/SKILL.md` — most production bugs come from violating these.
 3. [`../../reatom/references/core/extensions.md`](../../reatom/references/core/extensions.md) — `withAsyncData` + `withAsync` are used in almost every feature; `withChangeHook` and `withConnectHook` cover most lifecycle work.
 
-**Read on demand** when you start the relevant feature:
+**Read on demand** when the checklist reaches the relevant feature:
 
-4. [`../../reatom/references/features/routing/routes.md`](../../reatom/references/features/routing/routes.md) — routing API. Then [`../../reatom/references/features/routing/loaders.md`](../../reatom/references/features/routing/loaders.md) when you write the first loader.
+4. [`../../reatom/references/features/routing/routes.md`](../../reatom/references/features/routing/routes.md) — routing API. Read this right before the routing stage starts. Then [`../../reatom/references/features/routing/loaders.md`](../../reatom/references/features/routing/loaders.md) when you write the first loader.
 5. [`../../reatom/references/features/forms.md`](../../reatom/references/features/forms.md) — when adding the first form. Read **before** considering React Hook Form / Formik — `reatomForm` covers both.
 6. [`../../reatom/references/features/persistence.md`](../../reatom/references/features/persistence.md) — when state needs to survive refresh / cross-tab sync.
 7. [`../../reatom/references/integrations/react.md`](../../reatom/references/integrations/react.md) (or [`../../reatom/references/integrations/jsx.md`](../../reatom/references/integrations/jsx.md)) — adapter-specific gotchas, especially the StrictMode and "instant async resolution" notes.
