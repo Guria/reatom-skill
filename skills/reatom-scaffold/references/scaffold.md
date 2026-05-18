@@ -301,6 +301,8 @@ Track [oxc-project/oxc](https://github.com/oxc-project/oxc) for upcoming config 
 
 fallow is codebase intelligence for JavaScript/TypeScript. It complements, rather than replaces, TypeScript and linting: TypeScript proves types, oxlint catches lint rules, while fallow inspects the project graph for unused files/exports/dependencies, circular dependencies, duplicate code, complexity hotspots, and optional architecture boundary rules. This is useful during bootstrap because dead exports and import cycles are easier to prevent while the structure is still moving.
 
+Treat the code-intelligence check as part of the definition of done for the bootstrap pipeline, not as optional polish after the app "already works". A green build/typecheck/lint pass can still leave dead exports, small duplication clusters, or other graph-health issues that are easiest to clean up while the codebase is still small. Expect occasional small structural cleanups — for example removing unused exports, deleting dead files, or extracting a tiny shared helper — before `npm run validate` turns green.
+
 fallow is a recent tool and its CLI has changed quickly. Verify the installed CLI instead of assuming older command names or config keys:
 
 ```bash
@@ -505,6 +507,8 @@ Do not report bootstrap completion until the validation pipeline is green. At mi
 
 A common weak finish is: dependencies installed, files written, but the pipeline never actually ran. Treat that as unfinished. The completion bar is successful execution, not plausible configuration.
 
+Another common weak finish is: runtime/type/lint/build are green, but the code-intelligence check still reports duplicate or unused-code issues and the agent waves them off because the app works. Treat that as unfinished too unless the user explicitly accepted a lighter code-health bar.
+
 Before the final response, confirm all promised quality gates were both wired and executed:
 - `GOAL.md` exists and `postvalidate` can echo it back
 - `npm run lint` uses `oxlint`
@@ -538,7 +542,7 @@ At this point `postvalidate` should echo `GOAL.md`. Follow it literally.
 The next stage is **not** the original feature request yet. It is a routing-only pass:
 
 1. install the needed Reatom runtime packages for the chosen adapter;
-2. read [`../../reatom/references/features/routing/routes.md`](../../reatom/references/features/routing/routes.md) before writing route code;
+2. read [`../../reatom/references/features/routing/routes.md`](../../reatom/references/features/routing/routes.md) before writing route code, including its route-option gotchas;
 3. design the route tree with placeholder pages/layouts only;
 4. when using layout routes, have their `render(self)` return placeholder shell content plus `self.outlet()` composition;
 5. keep loaders/forms/business logic out of this pass;
@@ -552,7 +556,7 @@ A good first routing pass proves structure, nesting, and outlet composition with
 **When the scaffold checklist is complete and `GOAL.md` enters feature implementation, return to the main `../../reatom/SKILL.md` as the primary guide and read these in order:**
 
 1. [`../../reatom/references/core/patterns.md`](../../reatom/references/core/patterns.md) — atomization, scoped factories (`reatom*`), file organization, boolean-as-lifecycle-switch. **Skip this and the codebase will drift** toward identity actions, module-level forms, and React-owned state.
-2. The Gotchas + Anti-patterns sections of `../../reatom/SKILL.md` — most production bugs come from violating these.
+2. [`../../reatom/references/meta/gotchas.md`](../../reatom/references/meta/gotchas.md) plus the high-priority checkpoints in `../../reatom/SKILL.md` — most production bugs come from violating these.
 3. [`../../reatom/references/core/extensions.md`](../../reatom/references/core/extensions.md) — `withAsyncData` + `withAsync` are used in almost every feature; `withChangeHook` and `withConnectHook` cover most lifecycle work.
 
 **Read on demand** when the checklist reaches the relevant feature:

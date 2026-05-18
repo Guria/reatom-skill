@@ -47,6 +47,30 @@ const LegacyUnmountAbort = reatomComponent(
 )
 ```
 
+### Read atoms under the provider boundary
+
+[Source: `useFrame` in `reatomComponent.ts`](https://github.com/reatom/reatom/blob/v1001/packages/react/src/reatomComponent.ts)
+
+`useFrame()` reads `reatomContext` and falls back to `STACK[0]`; if neither exists, it throws that the root/provider is not set. In React structure terms, this means the first component that reads atoms must render **under** `<reatomContext.Provider>` (or another established frame source). Under strict setup, avoid making the top-level wrapper both provide the frame and read atoms before the provider exists.
+
+Prefer this shape:
+
+```tsx
+function AppProviders() {
+  return (
+    <reatomContext.Provider value={context}>
+      <AppRoot />
+    </reatomContext.Provider>
+  )
+}
+
+const AppRoot = reatomComponent(() => {
+  return <main>{currentRoute.exact() ? 'ready' : '...'}</main>
+})
+```
+
+Avoid a top-level component that reads atoms or routes first and only later returns the provider wrapper. If the render needs Reatom state, split the file into a plain provider wrapper and an inner `reatomComponent` root.
+
 ## bindField
 
 [Source: `bindField.ts`](https://github.com/reatom/reatom/blob/v1001/packages/react/src/bindField.ts)

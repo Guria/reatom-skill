@@ -55,6 +55,12 @@ const goodsRoute = reatomRoute({
 })
 goodsRoute.go({ category: 'tech', sort: 'asc' })  // /goods/tech?sort=asc
 
+// ⚠️ Route option objects do not include a `name` field.
+// Keep naming in the surrounding variable/module structure instead:
+// ❌ reatomRoute({ path: 'dashboard', name: 'dashboardRoute' })
+// ✅
+const dashboardRoute = reatomRoute({ path: 'dashboard' })
+
 // ⚠️ Routes with `search` often still want an explicit object on `.go(...)`,
 // even when the search schema has defaults. Treat navigation as writing a URL
 // shape, not as "the route will fill everything in for me".
