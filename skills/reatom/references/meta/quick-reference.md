@@ -111,7 +111,7 @@ priority.set('low')
 
 See [references/features/routing/routes.md](references/features/routing/routes.md) for complete routing API: routes, nested routes, loaders, layout/page routes, protected routes, modal gates, and search-only routes.
 
-Routing accepts any [Standard Schema](https://github.com/standard-schema/standard-schema) compliant library (Zod, Valibot, ArkType, etc.) for params and search validation.
+Routing accepts any [Standard Schema](https://github.com/standard-schema/standard-schema) compliant library for params and search validation. Preserve the existing validator choice when the project already has one; if there is no validator preference yet, default to Valibot unless the user asks for something else.
 
 Quick reference:
 
@@ -130,27 +130,21 @@ userRoute.path({ userId: '123' }) // build URL without navigating
 
 See [references/features/forms.md](references/features/forms.md) for complete forms API: `reatomForm`, React binding with `bindField`, field access patterns, and form factories.
 
-Forms accept any [Standard Schema](https://github.com/standard-schema/standard-schema) compliant library (Zod, Valibot, ArkType, etc.) for validation.
+Forms accept any [Standard Schema](https://github.com/standard-schema/standard-schema) compliant library for validation. Preserve the existing validator choice when the project already has one; if there is no validator preference yet, default to Valibot unless the user asks for something else.
 
 Quick reference:
 
 ```typescript
 import { reatomForm } from '@reatom/core'
-import { z } from 'zod/v4'
+import { loginSchema } from './validation'
 
-// with Zod
 const form = reatomForm(
   { email: '', password: '' },
-  { name: 'loginForm', validateOnBlur: true,
-    schema: z.object({ email: z.string().email(), password: z.string().min(8) }) },
-)
-
-// with Valibot — same API, any Standard Schema works
-import * as v from 'valibot'
-const form = reatomForm(
-  { email: '', password: '' },
-  { name: 'loginForm', validateOnBlur: true,
-    schema: v.object({ email: v.pipe(v.string(), v.email()), password: v.pipe(v.string(), v.minLength(8)) }) },
+  {
+    name: 'loginForm',
+    validateOnBlur: true,
+    schema: loginSchema,
+  },
 )
 
 form.fields.email     // FieldAtom

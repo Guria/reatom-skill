@@ -97,7 +97,7 @@ Keep this table as package selection guidance, not a version source. Package ver
 | Code intelligence | `fallow` | Graph/health checks for unused code, cycles, duplication, complexity |
 | Test runner | `vitest`, `@vitest/browser`, `@vitest/browser-playwright` | Browser smoke test baseline |
 | Browser provider | `playwright` | Install browser binaries after package install |
-| Schema (optional) | `zod`, `valibot`, `arktype`, or another Standard Schema library | Prefer whatever the target project already uses |
+| Schema (optional) | a Standard Schema library when the project needs schema validation | Prefer whatever the target project already uses; if there is no validator preference yet, default to Valibot unless the user explicitly asks for something else |
 
 Adjust freely if the user requested:
 

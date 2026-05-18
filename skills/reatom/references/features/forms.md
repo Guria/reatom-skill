@@ -2,7 +2,7 @@
 
 > Source: [`packages/core/src/form`](https://github.com/reatom/reatom/tree/v1001/packages/core/src/form). React binding lives in [`packages/react/src/bindField.ts`](https://github.com/reatom/reatom/blob/v1001/packages/react/src/bindField.ts). Per-API source links inline below.
 
-Forms accept any [Standard Schema](https://github.com/standard-schema/standard-schema) compliant library for validation — Zod, Valibot, ArkType, etc. Examples below use Zod, but any Standard Schema works identically via the `schema` option. **Check the target codebase's `package.json` to see which validation library is already in use and prefer that one.**
+Forms accept any [Standard Schema](https://github.com/standard-schema/standard-schema) compliant library for validation. Any compatible schema works through the `schema` option. **Check the target codebase's `package.json` to see which validation library is already in use and prefer that one; if there is no validator preference yet, default to Valibot unless the user explicitly asks for something else.**
 
 ## Basic form
 
