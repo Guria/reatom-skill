@@ -44,7 +44,7 @@
         },
         {
           "name": "root_bootstrap_verified",
-          "text": "The exact Reatom React root/provider/context API is verified from installed exports/source/reference before being written."
+          "text": "The React root/provider seam is taken from the React reference or quick-reference first — including the strict-setup split (`src/setup.ts` with `clearStack()` + `context.start()`, imported first) and `<reatomContext.Provider value={frame}>` shape — and only then, if needed, verified against installed exports/source."
         }
       ],
       "files": []

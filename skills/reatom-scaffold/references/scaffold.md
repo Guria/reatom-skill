@@ -589,7 +589,7 @@ The next stage is **not** the original feature request yet. It is a routing-only
 
 1. install the needed Reatom runtime packages for the chosen adapter; do not install requested UI-library packages yet unless the user explicitly made UI-library bootstrap the current phase;
 2. read [`../../reatom/references/features/routing/routes.md`](../../reatom/references/features/routing/routes.md) before writing route code, including its route-option gotchas;
-3. read the adapter integration reference needed to mount the route output (for React, [`../../reatom/references/integrations/react.md`](../../reatom/references/integrations/react.md)), then verify the exact root/provider exports from installed packages or source before writing `App.tsx` / `main.tsx`;
+3. read the adapter integration reference needed to mount the route output (for React, [`../../reatom/references/integrations/react.md`](../../reatom/references/integrations/react.md)) and the setup quick reference before writing `App.tsx` / `main.tsx`; for greenfield React strict setup, say the exact pattern out loud first (`src/setup.ts`: `clearStack()` + `export const frame = context.start()`, then keep `import './setup'` first and use `<reatomContext.Provider value={frame}>`). If that guidance is genuinely ambiguous for the installed version, inspect installed exports/source before writing code;
 4. design the route tree with placeholder pages/layouts only, using plain framework markup for shells and pages;
 5. when using layout routes, have their `render(self)` return placeholder shell content plus `self.outlet()` composition;
 6. keep UI-library shells, loaders, forms, fake backend data, persistence, and business logic out of this pass;

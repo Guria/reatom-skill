@@ -53,16 +53,33 @@ const LegacyUnmountAbort = reatomComponent(
 
 [Source: `useFrame` in `reatomComponent.ts`](https://github.com/reatom/reatom/blob/v1001/packages/react/src/reatomComponent.ts)
 
+> **Bootstrap wiring checkpoint:** before writing `main.tsx` / `App.tsx`, re-read this section and the App Setup note in `references/meta/quick-reference.md`. For greenfield strict setup, follow the same split documented there: create/export the frame in `src/setup.ts`, keep `import './setup'` first in the entrypoint, and pass that exported frame to `<reatomContext.Provider>`. If the reference is genuinely ambiguous for the installed version, validate against installed exports or local source.
+
 Before writing the first React root/bootstrap file, verify the exact context/frame creation API from the installed `@reatom/core` / `@reatom/react` exports, the local source, or the setup quick reference. Do not invent names from memory such as `createCtx` unless you have verified they exist in the installed version. The riskiest point in a fresh app is the seam between framework root code and Reatom's frame/provider.
+
+In the v1000+ source, `reatomContext` is `React.createContext<null | Frame>(null)` and `useFrame()` expects a `Frame`; in core source, `context.start()` creates that frame and `clearStack()` removes the implicit default stack. Do not pass the `context` atom itself to the provider when you intend to provide a frame.
 
 `useFrame()` reads `reatomContext` and falls back to `STACK[0]`; if neither exists, it throws that the root/provider is not set. In React structure terms, this means the first component that reads atoms must render **under** `<reatomContext.Provider>` (or another established frame source). Under strict setup, avoid making the top-level wrapper both provide the frame and read atoms before the provider exists.
 
-Prefer this shape:
+For greenfield strict setup, prefer this shape:
 
 ```tsx
+// src/setup.ts
+import { clearStack, context } from '@reatom/core'
+
+clearStack()
+export const frame = context.start()
+```
+
+```tsx
+// src/main.tsx
+import './setup'
+import { reatomComponent, reatomContext } from '@reatom/react'
+import { frame } from './setup'
+
 function AppProviders() {
   return (
-    <reatomContext.Provider value={context}>
+    <reatomContext.Provider value={frame}>
       <AppRoot />
     </reatomContext.Provider>
   )
@@ -73,7 +90,7 @@ const AppRoot = reatomComponent(() => {
 })
 ```
 
-Avoid a top-level component that reads atoms or routes first and only later returns the provider wrapper. If the render needs Reatom state, split the file into a plain provider wrapper and an inner `reatomComponent` root.
+If the project already uses the default global context instead of strict setup, preserve that style; do not add or remove `clearStack()` casually. Avoid a top-level component that reads atoms or routes first and only later returns the provider wrapper. If the render needs Reatom state, split the file into a plain provider wrapper and an inner `reatomComponent` root.
 
 ## bindField
 
