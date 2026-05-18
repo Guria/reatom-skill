@@ -439,6 +439,11 @@ export function App() {
 ```tsx
 import { expect, test, vi } from 'vitest'
 
+const nextFrame = () =>
+  new Promise<void>((resolve) => {
+    requestAnimationFrame(() => resolve())
+  })
+
 test('renders the initial page at root', async () => {
   window.history.replaceState({}, '', '/')
   document.body.innerHTML = '<div id="root"></div>'
@@ -446,23 +451,38 @@ test('renders the initial page at root', async () => {
   const errors: string[] = []
   const consoleErrorSpy = vi
     .spyOn(console, 'error')
-    .mockImplementation((...args) => {
+    .mockImplementation((...args: unknown[]) => {
       errors.push(args.map(String).join(' '))
     })
 
-  await import('../main')
-  await new Promise((resolve) => requestAnimationFrame(resolve))
+  try {
+    await import('../main')
+    // Give React/browser rendering a real frame boundary before asserting.
+    await nextFrame()
+    await nextFrame()
 
-  consoleErrorSpy.mockRestore()
-
-  expect(document.getElementById('root')?.textContent).toContain('My App')
-  expect(
-    errors.filter((e) => /missing async stack|ReatomError/.test(e)),
-  ).toEqual([])
+    const rootText = document.getElementById('root')?.textContent ?? ''
+    expect(rootText).toContain('My App')
+    expect(
+      errors.filter((e) => /missing async stack|ReatomError/.test(e)),
+    ).toEqual([])
+  } finally {
+    consoleErrorSpy.mockRestore()
+  }
 })
 ```
 
-Replace `My App` with the actual stable text for the generated landing page. This entrypoint-import smoke test is appropriate for the single plain-scaffold bootstrap check. Do not reuse it as the general pattern for multiple routed Browser Mode tests: repeated `import('../main')` relies on app-entry side effects and module caching, so later route tests should mount the app or route shell directly with a fresh framework root per test and clean it up afterwards.
+Replace `My App` with the actual stable text for the generated landing page. Keep the assertion meaningful: checking only that `#root` exists, that React created an empty wrapper, or that no exception was thrown is a false pass. The smoke test should prove visible app content rendered.
+
+This entrypoint-import smoke test is appropriate for the single plain-scaffold bootstrap check. Do not reuse it as the general pattern for multiple routed Browser Mode tests: repeated `import('../main')` relies on app-entry side effects and module caching, so later route tests should mount the app or route shell directly with a fresh framework root per test and clean it up afterwards.
+
+Initial smoke-test pitfall checklist:
+
+- Use exactly one stable text/role assertion from the scaffolded page.
+- Restore console spies in `finally` so failed assertions do not leak mocks into later tests.
+- Wait for a real browser frame before asserting; two `requestAnimationFrame` ticks are a cheap default for React/browser commit timing.
+- Do not weaken the assertion to make a failing test pass. Inspect the rendered text/errors and fix the harness or app.
+- Do not add route navigation, providers, or Reatom-specific helpers in the first baseline test; those belong after the validation gate.
 
 Do not introduce Reatom-only testing helpers yet; this first pass is still validating the plain scaffold. If the project later needs meaningful Reatom unit tests beyond this browser smoke check, pull the `test` utility from the reusables registry (`npx jsrepo add test` after initializing jsrepo against [reatom/reusables](https://github.com/reatom/reusables)) during the routing/feature stage. See [`../../reatom/references/meta/reusables.md`](../../reatom/references/meta/reusables.md) for the wider catalog.
 

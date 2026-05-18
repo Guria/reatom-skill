@@ -21,6 +21,10 @@
         {
           "name": "validation_before_runtime_features",
           "text": "The run wires and executes typecheck, lint, browser test, format check, code-intelligence, and npm run validate before adding @reatom runtime code, UI-library setup, routes, forms, fake backend, or product pages."
+        },
+        {
+          "name": "meaningful_initial_browser_smoke_test",
+          "text": "The initial Browser Mode smoke test imports the app entry once, waits for rendering, asserts visible stable page content, restores console spies, and does not weaken the assertion to root existence or an empty wrapper."
         }
       ],
       "files": []
