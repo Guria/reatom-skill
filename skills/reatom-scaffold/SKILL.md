@@ -57,10 +57,10 @@ Do not report bootstrap work as done until all relevant parts of the promised pi
 
 For the default recommended flow, that means the agent should normally complete and report evidence for:
 - `GOAL.md` exists as a staged todo list and preserves the parked original request
-- the chosen validation and formatting commands are wired and pass
-- a browser-level smoke check passes on the starter app
+- the promised validation commands are wired and pass
+- a browser-level smoke check passes on the scaffolded baseline
 - the project's single validation entry point passes
-- any promised isolated preview/runtime harness also runs when it is part of the bootstrap
+- any additional runtime harness promised during bootstrap also runs successfully
 - only after that, a separate routing-scheme pass driven by `GOAL.md`
 
 If one of these is intentionally omitted, say that explicitly and explain what confidence is being traded away. Do not silently downgrade the pipeline.

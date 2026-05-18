@@ -2,7 +2,7 @@
 
 Use this when bootstrapping a brand-new project around Reatom. The default stack below is opinionated for production use; **adjust any layer if the user already specified a preference**. If the user has not, **use this default and verify current package versions with the available tooling before pinning** (`npm view <pkg> dist-tags`).
 
-For greenfield work, treat this as the default sequence: scaffold, write `GOAL.md`, install the validation pipeline, configure quality gates, run validation on the untouched starter app, then let the staged checklist in `GOAL.md` unlock routing work and later feature code. Existing examples are useful for local style and package shape, but sample them narrowly so they do not replace the bootstrap sequence.
+For greenfield work, treat this as the default sequence: scaffold, write `GOAL.md`, install the validation pipeline, configure quality gates, run validation on the untouched scaffolded baseline, then let the staged checklist in `GOAL.md` unlock routing work and later feature code. Existing examples are useful for local style and package shape, but sample them narrowly so they do not replace the bootstrap sequence.
 
 This pipeline is intentionally **shift-left**: it is designed to surface tooling and runtime-integration mistakes as early as possible, while the app is still cheap to correct. Until the first green `npm run validate`, the only active goal is the validation pipeline; no Reatom code should be written yet.
 
@@ -117,7 +117,7 @@ Example:
   - Reconcile any overlapping default tooling with the selected validation stack.
   - Add `validate` / `postvalidate` scripts.
   - Configure the installed tools.
-  - Add a minimal browser smoke check for the starter app.
+  - Add a minimal browser smoke check for the scaffolded baseline.
   - Make the baseline pipeline pass without writing Reatom code yet.
 
 - [ ] Routing scheme

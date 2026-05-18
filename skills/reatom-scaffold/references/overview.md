@@ -63,9 +63,9 @@ Before saying the bootstrap is done, make sure the answer includes evidence that
 For the default path, the expected proof points are:
 - `GOAL.md` exists as a staged todo list
 - the selected validation commands are wired and runnable
-- a browser smoke test passes on the starter app
+- a browser smoke test passes on the scaffolded baseline
 - `npm run validate` passes
-- any promised isolated preview/runtime check passes too
+- any additional runtime harness promised during bootstrap also runs successfully
 
 ## Cross-skill handoff
 

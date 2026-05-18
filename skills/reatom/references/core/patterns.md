@@ -130,6 +130,51 @@ Guidelines:
 - Use semantic actions when they validate input, coordinate multiple atoms, or represent domain operations.
 - Export `ReturnType<typeof reatomX>` for component props and loader/model boundaries if needed.
 
+## Page model typing pattern
+
+When a component accepts a `model` prop, prefer a named `reatom*` factory plus an inferred alias over a hand-written structural `FooModel` type. This keeps the component prop aligned with the real model shape and makes later refactors cheap.
+
+```typescript
+const reatomUserSettingsPageModel = () => {
+  const form = reatomForm({ theme: 'light' }, { name: 'userSettingsForm' })
+  const save = action(() => wrap(form.submit()), 'userSettings.save')
+
+  return { form, save }
+}
+
+export type UserSettingsPageModel = ReturnType<typeof reatomUserSettingsPageModel>
+```
+
+Prefer this:
+
+```typescript
+const SettingsPage = reatomComponent(({
+  model,
+}: {
+  model: UserSettingsPageModel
+}) => {
+  return <form>{/* ... */}</form>
+})
+```
+
+Over this:
+
+```typescript
+type SettingsModel = {
+  form: {
+    fields: {
+      theme: { value: () => string; change: (value: string) => void }
+    }
+  }
+  save: () => Promise<unknown>
+}
+```
+
+Two rules keep this pattern clean:
+
+- If the model factory is async, use `Awaited<ReturnType<typeof reatomXModel>>`.
+- If the route adds view-only callbacks such as `onBack`, `onClose`, or `goToList`, keep them as separate props or create a tiny route-owned wrapper near the route. Do not pollute a reusable inferred model alias with route-bound navigation concerns. The routing loader guide already treats navigation/retry/refresh as route-bound logic — see [`../features/routing/loaders.md`](../features/routing/loaders.md).
+
 ## Component pattern — route render narrows, components receive models
 
 Route loaders should be the source of route-specific forms/actions/data, while the route `render(self)` should own loader status branching and route composition. Keep `render(self)` thin: branch on pending/error/no-data/refresh states, wire retry/navigation callbacks, and pass typed concrete model/data props to route-neutral components. Page components should receive a typed model/data prop, not a `loader` prop, and should own substantial markup plus section-level empty states. This keeps routing and async lifecycle concerns at the route boundary without turning route declarations into page components or letting `any` creep into form/model props. With concrete loader return types (no `undefined` branches), TypeScript narrows `status.data` to the full type in the refresh branch — no extra guards needed.
