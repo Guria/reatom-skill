@@ -90,7 +90,7 @@ For each category present, suggest a preventive skill change: a gate, a top-leve
 
 When finishing a project bootstrap, produce a short pitfall summary in the final message. The goal is to surface anything you tripped on so the user can decide whether the skill or references need updating.
 
-Format as a plain Markdown list. Keep it factual and specific to what happened during this run.
+Format as a plain Markdown list. Keep it factual and specific to what happened during this run. By default, keep this summary in the response itself; do not create or commit a feedback report file in the target project unless the user explicitly asks for that artifact.
 
 When the run touched a risky subsystem, include at least one checkpoint about how nearby cases were verified before declaring the fix done, and whether useful observability/debug visibility was kept until the behavior was proven correct.
 

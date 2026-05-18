@@ -230,6 +230,18 @@ Adapter helpers that *produce* callbacks for you (form binders, link/navigation 
 
 The place where you call `wrap(...)` matters too. `wrap()` captures the current Reatom frame at call time, so creating wrapped callbacks directly inside JSX is only safe when that render already runs inside a reactive boundary such as `reatomComponent`. In a plain function component, `onClick={wrap(doSomething)}` or `const handleClick = wrap(doSomething)` can fail under `clearStack()` because the `wrap(...)` call itself happens during a non-Reatom React render. Fix that by converting the component to `reatomComponent`, using `useWrap(...)`, or by pre-wrapping the callback in a reactive caller and passing the wrapped function down as a prop.
 
+A second strict-setup trap is **creating `wrap()` lazily at event time** instead of render time. This is still too late:
+
+```tsx
+// ❌ Wrong — the event handler runs first, then tries to create a wrapped callback
+const handleClick = () => wrap(() => route.go())()
+
+// ✅ Right — create the wrapped callback during render and hand it to React
+const handleClick = wrap(() => route.go())
+```
+
+If a helper returns `() => wrap(...)()` from an event path, treat it as the same bug class as a plain unwrapped handler.
+
 ### React is only the view adapter
 
 In a Reatom app, React should render and bind atoms; it should not own model invariants. Treat React-owned state/effects as a **red flag** whenever they hold domain state, mirror atom values, trigger Reatom side effects, coordinate navigation/data loading, or decide app lifecycle. Those responsibilities belong in atoms, actions, computeds, route loaders, and Reatom lifecycle extensions.

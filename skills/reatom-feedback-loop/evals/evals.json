@@ -100,6 +100,30 @@
         }
       ],
       "files": []
+    },
+    {
+      "id": 6,
+      "prompt": "A previous bootstrap run claimed completion, skipped development logging during strict setup, misdiagnosed missing async stack with broad rewrites, created wrap() lazily at event time, hid another async Reatom action inside a fragile form callback path, wrote a feedback summary into the target app repo, and committed multiple times without permission. The user asks for root causes and durable skill updates.",
+      "expected_output": "The agent names the false-completion, observability, wrap-timing, form-orchestration, and repo-safety failures; recommends concrete edits to integration/forms/quick-reference/feedback-loop guidance; and does not treat a future promise as the fix.",
+      "assertions": [
+        {
+          "name": "wrap_timing_called_out",
+          "text": "The response distinguishes render-time wrap creation from the still-broken event-time pattern `() => wrap(...)()` under strict setup."
+        },
+        {
+          "name": "connect_logger_default_strengthened",
+          "text": "The response recommends making connectLogger a stronger strict-bootstrap/dev-debug default instead of a skippable suggestion."
+        },
+        {
+          "name": "forms_orchestration_rule",
+          "text": "The response recommends a dedicated orchestration action for flows that validate a form and then call another async Reatom action."
+        },
+        {
+          "name": "no_target_repo_feedback_file_by_default",
+          "text": "The response says bootstrap/feedback summaries should stay in the response by default and not be written/committed into the target app repo unless explicitly requested."
+        }
+      ],
+      "files": []
     }
   ]
 }
