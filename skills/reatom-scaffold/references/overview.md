@@ -18,18 +18,18 @@ If the task is mainly about an existing codebase, API usage, debugging, or migra
 
 The bootstrap order matters more than any single package choice:
 
-1. scaffold the app/package with the Vite CLI
+1. scaffold the app/package with the recommended starter
 2. write `GOAL.md` as a staged todo list
 3. ignore the original request and focus only on the validation pipeline
-4. keep the broader implementation guidance out of the validation pass; wire the chosen tooling into scripts/configs and run it successfully on the untouched starter app
-5. only after the first green pipeline, let `GOAL.md` hand off to the main `reatom` skill for a routing-only pass with placeholders and outlets
-6. only after routing is validated, continue the parked implementation work with the main `reatom` skill
+4. keep this scaffold guidance as the priority checklist while you wire the chosen tooling into scripts/configs and run it successfully on the untouched starter app
+5. only after the first green pipeline, use the referenced routing material for a routing-only pass with placeholders and outlets
+6. only after routing is validated, continue the parked implementation work
 
 This prevents the common failure mode of writing routes, forms, and state code before the project can prove its basic runtime shape.
 
 Installing tools is not enough by itself. A bootstrap is still incomplete if the tools the agent chose are present in `package.json` but not configured, not exposed through scripts, or never actually executed.
 
-`GOAL.md` is the parking place for the original request and the source of truth for later stages. Once it is written, the agent should stop following the raw user request directly and stay inside the scaffold guidance until the validation pass is green. After validation completes, the echoed goal becomes the handoff into the main `reatom` skill for routing placeholders first, then back to the parked product work.
+`GOAL.md` is the parking place for the original request and the source of truth for later stages. Once it is written, the agent should stop following the raw user request directly and stay inside the scaffold flow until the bootstrap gate is green. After that, `GOAL.md` should drive the routing pass first and only then the parked product work.
 
 ## Reading strategy
 
@@ -69,7 +69,7 @@ For the default path, the expected proof points are:
 
 ## Cross-skill handoff
 
-- Keep the main `reatom` skill out of the validation-only phase.
-- After the first green pipeline, hand off to the main `reatom` skill and use its routing reference (`../../reatom/references/features/routing/routes.md`) to design the route tree with placeholder renders and `outlet()` composition before doing any real feature work.
-- For general Reatom architecture and feature guidance after that routing pass, keep that skill active.
+- During scaffold work, keep this flow in charge of immediate steps.
+- When this flow points to a specific Reatom reference (for example routing), read that reference at the indicated moment instead of broadening scope early.
+- After the scaffold checklist is complete, return to the broader Reatom guidance for feature implementation.
 - When bootstrap finishes or earlier guidance needs correction, read `../../reatom-feedback-loop/references/feedback-loop.md`.

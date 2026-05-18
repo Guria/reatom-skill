@@ -132,48 +132,52 @@ Guidelines:
 
 ## Page model typing pattern
 
-When a component accepts a `model` prop, prefer a named `reatom*` factory plus an inferred alias over a hand-written structural `FooModel` type. This keeps the component prop aligned with the real model shape and makes later refactors cheap.
+When a component accepts a `model` prop, prefer a named `reatom*` factory plus an inferred alias over a hand-written structural object type. This keeps the prop aligned with the real model shape and makes refactors cheaper.
 
 ```typescript
-const reatomUserSettingsPageModel = () => {
-  const form = reatomForm({ theme: 'light' }, { name: 'userSettingsForm' })
-  const save = action(() => wrap(form.submit()), 'userSettings.save')
+const reatomPageModel = () => {
+  const form = reatomForm({ title: '' }, { name: 'pageForm' })
 
-  return { form, save }
+  return { form }
 }
 
-export type UserSettingsPageModel = ReturnType<typeof reatomUserSettingsPageModel>
+export type PageModel = ReturnType<typeof reatomPageModel>
 ```
 
 Prefer this:
 
 ```typescript
-const SettingsPage = reatomComponent(({
+const Page = reatomComponent(({
   model,
 }: {
-  model: UserSettingsPageModel
+  model: PageModel
 }) => {
-  return <form>{/* ... */}</form>
+  return (
+    <form onSubmit={(event) => (event.preventDefault(), model.form.submit())}>
+      {/* ... */}
+    </form>
+  )
 })
 ```
 
 Over this:
 
 ```typescript
-type SettingsModel = {
+type PageModelLike = {
   form: {
     fields: {
-      theme: { value: () => string; change: (value: string) => void }
+      title: { value: () => string; change: (value: string) => void }
     }
+    submit: () => Promise<unknown>
   }
-  save: () => Promise<unknown>
 }
 ```
 
 Two rules keep this pattern clean:
 
 - If the model factory is async, use `Awaited<ReturnType<typeof reatomXModel>>`.
-- If the route adds view-only callbacks such as `onBack`, `onClose`, or `goToList`, keep them as separate props or create a tiny route-owned wrapper near the route. Do not pollute a reusable inferred model alias with route-bound navigation concerns. The routing loader guide already treats navigation/retry/refresh as route-bound logic — see [`../features/routing/loaders.md`](../features/routing/loaders.md).
+- Avoid passthrough actions whose only job is to rename or forward an existing model method just to shape the prop type. Keep the model surface honest.
+- If the route adds view-only callbacks, keep them as separate props or create a tiny route-owned wrapper near the route. Do not pollute a reusable inferred model alias with route-bound navigation concerns. The routing loader guide already treats navigation, retry, and refresh behavior as route-bound logic — see [`../features/routing/loaders.md`](../features/routing/loaders.md).
 
 ## Component pattern — route render narrows, components receive models
 

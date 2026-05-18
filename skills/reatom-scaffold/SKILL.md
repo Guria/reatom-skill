@@ -44,11 +44,11 @@ This skill is not the best fit for ordinary bug fixing or API lookup in an exist
 - As soon as the scaffold root exists, write `GOAL.md` as a checkbox todo list. It should park the original request, list the staged follow-up work, and become the only source of truth for what happens after bootstrap.
 - Once `GOAL.md` exists, intentionally ignore the original request until `GOAL.md` tells you to resume it.
 - Before the first green `npm run validate`, the only active goal is the validation pipeline on the scaffolded source. Do not write Reatom code yet.
-- Keep the broader Reatom implementation guidance out of the validation phase. Bring the main `reatom` skill in only when `GOAL.md` reaches routing or later feature work.
+- Keep broader Reatom implementation guidance subordinate to the scaffold ordering. Use targeted references when this checklist points to them, but do not let general feature guidance pull the bootstrap out of sequence.
 - Preserve explicit user constraints, but do not drift into feature work before the bootstrap gate is green unless the user knowingly asked for a lighter path.
 - If the starter ships overlapping validation tooling, reconcile it with the chosen stack instead of leaving two competing setups by accident.
 - Do not stop at dependency installation. The job is only complete when the tools are configured, exposed through scripts, and actually run successfully.
-- After the first green pipeline, let `GOAL.md` hand work over to the main `reatom` skill: sketch the routing scheme with placeholders and layout/page outlets first, validate again, and only then continue to the original product request.
+- After the first green pipeline, keep following `GOAL.md` and this scaffold flow. Use the referenced routing material for the routing-only pass, validate the skeleton, and only then resume broader implementation guidance.
 - When bootstrap finishes, switch to the `reatom-feedback-loop` skill's pitfall summary flow so the run improves the skill, not only the project.
 
 ## Completion contract

@@ -29,7 +29,7 @@ In-document sections (read top-to-bottom for orientation, jump for lookup):
 
 Reference files are loaded on demand — see the [reference table](#reference-files--read-on-demand) below.
 
-> **🚀 Greenfield/bootstrap work lives in the sibling `reatom-scaffold` skill.** Use this `reatom` skill for existing-code guidance, debugging, reviews, architecture decisions, migrations, and API usage. If a task is primarily about creating a new project, scaffold inside another repo, or establishing the validation pipeline from zero, prefer the scaffold skill's ordered workflow instead of improvising setup steps here.
+> **🚀 Greenfield/bootstrap work lives in the sibling `reatom-scaffold` skill.** Use this `reatom` skill for existing-code guidance, debugging, reviews, architecture decisions, migrations, and API usage. If you are here because the task is scaffolding a new project, scaffolding inside another repo, or establishing the validation pipeline from zero, stop here immediately after taking any needed global Reatom orientation and return to the scaffold skill. Do not continue implementing from this skill until the scaffold skill is complete.
 
 > **⚠️ v1000+ only — do not rely on any v3 or earlier packages.** The v3 ecosystem (`@reatom/lens`, `@reatom/hooks`, `@reatom/effects`, `@reatom/persist-web-storage`, etc.) is completely separate and incompatible. v1000+ consolidated everything into `@reatom/core` and `@reatom/react`. When researching, always target the `v1000+` / `v1001` branches — v3 docs will mislead you.
 
@@ -293,7 +293,7 @@ Full patterns reference — atomization, scoped factories, loader-as-SSOT, file 
 
 **Scoped model factories.** When a feature has several atoms/computeds/actions/hooks that belong together, prefer a `reatom*` factory returning a model object over exporting many module-level primitives. Each call gets its own atom graph; implementation state stays private; the public API is explicit. Use the `name` parameter to namespace internal names. Exporting a singleton from the factory is fine for app-wide state; route loaders, dialogs, repeated widgets create their own instances.
 
-**Page model typing.** When a component receives a `model` prop, prefer `type FooPageModel = ReturnType<typeof reatomFooPageModel>` (or `Awaited<ReturnType<...>>` for async factories) over a hand-written structural `FooModel` object type. If the route adds navigation/view callbacks such as `onBack` or `onClose`, keep them as separate props or a small route-owned wrapper instead of polluting the reusable model alias.
+**Page model typing.** When a component receives a `model` prop, prefer inferring that type from the factory that creates it (`ReturnType<typeof reatomXPageModel>`, or `Awaited<ReturnType<...>>` for async factories) instead of maintaining a parallel structural object type by hand. Keep route-owned view callbacks separate, or wrap the model near the route boundary, so the reusable model alias stays focused on the model itself.
 
 **Boolean state as a lifecycle switch.** When a boolean controls a background resource, model it as `reatomBoolean` and attach lifecycle with `withChangeHook(isEnabled => isEnabled ? run() : run.abort())`. Expose the atom itself so callers use `.setTrue()`/`.setFalse()`/`.toggle()`; add semantic actions only when they enforce extra rules. Change hooks run after atom updates — make cleanup idempotent.
 
@@ -505,7 +505,7 @@ These are not API traps; they are design choices to question. Read the relevant 
 - Nullable loader payloads for redirects/auth/feature gates; block in `params()` / parent guards instead.
 - Unmounting on background refresh (`!status.isFulfilled`) and losing focus/stale UI; use status flags that preserve settled data during refresh, and treat empty arrays as fulfilled data requiring empty-state UI.
 - Module-level forms/actions for route-owned lifecycle; create scoped models in route loaders/factories.
-- Hand-written structural page `*Model` prop types when a `reatom*` factory already exists or can be trivially extracted. Prefer `ReturnType<typeof reatomXModel>` and keep route-only callbacks separate.
+- Hand-written structural page `*Model` prop types when a `reatom*` factory already exists or can be trivially extracted. Prefer an inferred alias such as `ReturnType<typeof reatomXModel>` and keep route-only callbacks separate.
 - Syncing atoms with `withChangeHook`; use `computed` / `withComputed` for derivation.
 - Atom + effect bridges for one-shot commands (`latestEventAtom` + `effect()`); call the imperative API from the action unless the value is real rendered/persisted state.
 - Boot-only `start*Effects()` helpers; attach stable reactions to sources or put scoped work in loaders/factories/hooks.
