@@ -19,7 +19,7 @@ Atom-centric reactive state management. All primitives (actions, computeds, effe
 
 In-document sections (read top-to-bottom for orientation, jump for lookup):
 
-- [Version policy](#version-policy) · [Resources](#resources) · [Reference files](#reference-files--read-on-demand)
+- [API contract](#api-contract--v1000v1001-userland) · [Version policy](#version-policy) · [Resources](#resources) · [Reference files](#reference-files--read-on-demand)
 - [Core Primitives](#core-primitives) · [Extensions](#extensions) · [Built-in Primitives](#built-in-primitives)
 - [Routing](#routing) · [Forms](#forms) · [Persistence](#persistence)
 - [React Integration](#react-integration) · [Native JSX (@reatom/jsx)](#native-jsx-reatomjsx) · [Storybook](#storybook)
@@ -32,8 +32,32 @@ Reference files are loaded on demand — see the [reference table](#reference-fi
 > **🚀 Greenfield/bootstrap work lives in the sibling `reatom-scaffold` skill.** Use this `reatom` skill for existing-code guidance, debugging, reviews, architecture decisions, migrations, and API usage. If you are here because the task is scaffolding a new project, scaffolding inside another repo, or establishing the validation pipeline from zero, stop here immediately after taking any needed global Reatom orientation and return to the scaffold skill. Do not continue implementing from this skill until the scaffold skill is complete.
 
 > **⚠️ v1000+ only — do not rely on any v3 or earlier packages.** The v3 ecosystem (`@reatom/lens`, `@reatom/hooks`, `@reatom/effects`, `@reatom/persist-web-storage`, etc.) is completely separate and incompatible. v1000+ consolidated everything into `@reatom/core` and `@reatom/react`. When researching, always target the `v1000+` / `v1001` branches — v3 docs will mislead you.
+>
+> **Hard guardrail: do not rely on stale Reatom memory when v3 patterns appear familiar.** Treat any Reatom knowledge not re-validated from this skill and the current upstream source as suspect. If you catch yourself reaching for `ctx`, `ctx.spy`, `ctx.schedule`, `reatomAsync`, `@reatom/hooks`, or similar pre-v1000 vocabulary, stop immediately, reread this skill, and re-validate against the current source before answering or editing code.
+>
+> **Red-flag heuristic:** an explicit `ctx` parameter in proposed userland Reatom code is a strong signal that you drifted into v3 thinking. In v1000+ user code, context is implicit and async boundaries are preserved with exported helpers like `wrap()` from `@reatom/core`.
+
+## API contract — v1000/v1001 userland
+
+Use this as the top-level override against stale v3 memory. In ordinary app/library code targeting v1000+:
+
+- `computed(() => atom())` — computed callbacks do not take a `ctx` parameter. Source enforces this with `computedParamsMiddleware`, which throws if args are passed.
+- `action((...params) => { ... })` / `action(async (...params) => { ... })` — action callbacks receive direct params, not `ctx` first.
+- `atom.set(value)` / `atom.set(prev => next)` — atom writes do not take `ctx`.
+- `withChangeHook((state, prevState) => { ... })` — change hooks receive state values, not `ctx`.
+- `wrap(promise)` / `wrap(fn)` — preserve async context in userland instead of threading `ctx` manually.
+
+If a draft answer contains `ctx` in those positions, assume the draft is wrong until re-validated from source.
 
 ## Version policy
+
+Before giving implementation advice, run this quick mental filter:
+
+- Am I about to suggest any API that is not visible in `@reatom/core` / the active adapter source?
+- Does the draft contain explicit `ctx` usage in app code?
+- Did the idea come from memory of older Reatom articles/examples rather than this skill or validated source?
+
+If any answer is "yes" or even "maybe", pause and reread the relevant section/reference before proceeding.
 
 - **Greenfield projects:** default to the released v1001 line (`@reatom/core@latest`, currently `1001.0.0`) and a matching adapter where one is available.
 - **Existing projects:** inspect `package.json` / lockfile and match the installed `@reatom/*` versions. Do not apply v1001-only APIs to a v1000.x codebase unless you also upgrade packages.
@@ -426,6 +450,7 @@ Keep this section as the always-loaded warning list. For detail, read the linked
 - In strict-context apps, every handwritten UI callback that reads/writes atoms or calls Reatom actions must be wrapped. Third-party controls often provide raw-value callbacks, so they are not covered by adapter helpers like `bindField`.
 - For debugging, enable `connectLogger()` in the earliest development setup import and use the built-in `log` action (`LOG(...)`) for traceable debug points. Guard logger setup to development so production output stays clean, and keep the setup side-effect import first so import sorters do not break strict bootstrap order.
 - `@reatom/core` is effectively a singleton (`STACK` and global runtime state). After package updates or impossible type/runtime errors, check for duplicate installed copies and dedupe all `@reatom/*` packages.
+- A draft that introduces an explicit `ctx` parameter, `ctx.spy(...)`, `ctx.schedule(...)`, `ctx.get(...)`, or other v3-style imperative context APIs into ordinary v1000+ app code is wrong by default. Treat that as a self-check failure: reread this skill and validate the needed v1000+ primitive from source before continuing.
 - Reatom-managed `effect`, `computed`, subscriptions, aborts, and async work are cleaned up by the reactive context. Return cleanup from `withConnectHook` only when the connected work is not already lifecycle-managed. Non-Reatom resources such as DOM listeners, WebSockets, and other imperative registrations clearly need cleanup. Low-level hook/middleware installers that mutate a target outside the reactive subscription graph need cleanup too, because Reatom cannot infer their disconnect lifecycle. Do not return cleanup handles for already-managed reactive subscriptions just to re-clean them.
 
 ### Routing

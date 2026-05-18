@@ -3,6 +3,8 @@
 > Source: current public API at [`packages/core/src/index.ts`](https://github.com/reatom/reatom/blob/v1001/packages/core/src/index.ts) and [`packages/react/src/index.ts`](https://github.com/reatom/reatom/blob/v1001/packages/react/src/index.ts). v1000+ branches: [`v1000`](https://github.com/reatom/reatom/tree/v1000), [`v1001`](https://github.com/reatom/reatom/tree/v1001).
 
 > **⚠️ v1000+ only — do not rely on any v3 or earlier packages.** The v3 ecosystem is completely separate and incompatible. v1000+ consolidated everything into `@reatom/core` and `@reatom/react`.
+>
+> **Use this table only for migration translation, not as a source of new code patterns.** If a draft answer starts recreating v3 shapes (`ctx`, `ctx.spy`, `ctx.schedule`, `reatomAsync`, old package imports), that is a red flag that you are reasoning from stale memory instead of the current skill/source. Stop and re-check the v1000+ API before continuing.
 
 ## API Mapping
 
