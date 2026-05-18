@@ -483,6 +483,12 @@ Replace `My App` with the actual stable text for the generated landing page. Kee
 
 This entrypoint-import smoke test is appropriate for the single plain-scaffold bootstrap check. Do not reuse it as the general pattern for multiple routed Browser Mode tests: repeated `import('../main')` relies on app-entry side effects and module caching, so later route tests should mount the app or route shell directly with a fresh framework root per test and clean it up afterwards. Once routes/loaders/providers are involved, do not assume two `requestAnimationFrame` waits are enough either — prefer waiting for visible route content or another concrete settled signal rather than asserting immediately on injected styles or an empty shell.
 
+As soon as the simple route tree exists, upgrade the browser harness from "root smoke" to "routes are actually navigable": mount the routed app, drive the real navigation path, and assert that each important route renders visible content without runtime errors. This is the runtime check that most often catches broken provider/setup wiring, route ownership mistakes, lazy `wrap()` bugs, and routing-setup `AbortError` noise. Keep those route-navigation browser tests current as the feature set evolves; when routes, guards, shells, or critical flows change, update the browser tests to match the new real app shape instead of leaving them frozen at the placeholder stage.
+
+For routed browser tests, capture `console.error` and treat unexpected `AbortError`, `missing async stack`, or `ReatomError` output during ordinary navigation as a failing signal until proved intentional. Route setup commonly leaks abort noise when ownership or redirect wiring is wrong. If a flow intentionally aborts stale loaders, prove that the abort is expected and still assert the steady-state route result.
+
+As a default scaffold posture, prioritize these browser-level navigation/runtime tests over detailed business-logic test expansion. Add fine-grained business-logic coverage when the user explicitly asks for it or when a risky local invariant genuinely needs tighter proof.
+
 Initial smoke-test pitfall checklist:
 
 - Use exactly one stable text/role assertion from the scaffolded page.
@@ -602,12 +608,15 @@ The next stage is **not** the original feature request yet. It is a routing-only
 6. keep UI-library shells, loaders, forms, fake backend data, persistence, and business logic out of this pass;
 7. if route typecheck turns red, stop at the routing skeleton and restore green status before adding any new page/feature files;
 8. make sure placeholder routes are actually consumed (typically through a navigation config, explicit `route.go()` calls, or another real route-layer usage) so code-intelligence checks do not correctly flag the route module as mostly dead exports during the skeleton phase;
-9. validate the routing skeleton, then mark the routing checkbox in `GOAL.md`;
-10. only after that, resume the parked original request.
+9. before leaving the routing stage, add or upgrade browser tests so they prove the placeholder routes are actually navigable in a real browser harness and do not emit unexpected `AbortError` noise during ordinary route entry/navigation;
+10. validate the routing skeleton and the route-navigation browser tests, then mark the routing checkbox in `GOAL.md`;
+11. only after that, resume the parked original request.
 
 A good first routing pass proves structure, nesting, outlet composition, and root/provider wiring without conflating them with product logic or UI-library APIs.
 
 When the routing skeleton is green and `GOAL.md` unlocks feature work, handle version-pinned UI libraries as their own small integration step before broad page generation: verify package names and the risky primitives (provider, shell/layout, navigation, inputs/forms) from current docs or installed types; add a minimal provider/shell; validate; then continue to product pages. Do not guess packages such as build plugins or component names from memory just because the UI library is familiar.
+
+Do not treat the route-navigation browser tests as disposable bootstrap scaffolding. They should evolve with the real route tree and remain the primary runtime proof after feature work lands. When the final feature set changes default redirects, guarded routes, shells, or critical navigation paths, update the browser tests so they still exercise the app the user actually runs.
 
 ## Reading list for the next steps
 
