@@ -109,6 +109,9 @@ For each pitfall include:
 2. **Root cause** — the Reatom rule or API contract that was violated.
 3. **Fix applied** — the smallest resolving change.
 4. **Where the skill addresses this today**, or **"not in skill yet — candidate for distillation"** if you cannot find it in `SKILL.md` or `references/`.
+5. **Relevant references that never triggered** — name only the skill files or reference docs that plausibly should have been consulted for this run but were never loaded.
+
+Do not turn this into an exhaustive inventory. Only mention missed references when they help explain why the run drifted.
 
 Close with one of:
 

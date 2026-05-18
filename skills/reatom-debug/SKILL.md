@@ -13,6 +13,8 @@ allowed-tools: read Bash edit write
 
 Use this skill when the job is **debugging an active Reatom problem**, not broad architecture design and not greenfield scaffold order.
 
+If the task stops being debugging and turns into broader API design, architecture review, or migration guidance, return to the main `reatom` skill. If the issue is really bootstrap order, return to `reatom-scaffold`. If the user is correcting earlier bad guidance, use `reatom-feedback-loop` once the immediate bug is stabilized.
+
 This skill adds a **debugging procedure** on top of the main `reatom` reference set: preserve the exact symptom, verify observability early, classify the failure by layer, repair the smallest broken boundary, and prove the fix with the narrowest useful command.
 
 ## First read

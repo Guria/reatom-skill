@@ -52,12 +52,12 @@ effect(() => {
 
 ## Extensions
 
-Extensions add capabilities via `.extend()`. See [references/core/extensions.md](references/core/extensions.md) for built-in APIs (`withAsyncData`, `withAsync`, `withAbort`, `withChangeHook`, `withConnectHook`, `withComputed`, `withSuspense`, `withRollback`, `withTransaction`, `framePromise`). When authoring reusable custom extensions, read [references/core/writing-extensions.md](references/core/writing-extensions.md).
+Extensions add capabilities via `.extend()`. See [../core/extensions.md](../core/extensions.md) for built-in APIs (`withAsyncData`, `withAsync`, `withAbort`, `withChangeHook`, `withConnectHook`, `withComputed`, `withSuspense`, `withRollback`, `withTransaction`, `framePromise`). When authoring reusable custom extensions, read [../core/writing-extensions.md](../core/writing-extensions.md).
 
 Extension decision ladder:
 
 1. **Built-in core first** — if `@reatom/core` already has the primitive or extension, use it directly.
-2. **Reusables second** — if the pattern is generic and repeated (form submit wiring, focus-on-error, unsaved-warning, history/reset/test helpers), scan [`references/meta/reusables.md`](references/meta/reusables.md) before inventing a new helper.
+2. **Reusables second** — if the pattern is generic and repeated (form submit wiring, focus-on-error, unsaved-warning, history/reset/test helpers), scan [`reusables.md`](reusables.md) before inventing a new helper.
 3. **Custom extension third** — if there is an existing primitive to enrich but no reusable fits, add a narrow `.extend(...)` helper.
 4. **`reatom*` factory last** — if the pattern is domain-shaped or must create several primitives together, model it as a local `reatom*` factory instead of a generic extension.
 
@@ -109,7 +109,7 @@ priority.set('low')
 
 ## Routing
 
-See [references/features/routing/routes.md](references/features/routing/routes.md) for complete routing API: routes, nested routes, loaders, layout/page routes, protected routes, modal gates, and search-only routes.
+See [../features/routing/routes.md](../features/routing/routes.md) for complete routing API: routes, nested routes, loaders, layout/page routes, protected routes, modal gates, and search-only routes.
 
 Routing accepts any [Standard Schema](https://github.com/standard-schema/standard-schema) compliant library for params and search validation. Preserve the existing validator choice when the project already has one; if there is no validator preference yet, default to Valibot unless the user asks for something else.
 
@@ -128,7 +128,7 @@ userRoute.path({ userId: '123' }) // build URL without navigating
 
 ## Forms
 
-See [references/features/forms.md](references/features/forms.md) for complete forms API: `reatomForm`, React binding with `bindField`, field access patterns, and form factories.
+See [../features/forms.md](../features/forms.md) for complete forms API: `reatomForm`, React binding with `bindField`, field access patterns, and form factories.
 
 Forms accept any [Standard Schema](https://github.com/standard-schema/standard-schema) compliant library for validation. Preserve the existing validator choice when the project already has one; if there is no validator preference yet, default to Valibot unless the user asks for something else.
 
@@ -154,7 +154,7 @@ form.validation()     // { errors: FieldSetFieldError[], triggered: boolean }
 
 ## Persistence
 
-See [references/features/persistence.md](references/features/persistence.md) for complete persistence API: all storage adapters, configuration options, version migration, TTL, schema validation, custom storage, and cross-tab sync.
+See [../features/persistence.md](../features/persistence.md) for complete persistence API: all storage adapters, configuration options, version migration, TTL, schema validation, custom storage, and cross-tab sync.
 
 Quick reference:
 
@@ -177,7 +177,7 @@ const pageNumber = atom(1, 'pageNumber').extend(withSearchParams('page', {
 
 ## React Integration
 
-See [references/integrations/react.md](references/integrations/react.md) for `reatomComponent`, `useAtom`, `useAction`, `bindField`, StrictMode caveat, and TypeScript gotchas.
+See [../integrations/react.md](../integrations/react.md) for `reatomComponent`, `useAtom`, `useAction`, `bindField`, StrictMode caveat, and TypeScript gotchas.
 
 Quick reference:
 
@@ -191,7 +191,7 @@ const Counter = reatomComponent(() => {
 
 ## Native JSX (@reatom/jsx)
 
-See [references/integrations/jsx.md](references/integrations/jsx.md) for the native JSX runtime API: zero re-renders, CSS-in-JS (`css` prop), `reatomClassName`, `$spread`, and two-way bindings.
+See [../integrations/jsx.md](../integrations/jsx.md) for the native JSX runtime API: zero re-renders, CSS-in-JS (`css` prop), `reatomClassName`, `$spread`, and two-way bindings.
 
 Quick reference:
 
@@ -209,7 +209,7 @@ mount(document.body, <Counter />)
 
 ## Patterns & Architecture
 
-Full patterns reference — atomization, scoped factories, loader-as-SSOT, file organization — in [`references/core/patterns.md`](references/core/patterns.md). Two pattern reminders that affect day-one decisions:
+Full patterns reference — atomization, scoped factories, loader-as-SSOT, file organization — in [`../core/patterns.md`](../core/patterns.md). Two pattern reminders that affect day-one decisions:
 
 **Naming convention.** Custom factories that create atom primitives or scoped models use `reatom*` (e.g. `reatomUser`, `reatomSessionForm`), not `create*`/`make*`. Keeps custom primitives visually aligned with built-ins (`reatomBoolean`, `reatomForm`, `reatomRoute`).
 
@@ -236,7 +236,7 @@ render: (self) => {
 
 ## Sampling & Events
 
-See [references/core/sampling.md](references/core/sampling.md) for debounce/throttle via `wrap(sleep())`, `take()`, `onEvent()`, `race()`, `all()`, `variable()`, `abortVar`, and the checkpoint pattern.
+See [../core/sampling.md](../core/sampling.md) for debounce/throttle via `wrap(sleep())`, `take()`, `onEvent()`, `race()`, `all()`, `variable()`, `abortVar`, and the checkpoint pattern.
 
 Quick reference:
 
@@ -314,7 +314,7 @@ For app-lifetime reactions, prefer source-attached hooks (`withChangeHook`, `wit
 
 ## Testing
 
-Read [`references/core/testing.md`](references/core/testing.md) for source-backed examples. Quick rule:
+Read [`../core/testing.md`](../core/testing.md) for source-backed examples. Quick rule:
 
 - Existing/default-context suites: use `context.reset()` in `beforeEach()` and call atoms normally.
 - Strict suites that call `clearStack()`: run each test body inside `context.start(() => { ... })` or a project test helper. Atom reads/writes outside that frame throw `missing async stack`.

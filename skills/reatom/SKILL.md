@@ -25,7 +25,7 @@ Read this file top-to-bottom once for orientation. Then load only the topic file
 - Fast lookup: [Reference files](#reference-files--read-on-demand)
 - Decision rules: [Working mode](#working-mode), [Topic routing](#topic-routing), [High-priority checkpoints](#high-priority-checkpoints)
 
-> **🚀 Greenfield/bootstrap work lives in the sibling `reatom-scaffold` skill.** Use this `reatom` skill for existing-code guidance, debugging, reviews, architecture decisions, migrations, and API usage. If the task is scaffolding a new project, scaffolding inside another repo, or establishing the validation pipeline from zero, stop after taking any needed Reatom orientation and return to the scaffold skill.
+> **🚀 Greenfield/bootstrap work lives in the sibling `reatom-scaffold` skill.** Use this `reatom` skill for existing-code guidance, reviews, architecture decisions, migrations, and API usage. If the task is scaffolding a new project, scaffolding inside another repo, or establishing the validation pipeline from zero, stop after taking any needed Reatom orientation and return to the scaffold skill. If the job is active runtime/test troubleshooting, hand off to the sibling `reatom-debug` workflow instead of keeping everything in the broad expert skill.
 
 > **⚠️ v1000+ only — do not rely on any v3 or earlier packages.** The v3 ecosystem (`@reatom/lens`, `@reatom/hooks`, `@reatom/effects`, `@reatom/persist-web-storage`, etc.) is completely separate and incompatible. v1000+ consolidated everything into `@reatom/core` and `@reatom/react`. When researching, always target the `v1000+` / `v1001` branches — v3 docs will mislead you.
 >
@@ -164,6 +164,7 @@ These are the frequent failure modes worth keeping always loaded. The full prese
 ## Escalation / handoff
 
 - If the task is **greenfield bootstrap**, hand off to `reatom-scaffold`.
+- If the task is **active debugging of runtime, routing, setup, or test failures**, hand off to `reatom-debug`.
 - If the user says prior Reatom advice was wrong or wants a correction workflow, use `reatom-feedback-loop`.
 - If repeated generic patterns appear, inspect `reatom/reusables` before designing a custom extension.
 

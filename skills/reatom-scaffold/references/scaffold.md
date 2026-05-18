@@ -596,7 +596,7 @@ The next stage is **not** the original feature request yet. It is a routing-only
 
 1. install the needed Reatom runtime packages for the chosen adapter; do not install requested UI-library packages yet unless the user explicitly made UI-library bootstrap the current phase;
 2. read [`../../reatom/references/features/routing/routes.md`](../../reatom/references/features/routing/routes.md) before writing route code, including its route-option gotchas;
-3. read the adapter integration reference needed to mount the route output (for React, [`../../reatom/references/integrations/react.md`](../../reatom/references/integrations/react.md)) and the setup quick reference before writing `App.tsx` / `main.tsx`; for greenfield React strict setup, say the exact pattern out loud first (`src/setup.ts`: `clearStack()`, `const frame = context.start()`, dev-time `frame.run(connectLogger)`, then export the frame, keep `import './setup'` first, and use `<reatomContext.Provider value={frame}>`). If that guidance is genuinely ambiguous for the installed version, inspect installed exports/source before writing code;
+3. before writing `App.tsx` / `main.tsx`, read the adapter integration reference needed to mount the route output (for React, [`../../reatom/references/integrations/react.md`](../../reatom/references/integrations/react.md)), then read [`../../reatom/references/meta/quick-reference.md`](../../reatom/references/meta/quick-reference.md) for the setup shape and [`../../reatom/references/meta/gotchas.md`](../../reatom/references/meta/gotchas.md) for the easy-to-miss failure modes; for greenfield React strict setup, say the exact pattern out loud first (`src/setup.ts`: `clearStack()`, `const frame = context.start()`, dev-time `frame.run(connectLogger)`, then export the frame, keep `import './setup'` first, and use `<reatomContext.Provider value={frame}>`). If that guidance is genuinely ambiguous for the installed version, inspect installed exports/source before writing code;
 4. design the route tree with placeholder pages/layouts only, using plain framework markup for shells and pages;
 5. when using layout routes, have their `render(self)` return placeholder shell content plus `self.outlet()` composition;
 6. keep UI-library shells, loaders, forms, fake backend data, persistence, and business logic out of this pass;
@@ -614,24 +614,25 @@ When the routing skeleton is green and `GOAL.md` unlocks feature work, handle ve
 **When the scaffold checklist is complete and `GOAL.md` enters feature implementation, return to the main `../../reatom/SKILL.md` as the primary guide and read these in order:**
 
 1. [`../../reatom/references/core/patterns.md`](../../reatom/references/core/patterns.md) — atomization, scoped factories (`reatom*`), file organization, boolean-as-lifecycle-switch. **Skip this and the codebase will drift** toward identity actions, module-level forms, and React-owned state.
-2. [`../../reatom/references/meta/gotchas.md`](../../reatom/references/meta/gotchas.md) plus the high-priority checkpoints in `../../reatom/SKILL.md` — most production bugs come from violating these.
-3. [`../../reatom/references/core/extensions.md`](../../reatom/references/core/extensions.md) — `withAsyncData` + `withAsync` are used in almost every feature; `withChangeHook` and `withConnectHook` cover most lifecycle work.
+2. [`../../reatom/references/meta/quick-reference.md`](../../reatom/references/meta/quick-reference.md) — fast syntax and setup refresh before real feature work starts.
+3. [`../../reatom/references/meta/gotchas.md`](../../reatom/references/meta/gotchas.md) plus the high-priority checkpoints in `../../reatom/SKILL.md` — most production bugs come from violating these.
+4. [`../../reatom/references/core/extensions.md`](../../reatom/references/core/extensions.md) — `withAsyncData` + `withAsync` are used in almost every feature; `withChangeHook` and `withConnectHook` cover most lifecycle work.
 
 **Read on demand** when the checklist reaches the relevant feature:
 
-4. [`../../reatom/references/features/routing/routes.md`](../../reatom/references/features/routing/routes.md) — routing API. Read this right before the routing stage starts. Then [`../../reatom/references/features/routing/loaders.md`](../../reatom/references/features/routing/loaders.md) when you write the first loader.
-5. [`../../reatom/references/features/forms.md`](../../reatom/references/features/forms.md) — when adding the first form. Read **before** considering React Hook Form / Formik — `reatomForm` covers both.
-6. [`../../reatom/references/features/persistence.md`](../../reatom/references/features/persistence.md) — when state needs to survive refresh / cross-tab sync.
-7. [`../../reatom/references/integrations/react.md`](../../reatom/references/integrations/react.md) (or [`../../reatom/references/integrations/jsx.md`](../../reatom/references/integrations/jsx.md)) — adapter-specific gotchas, especially the StrictMode and "instant async resolution" notes.
-8. [`../../reatom/references/core/sampling.md`](../../reatom/references/core/sampling.md) — when you need debounce/throttle, race conditions, or imperative event awaiting.
+5. [`../../reatom/references/features/routing/routes.md`](../../reatom/references/features/routing/routes.md) — routing API. Read this right before the routing stage starts. Then [`../../reatom/references/features/routing/loaders.md`](../../reatom/references/features/routing/loaders.md) when you write the first loader.
+6. [`../../reatom/references/features/forms.md`](../../reatom/references/features/forms.md) — when adding the first form. Read **before** considering React Hook Form / Formik — `reatomForm` covers both.
+7. [`../../reatom/references/features/persistence.md`](../../reatom/references/features/persistence.md) — when state needs to survive refresh / cross-tab sync.
+8. [`../../reatom/references/integrations/react.md`](../../reatom/references/integrations/react.md) (or [`../../reatom/references/integrations/jsx.md`](../../reatom/references/integrations/jsx.md)) — adapter-specific gotchas, especially the StrictMode and "instant async resolution" notes.
+9. [`../../reatom/references/core/sampling.md`](../../reatom/references/core/sampling.md) — when you need debounce/throttle, race conditions, or imperative event awaiting.
 
 **Read once before any v1001-only API call:**
 
-9. [`../../reatom/references/meta/v1001.md`](../../reatom/references/meta/v1001.md) — if you installed `@reatom/core@1001.x`, this lists every API that exists ONLY in v1001. Cite it in PR descriptions when bumping.
+10. [`../../reatom/references/meta/v1001.md`](../../reatom/references/meta/v1001.md) — if you installed `@reatom/core@1001.x`, this lists every API that exists ONLY in v1001. Cite it in PR descriptions when bumping.
 
 **Read when setting up Storybook (Step 11):**
 
-10. [`../../reatom/references/integrations/storybook.md`](../../reatom/references/integrations/storybook.md) — Storybook + Reatom integration patterns: fresh frame per story, routed story setup, optional MSW, browser-test integration, and common pitfalls.
+11. [`../../reatom/references/integrations/storybook.md`](../../reatom/references/integrations/storybook.md) — Storybook + Reatom integration patterns: fresh frame per story, routed story setup, optional MSW, browser-test integration, and common pitfalls.
 
 **Reference (look up only):**
 

@@ -12,7 +12,7 @@ Use `reatom-scaffold` when the task is primarily about:
 - adding a fresh Reatom app/package inside an existing repo
 - establishing the validation pipeline before feature work
 
-If the task is mainly about an existing codebase, API usage, debugging, or migration, switch back to the main `reatom` skill.
+If the task is mainly about an existing codebase, API usage, or migration, switch back to the main `reatom` skill. If the job is active runtime/test investigation, switch to `reatom-debug` instead.
 
 ## Default execution model
 

@@ -104,7 +104,7 @@
     {
       "id": 6,
       "prompt": "A previous bootstrap run claimed completion, skipped development logging during strict setup, misdiagnosed missing async stack with broad rewrites, created wrap() lazily at event time, hid another async Reatom action inside a fragile form callback path, wrote a feedback summary into the target app repo, and committed multiple times without permission. The user asks for root causes and durable skill updates.",
-      "expected_output": "The agent names the false-completion, observability, wrap-timing, form-orchestration, and repo-safety failures; explains when the guidance already existed but was too skippable as an execution mechanism; recommends concrete edits to integration/forms/quick-reference/feedback-loop guidance; and does not treat a future promise as the fix.",
+      "expected_output": "The agent names the false-completion, observability, wrap-timing, form-orchestration, and repo-safety failures; explains when the guidance already existed but was too skippable as an execution mechanism; recommends concrete edits to integration/forms/quick-reference/feedback-loop guidance; identifies which relevant skill references never triggered; and does not treat a future promise as the fix.",
       "assertions": [
         {
           "name": "wrap_timing_called_out",
@@ -125,6 +125,10 @@
         {
           "name": "no_target_repo_feedback_file_by_default",
           "text": "The response says bootstrap/feedback summaries should stay in the response by default and not be written/committed into the target app repo unless explicitly requested."
+        },
+        {
+          "name": "missed_reference_listed",
+          "text": "The response identifies relevant skill references that should have been consulted but never triggered during the run."
         }
       ],
       "files": []

@@ -15,6 +15,8 @@ Use this skill for **existing codebases** when the job is to find repeated Reato
 
 This skill is about **discovery and triage**, not blind abstraction. The goal is to reduce duplication without over-generalizing.
 
+If the task is active bug fixing, runtime/test debugging, or bootstrap order, use the sibling `reatom-debug` or `reatom-scaffold` workflow instead. If the user is correcting earlier bad guidance, use `reatom-feedback-loop` after the immediate code issue is understood.
+
 ## First read
 
 Before analyzing the target codebase, read these sibling references:

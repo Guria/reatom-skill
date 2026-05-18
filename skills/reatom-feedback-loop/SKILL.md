@@ -30,6 +30,8 @@ This skill is for:
 ## Working style
 
 - Fix the user's immediate issue first.
+- If that immediate issue is active runtime/test debugging, pull in the sibling `reatom-debug` workflow before distilling lessons.
+- If the failure was scaffold-order or bootstrap-gate drift, re-check the sibling `reatom-scaffold` workflow before proposing preventive edits.
 - Then extract the reusable lesson.
 - If the user says the skill was ignored, do not answer only with an apology or a future promise. Analyze why the existing wording failed as an execution mechanism.
 - Prefer preventive changes: move critical gates into always-loaded `SKILL.md`, add artifact checks, add phase names, or add an out-of-order recovery rule.

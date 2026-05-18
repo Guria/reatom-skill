@@ -26,7 +26,7 @@ Keep this section as the always-loaded warning list. For detail, read the linked
 
 ### Routing
 
-Read [`references/features/routing/routes.md`](references/features/routing/routes.md) and [`references/features/routing/loaders.md`](references/features/routing/loaders.md) before changing routes or loaders.
+Read [`../features/routing/routes.md`](../features/routing/routes.md) and [`../features/routing/loaders.md`](../features/routing/loaders.md) before changing routes or loaders.
 
 - `render` is a route option; after construction `route.render` is a computed output, not an assignable callback. If the route module writes JSX inline inside `render`, the file should use a JSX-capable extension (`.tsx` / `.jsx`).
 - `RouteChild` needs one framework declaration merge, and `outlet()` returns `RouteChild[]`.
@@ -55,7 +55,7 @@ Read [`references/features/routing/routes.md`](references/features/routing/route
 
 ### Forms
 
-Read [`references/features/forms.md`](references/features/forms.md) for field APIs, validation, and factories.
+Read [`../features/forms.md`](../features/forms.md) for field APIs, validation, and factories.
 
 - `reatomForm` belongs in route/scoped factories, not as a shared module-level singleton for route-bound data. But route ownership follows product behavior: choose the route boundary from URL/history/state-lifetime semantics before deciding which loader creates the form.
 - `bindField` is event-shaped; wire controls like `<select>` manually with `field.change(value)` and wrap handwritten handlers under `clearStack()`.
@@ -71,7 +71,7 @@ Read [`references/features/forms.md`](references/features/forms.md) for field AP
 
 ### React and TypeScript
 
-Read [`references/integrations/react.md`](references/integrations/react.md) for StrictMode and consumption patterns.
+Read [`../integrations/react.md`](../integrations/react.md) for StrictMode and consumption patterns.
 
 - Reatom leans heavily on TypeScript inference, so unsafe typing should be treated as architecture debt rather than a harmless shortcut.
 - Do not introduce `any` into the codebase. Keep `no-explicit-any` enforced and avoid silencing it just to push a change through.
@@ -90,7 +90,7 @@ Read [`references/integrations/react.md`](references/integrations/react.md) for 
 
 ### Storybook
 
-Read [`references/integrations/storybook.md`](references/integrations/storybook.md) when the user wants isolated component work, routed story scenarios, visual review, or browser-driven interaction tests.
+Read [`../integrations/storybook.md`](../integrations/storybook.md) when the user wants isolated component work, routed story scenarios, visual review, or browser-driven interaction tests.
 
 - For from-scratch app bootstraps, treat Storybook as part of the runtime validation harness, not as optional decoration. After the app is verified, it is reasonable to offer cleanup if the user wants a leaner setup.
 - Every story should get a fresh Reatom frame via `context.start()` so atoms, route registrations, subscriptions, and async work do not leak between stories.
@@ -103,7 +103,7 @@ Read [`references/integrations/storybook.md`](references/integrations/storybook.
 
 ## Package Index
 
-Full table, deprecation list, and `jsrepo` reusables system live in [`references/meta/packages.md`](references/meta/packages.md) and [`references/meta/reusables.md`](references/meta/reusables.md). The usual install is `@reatom/core` plus one adapter (`@reatom/react`, `@reatom/jsx`, `@reatom/vue`, `@reatom/solid-js`, `@reatom/preact`, or `@reatom/lit`).
+Full table, deprecation list, and `jsrepo` reusables system live in [`packages.md`](packages.md) and [`reusables.md`](reusables.md). The usual install is `@reatom/core` plus one adapter (`@reatom/react`, `@reatom/jsx`, `@reatom/vue`, `@reatom/solid-js`, `@reatom/preact`, or `@reatom/lit`).
 
 > **Do not install** v3 packages (`@reatom/hooks`, `@reatom/async`, `@reatom/persist*`, `@reatom/form`, `@reatom/url`, `@reatom/timer`, `@reatom/lens`, `@reatom/undo`, `@reatom/primitives`, `@reatom/npm-react`, `@reatom/npm-vue`, `@reatom/devtools`) into v1000+ projects.
 
