@@ -45,6 +45,18 @@ When the user challenges a claim like "next time I will follow it", agree with t
 
 Write this as general process feedback. Avoid project names, paths, package choices, or one-off implementation details unless they are necessary evidence for the user's immediate task. If the divergence involved an unfamiliar or fast-moving tool/API, verify it from an authoritative local or upstream source before turning the lesson into guidance.
 
+### False completion and unvalidated fix recovery
+
+Use this branch when the user catches the agent claiming unfinished work, checking a box without proof, or reporting a fix that was not rerun.
+
+1. Name the false claim exactly: what was marked done or described as fixed?
+2. Identify the missing proof: file artifact, command, test run, validation output, or commit evidence.
+3. Repair the tracking artifact first (`GOAL.md`, status note, checklist, or handoff text) so it reflects reality.
+4. Run the narrow missing proof command before claiming success. For test fixes, prefer the specific test-file command first.
+5. Report the observed result. If it fails, keep the checkbox/status incomplete and continue from the failure.
+
+Practical guardrail: "edited" means a file changed; "fixed" means the relevant proof command passed. Do not collapse those states.
+
 ### Self-evaluation checklist for ignored instructions
 
 Use this checklist when the mistake was caused by skipping a process the agent had already read:
@@ -67,7 +79,10 @@ When analyzing a failed Reatom run, name the wrong mental model, not only the br
 - **Generic React/router habit** — mutating route config after creation, approximating provider/bootstrap code, or treating Reatom as another hook state library.
 - **Adapter-style confusion** — mixing `reatomComponent` direct atom reads with `useAtom` hook-return plain values.
 - **Third-party UI guessing** — assuming version-pinned UI component APIs from memory instead of checking installed types/docs.
-- **Recovery misconception** — broad rewrites, casts, suppressions, or commits while typecheck is red instead of returning to the smallest failing layer.
+- **Browser-test harness misconception** — treating Browser Mode like repeated jsdom-style entrypoint imports instead of a real app/runtime harness that needs fresh mounts and explicit cleanup.
+- **Router source-of-truth misconception** — assuming browser history mutation alone necessarily drives Reatom route state in tests; when asserting Reatom route output, drive the Reatom URL owner.
+- **Extension extraction misconception** — treating a generic-looking one-off side effect as a shared extension candidate before it repeats or has a strategic reuse reason.
+- **Recovery misconception** — broad rewrites, casts, suppressions, unvalidated fixes, or commits while typecheck/tests are red instead of returning to the smallest failing layer and proving it.
 
 For each category present, suggest a preventive skill change: a gate, a top-level red flag, a reference preflight checklist, or an eval that would reproduce the failure.
 

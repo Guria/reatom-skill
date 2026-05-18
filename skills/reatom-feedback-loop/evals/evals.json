@@ -40,6 +40,46 @@
         }
       ],
       "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "A previous run edited a failing Vitest Browser Mode routing test, reported it as fixed without rerunning it, then the rerun failed because repeated app-entry imports and history.replaceState did not reliably drive Reatom route output. The user asks for detailed skill-update suggestions.",
+      "expected_output": "The agent identifies false completion and unvalidated fix claims, distinguishes edited from fixed, recommends narrow test reruns before reporting success, and suggests Browser Mode routing guidance: fresh mount per test, cleanup/unmount, and drive route state through Reatom's URL owner when asserting route output.",
+      "assertions": [
+        {
+          "name": "edited_not_fixed",
+          "text": "The response states that editing a test is not a fix until the relevant test command passes."
+        },
+        {
+          "name": "browser_mode_harness_guidance",
+          "text": "The response recommends avoiding repeated app-entry imports across route tests and using a fresh mount with cleanup."
+        },
+        {
+          "name": "reatom_url_owner_guidance",
+          "text": "The response notes that Reatom-routed output tests should drive navigation through urlAtom.go or route.go when appropriate, not rely only on history.replaceState."
+        }
+      ],
+      "files": []
+    },
+    {
+      "id": 4,
+      "prompt": "A reference implementation extracted a shared extension for a one-off computed atom that only syncs one browser document property. The user argues it should have stayed inline with .extend((target) => ...). Analyze the misconception and suggest a skill fix.",
+      "expected_output": "The agent explains that a focused side-effect boundary can still be a weak shared extension if used once, distinguishes inline target-local extensions from extracted reusable helpers, and recommends an extraction threshold in the extension-writing guide.",
+      "assertions": [
+        {
+          "name": "one_off_extraction_threshold",
+          "text": "The response says one-off generic-looking side effects should usually stay inline unless substantial resource isolation, immediate reuse, or a named/tested API surface justifies extraction."
+        },
+        {
+          "name": "inline_extend_pattern",
+          "text": "The response recommends inline target-local .extend((target) => target.extend(...)) for single-use primitive side effects."
+        },
+        {
+          "name": "repeated_helpers_stronger_candidates",
+          "text": "The response contrasts one-off side effects with repeated host-binding/form/view-helper patterns as stronger extension candidates."
+        }
+      ],
+      "files": []
     }
   ]
 }

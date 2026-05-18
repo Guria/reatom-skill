@@ -19,6 +19,7 @@
   - [Route search schemas vs withSearchParams](#route-search-schemas-vs-withsearchparams)
 - [URL codecs (v1001+)](#url-codecs-v1001)
 - [Relative navigation (v1001+)](#relative-navigation-v1001)
+- [Testing routed output](#testing-routed-output)
 - [urlAtom and global state](#urlatom-and-global-state)
   - [Default redirect with urlAtom.extend(withChangeHook(...))](#default-redirect-with-urlatomextendwithchangehook)
 
@@ -487,6 +488,19 @@ reviewRoute.go.relative()             // /projects/123/review
 ```
 
 It throws if the parent route is not currently matched. In v1000, call `reviewRoute.go({ projectId })` explicitly.
+
+## Testing routed output
+
+When a test asserts Reatom route output, drive the route state through the same Reatom URL owner the app uses. `window.history.replaceState(...)` changes the browser URL, but by itself it is not a reliable substitute for updating Reatom routing state in Browser Mode tests.
+
+Practical rules:
+
+- For route-rendering assertions, prefer `urlAtom.go(pathname, true)` or the route's own `.go(...)` helper before mounting/asserting.
+- Use `history.replaceState(...)` only when the test is specifically about browser-history integration, and then assert the synchronization behavior directly.
+- Avoid repeatedly importing the app entrypoint (`import('../main')`) across multiple Browser Mode route tests. Mount the app or route shell directly in a fresh framework root per test and unmount in cleanup.
+- If a route test fix changes the harness, rerun the narrow browser test file before reporting success.
+
+This keeps route state, browser URL, and app bootstrap responsibilities separate enough to debug.
 
 ## urlAtom and global state
 

@@ -117,6 +117,7 @@ Immediately after the scaffold root exists, create `GOAL.md` in that root as a c
 The checklist should:
 - make **validation pipeline** the only active goal at first;
 - keep checkboxes honest: future work starts unchecked, and a box is checked only after its exit artifact has been verified;
+- tie non-trivial boxes to proof when useful, for example `Artifact: src/__tests__/root.browser.test.tsx` and `Proof: npm run test -- src/__tests__/root.browser.test.tsx`;
 - never mark a parent stage complete until all of its child gates are complete and the stage's final validation command has passed;
 - explicitly park **routing scheme** as the next stage after a green pipeline;
 - explicitly park **finish original request** after routing is validated;
@@ -461,7 +462,11 @@ test('renders the initial page at root', async () => {
 })
 ```
 
-Replace `My App` with the actual stable text for the generated landing page. Do not introduce Reatom-only testing helpers yet; this first pass is still validating the plain scaffold. If the project later needs meaningful Reatom unit tests beyond this browser smoke check, pull the `test` utility from the reusables registry (`npx jsrepo add test` after initializing jsrepo against [reatom/reusables](https://github.com/reatom/reusables)) during the routing/feature stage. See [`../../reatom/references/meta/reusables.md`](../../reatom/references/meta/reusables.md) for the wider catalog.
+Replace `My App` with the actual stable text for the generated landing page. This entrypoint-import smoke test is appropriate for the single plain-scaffold bootstrap check. Do not reuse it as the general pattern for multiple routed Browser Mode tests: repeated `import('../main')` relies on app-entry side effects and module caching, so later route tests should mount the app or route shell directly with a fresh framework root per test and clean it up afterwards.
+
+Do not introduce Reatom-only testing helpers yet; this first pass is still validating the plain scaffold. If the project later needs meaningful Reatom unit tests beyond this browser smoke check, pull the `test` utility from the reusables registry (`npx jsrepo add test` after initializing jsrepo against [reatom/reusables](https://github.com/reatom/reusables)) during the routing/feature stage. See [`../../reatom/references/meta/reusables.md`](../../reatom/references/meta/reusables.md) for the wider catalog.
+
+If you edit a failing browser test, the edit is not complete until you rerun the narrow proving command for that test file and report the observed result. For example: `npm run test -- src/__tests__/root.browser.test.tsx`.
 
 ## Step 11 — Optional Storybook
 

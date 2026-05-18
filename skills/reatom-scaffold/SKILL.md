@@ -76,13 +76,14 @@ This skill is not the best fit for ordinary bug fixing or API lookup in an exist
 - Preserve explicit user constraints, but do not drift into feature work before the bootstrap gate is green unless the user knowingly asked for a lighter path.
 - If the starter ships overlapping validation tooling, reconcile it with the chosen stack instead of leaving two competing setups by accident.
 - Do not stop at dependency installation. The job is only complete when the tools are configured, exposed through scripts, and actually run successfully.
+- A test edit is not a test fix until the narrow proving command has been rerun and passed. Report the command and result, not the expectation.
 - Do not stage or commit a baseline unless the user explicitly asked for it, and even then prefer the validated Step 12 baseline.
 - After the first green pipeline, keep following `GOAL.md` and this scaffold flow. Use the referenced routing material for the routing-only pass, validate the skeleton, and only then resume broader implementation guidance.
 - When bootstrap finishes, switch to the `reatom-feedback-loop` skill's pitfall summary flow so the run improves the skill, not only the project.
 
 ## Completion contract
 
-Do not report bootstrap work as done until all relevant parts of the promised pipeline exist and have been executed successfully.
+Do not report bootstrap work as done until all relevant parts of the promised pipeline exist and have been executed successfully. If a user correction points out false completion or an unvalidated fix, first repair the tracking artifact, then run the missing proof command, then report the observed result.
 
 For the default recommended flow, that means the agent should normally complete and report evidence for:
 - `GOAL.md` exists as a staged todo list and preserves the parked original request
