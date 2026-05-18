@@ -450,6 +450,8 @@ Prefer `someRoute.go(...)` / `someRoute.path(...)` for ordinary application navi
 
 A common pattern is redirecting the root URL to a default page. Use `urlAtom.extend(withChangeHook(...))` at module scope (typically in the app entry file) to watch every URL change and redirect when needed. In apps with auth, onboarding, tenant selection, or feature gates, the "default page" is conditional — do not blindly redirect `/` to a private page and rely on a later guard to recover.
 
+For examples, smoke tests, and any app where `/` must have deterministic first-paint ownership, prefer pairing the global URL reaction with a concrete root/index route or route-owned guard. Treat the URL hook as app-lifetime normalization, not as the only owner of the initial screen.
+
 ```typescript
 // App.tsx (or app entry file)
 import { urlAtom, withChangeHook } from '@reatom/core'
@@ -479,6 +481,7 @@ Key details:
 - Use `.go(undefined, true)` (replace) so the redirect doesn't create a history entry — the back button skips the root and goes to whatever was before.
 - For global redirects from `/`, the safest universal guard is the concrete pathname from the `withChangeHook` callback (`url.pathname === '/'`). Route predicates can be shaped by how the root route was declared: a pathless root route reports `exact()` broadly by design, while an explicit empty-path root route behaves as expected. Prefer the raw pathname check when you want a redirect rule that is independent of route-shape subtleties.
 - Make default redirects state-aware. If the default target depends on auth or setup state, branch before navigating instead of causing `/` → private page → public page cascades.
+- For deterministic initial render in examples/tests, give `/` an explicit owner as well — usually a concrete root/index route that redirects or a route-owned guard. This avoids relying on a global URL hook alone for first paint.
 - Redirects from URL reactions and route guards should be idempotent: check the target route before calling `.go()`.
 - Do not replace this with a top-level `effect()` or a `start*Effects()` boot helper. `effect()` subscribes immediately and needs an active reactive frame after `clearStack()`; a source-attached `withChangeHook` models the app-lifetime URL reaction without a separate activation step.
 - This same pattern works for other URL-source reactions such as navigation analytics or scroll restoration. Keep purely imperative one-shot work in the action that causes it; only store an event in an atom when other code actually reads that state.

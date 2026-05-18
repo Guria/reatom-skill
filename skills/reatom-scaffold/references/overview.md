@@ -27,7 +27,7 @@ The bootstrap order matters more than any single package choice:
 
 This prevents the common failure mode of writing routes, forms, and state code before the project can prove its basic runtime shape.
 
-Installing `oxlint`, `oxfmt`, `fallow`, or Storybook is not enough by itself. A bootstrap is still incomplete if those tools are present in `package.json` but not configured, not exposed through scripts, or never actually executed.
+Installing `oxlint`, `oxfmt`, `fallow`, or optional Storybook is not enough by itself. A bootstrap is still incomplete if the tools the agent chose are present in `package.json` but not configured, not exposed through scripts, or never actually executed.
 
 `GOAL.md` is the parking place for the original request and the source of truth for later stages. Once it is written, the agent should stop following the raw user request directly. After validation completes, the echoed goal becomes the handoff into routing placeholders first, then back to the parked product work.
 
@@ -66,7 +66,6 @@ For the default path, the expected proof points are:
 - format-check runs with `oxfmt`
 - intelligence check runs with `fallow`
 - browser smoke test passes on the Vite scaffold
-- Storybook coverage exists for `App.tsx`
 - `npm run validate` passes
 - Storybook smoke check passes when Storybook is part of the promised setup
 

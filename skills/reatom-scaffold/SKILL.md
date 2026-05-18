@@ -15,7 +15,7 @@ Use this skill when the task is primarily about creating a new Reatom codebase o
 
 The goal is not just to list packages. The important part is the **order**: scaffold first, write `GOAL.md`, finish the validation pipeline on the untouched Vite scaffold, and only then let later stages resume from the checklist in `GOAL.md`.
 
-The common failure mode is that an agent installs tooling such as `oxlint`, `oxfmt`, `fallow`, and Storybook but never actually wires them into a working pipeline. Treat that as an incomplete bootstrap, not as a minor omission.
+The common failure mode is that an agent installs tooling such as `oxlint`, `oxfmt`, `fallow`, but never actually wires them into a working pipeline. Treat that as an incomplete bootstrap, not as a minor omission.
 
 ## Read strategy
 
@@ -60,7 +60,6 @@ For the default recommended flow, that means the agent should normally complete 
 - `npm run format:check` using `oxfmt`
 - `npm run intel` using `fallow`
 - browser smoke test on the Vite-scaffolded app
-- minimal Storybook coverage for `App.tsx`
 - `npm run validate`
 - Storybook smoke validation when Storybook is part of the requested bootstrap
 - only after that, a separate routing-scheme pass driven by `GOAL.md`

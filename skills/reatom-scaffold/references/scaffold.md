@@ -20,7 +20,7 @@ By default:
 2. **As soon as the scaffold root exists, write `GOAL.md` as a checkbox todo list.** It should park the original request, list the later stages, and become the only roadmap after that point.
 3. **Once `GOAL.md` exists, ignore the original request until the checklist brings it back.** The current job is now the validation pipeline only.
 4. **Do not install feature dependencies first.** Install the requested validation/tooling dependencies immediately after the scaffold.
-5. **Do not write Reatom code before the bootstrap is green.** No routes, pages, forms, loaders, or state code before the validate pipeline, smoke test, Storybook/runtime harness, and post-validate reminder are in place.
+5. **Do not write Reatom code before the bootstrap is green.** No routes, pages, forms, loaders, or state code before the validate pipeline, browser smoke test, and post-validate reminder are in place.
 6. **If the Vite template ships ESLint, clean it up in favor of `oxlint` after the requested dependencies are installed** unless the user explicitly wants both.
 7. **Do not treat examples, demos, or standalone packages as automatic exceptions.** They teach by example, so the bootstrap quality bar often matters more, not less.
 8. **If the user gave target-path constraints, preserve them while still following the sequence.** For example, a standalone package inside `./examples/...` still starts with the scaffold step inside that directory.
@@ -37,12 +37,12 @@ Before substantial feature work, verify this gate explicitly:
 - [ ] `npm run typecheck` passes;
 - [ ] `npm run lint` passes;
 - [ ] browser smoke test passes;
-- [ ] Storybook smoke for `App.tsx` passes;
-- [ ] `npm run validate` is green.
+- [ ] `npm run validate` is green;
+- [ ] if Storybook was intentionally added, its smoke check passes.
 
 If any box is unchecked, the next task is still bootstrap work, not routing or feature work.
 
-A package install alone does not count. `oxlint`, `oxfmt`, `fallow`, and Storybook only matter if they are configured, reachable through scripts or documented commands, and actually executed.
+A package install alone does not count. `oxlint`, `oxfmt`, `fallow`, and any optional Storybook layer only matter if they are configured, reachable through scripts or documented commands, and actually executed.
 
 ## Table of contents
 
@@ -57,7 +57,7 @@ A package install alone does not count. `oxlint`, `oxfmt`, `fallow`, and Storybo
 - [Step 8 — npm scripts (`package.json`)](#step-8--npm-scripts-packagejson)
 - [Step 9 — Phase boundary: no Reatom code yet](#step-9--phase-boundary-no-reatom-code-yet)
 - [Step 10 — Vitest browser smoke test](#step-10--vitest-browser-smoke-test)
-- [Step 11 — Storybook](#step-11--storybook)
+- [Step 11 — Optional Storybook](#step-11--optional-storybook)
 - [Step 12 — Final validation run](#step-12--final-validation-run)
 - [After first green validate — routing scheme only](#after-first-green-validate--routing-scheme-only)
 - [Reading list for the next steps](#reading-list-for-the-next-steps)
@@ -116,7 +116,7 @@ Example:
   - If the Vite template ships ESLint, remove or neutralize it in favor of oxlint.
   - Add `validate` / `postvalidate` scripts.
   - Configure the installed tools.
-  - Add minimal browser + Storybook coverage for `App.tsx`.
+  - Add minimal browser coverage for the scaffolded `App.tsx`.
   - Make the pipeline pass on the Vite-scaffolded `src` without writing Reatom code yet.
 
 - [ ] Routing scheme
@@ -382,7 +382,7 @@ Do not add `@reatom/*`, route definitions, `src/setup.ts`, strict-context wiring
 That means:
 - keep `src/main.*` and `src/App.*` close to the Vite scaffold until `npm run validate` is green;
 - make the tooling pass on the scaffolded source instead of silently rewriting the app into a Reatom shell;
-- use Storybook and browser smoke tests against the current `App.tsx`, not against an early route tree;
+- use the browser smoke test against the current `App.tsx`, not against an early route tree;
 - let `postvalidate` echo `GOAL.md`, then follow its routing stage.
 
 Reatom runtime setup belongs to the next phase, not this one. After the first green pipeline, start the routing-scheme pass by reading [`../../reatom/references/features/routing/routes.md`](../../reatom/references/features/routing/routes.md) and introducing only placeholder routes/layouts whose `render` methods compose `outlet()`.
@@ -442,9 +442,11 @@ test('renders the initial page at root', async () => {
 
 Replace `My App` with the actual stable text for the generated landing page. Do not introduce Reatom-only testing helpers yet; this first pass is still validating the plain scaffold. If the project later needs meaningful Reatom unit tests beyond this browser smoke check, pull the `test` utility from the reusables registry (`npx jsrepo add test` after initializing jsrepo against [reatom/reusables](https://github.com/reatom/reusables)) during the routing/feature stage. See [`../../reatom/references/meta/reusables.md`](../../reatom/references/meta/reusables.md) for the wider catalog.
 
-## Step 11 — Storybook
+## Step 11 — Optional Storybook
 
-For this bootstrap flow, Storybook is part of the runtime validation harness, not just a design convenience. The point is to prove the generated app actually renders in a realistic browser environment on the first run. In this phase, keep it minimal and point it at the existing `App.tsx`. After the app is verified and the user wants a leaner surface area, offer to clean Storybook back out deliberately.
+Storybook is optional in this scaffold skill. Add it when the user asked for it, when the example is explicitly component-library oriented, or when you want a reusable isolated UI harness beyond the browser smoke test. If the task is a focused app/bootstrap request, it is valid to skip Storybook and keep the default pipeline smaller.
+
+When you do add Storybook, keep it minimal at first and point it at the existing `App.tsx`.
 
 **Read [`../../reatom/references/integrations/storybook.md`](../../reatom/references/integrations/storybook.md) in full before starting this step.** It covers the Reatom-specific parts that matter here: fresh frame per story, routed story URL ownership, optional MSW setup, browser-test integration, and pitfalls.
 
@@ -511,7 +513,6 @@ Before the final response, confirm all promised quality gates were both wired an
 - `npm run format:check` uses `oxfmt`
 - `npm run intel` uses `fallow`
 - browser smoke test passes on the Vite scaffold
-- Storybook coverage exists for `App.tsx`
 - `npm run validate` passes
 - Storybook smoke validation passes when Storybook is part of the requested bootstrap
 
@@ -522,7 +523,7 @@ If the user explicitly chose a lighter setup, say which gates were skipped and w
 npm run validate
 ```
 
-Also verify Storybook starts and renders the first story:
+If Storybook is part of the chosen bootstrap, also verify it starts and renders the first story:
 
 ```bash
 npx storybook dev --smoke-test
