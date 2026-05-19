@@ -32,7 +32,7 @@ Use this compact check before writing the first route file in a new app or after
 - `self.outlet()` returns an array of route children. Wrap or place it where an array is valid; do not hide duplicate matches with `outlet().at(0)`.
 - Declare `RouteChild` once for the target framework before expecting route output and outlets to type-check.
 - For the first post-bootstrap pass, keep routes as placeholders. Do not add loaders, forms, fake backend calls, persistence, UI-library shells, or product pages until the routing skeleton typechecks and validates.
-- For React roots, verify the installed context/provider exports before writing the root wrapper; do not guess bootstrap API names from memory.
+- For React roots, verify the context/provider shape from the bundled React reference first, then the local upstream Reatom source or package export surface if needed; do not guess bootstrap API names from memory or start by browsing compiled `node_modules` output.
 
 ## Basic routes
 

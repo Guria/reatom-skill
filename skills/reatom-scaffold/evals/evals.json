@@ -56,7 +56,7 @@
         },
         {
           "name": "root_bootstrap_verified",
-          "text": "The React root/provider seam is taken from the React reference or quick-reference first — including the strict-setup split (`src/setup.ts` with `clearStack()`, `context.start()`, dev-time logger wiring, imported first) and `<reatomContext.Provider value={frame}>` shape — and only then, if needed, verified against installed exports/source."
+          "text": "The React root/provider seam is taken from the React reference or quick-reference first — including the strict-setup split (`src/setup.ts` with `clearStack()`, `context.start()`, dev-time logger wiring, imported first) and `<reatomContext.Provider value={frame}>` shape — and only then, if needed, verified against the local upstream Reatom source or package export surface instead of defaulting to compiled `node_modules` output."
         }
       ],
       "files": []
@@ -124,11 +124,11 @@
     {
       "id": 6,
       "prompt": "A persisted theme switcher updates Reatom state, but the UI library theme does not actually change at runtime. The app uses a version-pinned provider API. Fix it and validate the result.",
-      "expected_output": "The agent verifies the provider control prop from current docs or installed types instead of guessing from memory, treats this as a provider-integration proof task, and validates the actual DOM/provider state change plus reload persistence in a real browser harness.",
+      "expected_output": "The agent verifies the provider control prop from current docs first, then installed types only if ambiguity remains, treats this as a provider-integration proof task, and validates the actual DOM/provider state change plus reload persistence in a real browser harness.",
       "assertions": [
         {
           "name": "provider_prop_revalidated",
-          "text": "The run re-checks the version-pinned UI library provider/control prop from docs or installed types instead of relying on memory."
+          "text": "The run re-checks the version-pinned UI library provider/control prop from docs first, then installed types only if ambiguity remains, instead of relying on memory."
         },
         {
           "name": "provider_dom_state_proved",
