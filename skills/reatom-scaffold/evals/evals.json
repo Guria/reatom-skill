@@ -3,7 +3,7 @@
   "evals": [
     {
       "id": 1,
-      "prompt": "Build a new Reatom dashboard-style example in the current empty folder. Use a version-pinned third-party UI component library. Demonstrate public/private routing, forms, actions, side effects, async fetches, persistence, error handling, fake backend delays, practical app structure, and idiomatic Reatom patterns.",
+      "prompt": "Build a new multi-page Reatom example in the current empty folder. Use a version-pinned third-party UI component library. Demonstrate public and gated routing, forms, actions, side effects, async fetches, persistence, error handling, fake backend delays, practical app structure, and idiomatic Reatom patterns.",
       "expected_output": "The agent treats this as a full greenfield bootstrap: reads scaffold overview/checklist, runs the scaffold, writes GOAL.md as the next normal project tool call, does not read routing/forms/persistence/React feature references before GOAL.md and a green validation baseline, installs/configures/runs validation tooling before Reatom runtime or UI-library feature work, keeps GOAL.md truthful when reporting phase progress, and carries strict setup/dev-time logger wiring forward into the routed phase plan.",
       "assertions": [
         {
@@ -43,7 +43,7 @@
     },
     {
       "id": 2,
-      "prompt": "The Vite + validation baseline is green and GOAL.md says routing scheme is next. Add the first Reatom routing skeleton for a React app, then continue toward the requested dashboard-style example.",
+      "prompt": "The Vite + validation baseline is green and GOAL.md says routing scheme is next. Add the first Reatom routing skeleton for a React app, then continue toward the requested multi-page example.",
       "expected_output": "The agent keeps the blue phase routing-only: installs only needed Reatom runtime/adapter packages, reads routing and React integration references, verifies root/provider exports before App.tsx/main.tsx, creates placeholder routes/layouts with outlet() composition in .tsx files and RouteChild declaration, validates the skeleton, and does not install/configure the UI library, loaders, forms, fake backend, persistence, or product pages until routing is green.",
       "assertions": [
         {
@@ -64,7 +64,7 @@
     {
       "id": 3,
       "prompt": "The routed skeleton is already green. Continue the Reatom app with one public entry page plus several protected pages at different top-level URLs, add a literal create route beside a dynamic `:id` route, and use at least one manually wired select or checkbox control.",
-      "expected_output": "The agent reads the routing and forms references before implementation, keeps guard ownership explicit, avoids sibling pathless guard redirects keyed to the negated match of another protected page, constrains dynamic `:id` routes when literal siblings like `new` exist, and wraps handwritten manual control handlers under strict setup.",
+      "expected_output": "The agent reads the routing and forms references before implementation, keeps guard ownership explicit, avoids sibling pathless guard redirects keyed to the negated match of another protected page, constrains dynamic `:id` routes when literal siblings like `new` exist, and wraps handwritten manual control handlers.",
       "assertions": [
         {
           "name": "pathless_guard_redirects_scoped",
@@ -76,34 +76,34 @@
         },
         {
           "name": "manual_control_handlers_wrapped",
-          "text": "Handwritten select/checkbox/raw-value control handlers that call form fields or other Reatom APIs are wrapped under strict setup instead of assuming `bindField` or the component library handled it."
+          "text": "Handwritten select/checkbox/raw-value control handlers that call form fields or other Reatom APIs are wrapped instead of assuming `bindField` or the component library handled it."
         }
       ],
       "files": []
     },
     {
       "id": 4,
-      "prompt": "The app already has a public login page and a protected dashboard shell. After login, the shell crashes with `ReatomError: missing async stack` because a plain React child component creates `wrap(...)` callbacks during render. Finish the feature and report it validated.",
-      "expected_output": "The agent treats this as a strict React boundary bug, reads the React/gotchas guidance, moves the `wrap(...)` creation into a reactive caller (`reatomComponent` or `useWrap`) instead of patching around the symptom, and proves the authenticated login -> private-shell path in a real browser harness instead of relying only on baseline validate.",
+      "prompt": "The app already has a public entry route and a gated application shell. After the gate opens and the shell renders, it crashes with `ReatomError: missing async stack` because a plain React child component creates `wrap(...)` callbacks during render. Finish the feature and report it validated.",
+      "expected_output": "The agent treats this as a React boundary bug, reads the React/gotchas guidance, moves the `wrap(...)` creation into a reactive caller (`reatomComponent` or `useWrap`) instead of patching around the symptom, and proves the gate-open runtime path into the shell in a real browser harness instead of relying only on baseline validate.",
       "assertions": [
         {
           "name": "plain_component_wrap_bug_named",
           "text": "The response identifies a plain React component creating `wrap(...)` during render as the likely bug class, not just a generic event-handler issue."
         },
         {
-          "name": "authenticated_shell_browser_proof",
-          "text": "The run proves the authenticated runtime path (for example login -> dashboard shell, plus logout when relevant) in a real browser harness and checks for missing async stack / ReatomError / TypeError output."
+          "name": "gate_open_shell_browser_proof",
+          "text": "The run proves the gate-open runtime path into the shell (plus the reverse/closed path when relevant) in a real browser harness and checks for missing async stack / ReatomError / TypeError output."
         },
         {
-          "name": "validate_not_enough_for_post_login_bug",
-          "text": "The run does not treat `npm run validate` alone as sufficient when the reported bug only appears after login or private-shell rendering."
+          "name": "validate_not_enough_for_gate_open_bug",
+          "text": "The run does not treat `npm run validate` alone as sufficient when the reported bug only appears after a gate opens or the application shell renders."
         }
       ],
       "files": []
     },
     {
       "id": 5,
-      "prompt": "A private dashboard app already validates, but users cannot navigate from `/dashboard` to sibling protected pages like `/users` or `/settings` because a default/index redirect keeps reclaiming ownership. Fix it and prove the behavior.",
+      "prompt": "A gated multi-page app already validates, but users cannot navigate from one default gated page to sibling gated pages because a default/index redirect keeps reclaiming ownership. Fix it and prove the behavior.",
       "expected_output": "The agent recognizes the high-risk `path: ''` / pathless redirect pattern, adds an explicit pathname/ownership guard, verifies unaffected sibling URLs in a real browser harness, and does not stop at a root smoke test or typecheck-only proof.",
       "assertions": [
         {
@@ -111,8 +111,8 @@
           "text": "The fix constrains the broad default redirect with an explicit pathname or equivalent ownership check instead of leaving it keyed to broad route matches alone."
         },
         {
-          "name": "protected_sibling_navigation_proved",
-          "text": "The proof covers navigation between protected sibling URLs with URL assertions and visible page-content assertions, not only the default page."
+          "name": "peer_route_navigation_proved",
+          "text": "The proof covers navigation between sibling or peer gated URLs with URL assertions and visible page-content assertions, not only the default page."
         },
         {
           "name": "nearby_urls_rechecked",
@@ -123,16 +123,16 @@
     },
     {
       "id": 6,
-      "prompt": "A persisted theme switcher updates Reatom state, but the UI library theme does not actually change at runtime. The app uses a version-pinned provider API. Fix it and validate the result.",
-      "expected_output": "The agent verifies the provider control prop from current docs first, then installed types only if ambiguity remains, treats this as a provider-integration proof task, and validates the actual DOM/provider state change plus reload persistence in a real browser harness.",
+      "prompt": "A persisted provider-driven setting updates Reatom state, but the host-visible provider effect does not actually change at runtime. The app uses a version-pinned provider API. Fix it and validate the result.",
+      "expected_output": "The agent verifies the provider control prop from current docs first, then installed types only if ambiguity remains, treats this as a provider-integration proof task, and validates the actual host-visible provider effect plus reload persistence in a real browser harness.",
       "assertions": [
         {
           "name": "provider_prop_revalidated",
           "text": "The run re-checks the version-pinned UI library provider/control prop from docs first, then installed types only if ambiguity remains, instead of relying on memory."
         },
         {
-          "name": "provider_dom_state_proved",
-          "text": "The proof checks real DOM/provider evidence of the theme change (for example `html[data-mantine-color-scheme]`) rather than only atom state or a passing build."
+          "name": "provider_host_state_proved",
+          "text": "The proof checks real DOM/provider evidence of the controlled effect (for example a DOM attribute or visible provider-owned state change) rather than only atom state or a passing build."
         },
         {
           "name": "persistence_reload_proved",

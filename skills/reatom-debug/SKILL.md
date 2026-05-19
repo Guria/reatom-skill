@@ -43,18 +43,18 @@ Do not widen scope before you can name the failing layer.
 
 ### 2. Identify the context style
 
-Determine whether the project is using:
+Determine whether the project actually uses the default strict setup or an existing-code deviation from it:
 
-- the default global context, or
-- strict setup with `clearStack()` + `context.start()`.
+- strict setup with `clearStack()` + `context.start()`, or
+- the default global context as a compatibility path.
 
-Many Reatom debugging decisions depend on that answer. Do not add or remove `clearStack()` casually just to quiet an error.
+Many Reatom debugging decisions depend on that answer. Assume strict setup is intended unless the repo clearly proves otherwise, and do not add or remove `clearStack()` casually just to quiet an error.
 
 ### 3. Verify observability before deep surgery
 
 For app/runtime debugging, inspect the earliest setup import first.
 
-If the project is using greenfield-style strict setup, verify whether development-time logging is wired there before doing broader rewrites:
+In the default strict setup, verify whether development-time logging is wired there before doing broader rewrites. If the repo proves it uses a different context style, adapt without treating that deviation as the planning default:
 
 - `connectLogger()` should be connected in development from the earliest setup import;
 - that setup import should stay first in the app entry;

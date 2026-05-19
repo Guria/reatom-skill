@@ -3,8 +3,8 @@
   "evals": [
     {
       "id": 1,
-      "prompt": "My app throws 'missing async stack' when I change a UI control. We use strict setup. Please debug it.",
-      "expected_output": "The agent identifies strict-context callback boundaries as the likely failing layer, checks whether observability/setup is in place first (including dev-time connectLogger in the earliest setup import), inspects the handwritten callback for missing wrap(), and proves the fix with the narrowest repro or test command instead of removing clearStack.",
+      "prompt": "My app throws 'missing async stack' when I change a UI control. Please debug it.",
+      "expected_output": "The agent identifies callback boundaries as the likely failing layer, checks whether observability/setup is in place first (including dev-time connectLogger in the earliest setup import), inspects the handwritten callback for missing wrap(), and proves the fix with the narrowest repro or test command instead of removing clearStack.",
       "assertions": [
         {
           "name": "connect_logger_preflight",
@@ -40,7 +40,7 @@
     {
       "id": 3,
       "prompt": "After adding clearStack to tests, several Reatom tests fail with missing async stack. Debug the test setup.",
-      "expected_output": "The agent matches the suite's strict context style, checks for context.start() or a reusable strict test helper, and repairs the test harness or host callback boundary instead of backing out strict setup blindly.",
+      "expected_output": "The agent checks for context.start() or a reusable test helper, repairs the test harness or host callback boundary, and does not respond by blindly backing out the setup.",
       "assertions": [
         {
           "name": "strict_test_harness_checked",

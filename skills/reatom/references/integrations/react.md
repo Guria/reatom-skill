@@ -9,7 +9,7 @@
 
 For greenfield Reatom pages, layouts, and examples, prefer `reatomComponent` as the default style unless the user or existing codebase has already chosen hook-style integration. It keeps the mental model uniform: read atoms/computeds/routes directly during render, and use `wrap(...)` for ordinary handlers inside that reactive boundary. Reach for `useAtom`/`useAction` when matching an established hook-style codebase or when you intentionally need hook-level subscription/control.
 
-Wrap any React component that reads atom values with `reatomComponent`. Under strict setup (`clearStack()`), extend that rule to components that create Reatom callbacks during render too — for example `wrap(...)` handlers, route checks, or other render-time reads of Reatom primitives. `reatomComponent` establishes the reactive boundary the render needs, and the component re-renders when the read atoms change.
+Wrap any React component that reads atom values with `reatomComponent`. Extend that rule to components that create Reatom callbacks during render too — for example `wrap(...)` handlers, route checks, or other render-time reads of Reatom primitives. `reatomComponent` establishes the reactive boundary the render needs, and the component re-renders when the read atoms change.
 
 **Fast red-flag checklist for strict React work:**
 - if a plain function component reads atoms/routes during render, convert it to `reatomComponent` or use hooks consistently;
@@ -28,7 +28,7 @@ Components that call atom getters must be wrapped with `reatomComponent`; this a
 
 ### Practical audit rule
 
-When editing or generating React UI under strict setup, treat this as a mechanical check:
+When editing or generating React UI, treat this as a mechanical check:
 
 A component should be `reatomComponent` if its render path does any of these:
 
@@ -58,7 +58,7 @@ const LegacyUnmountAbort = reatomComponent(
 
 [Source: `useFrame` in `reatomComponent.ts`](https://github.com/reatom/reatom/blob/v1001/packages/react/src/reatomComponent.ts)
 
-> **Bootstrap wiring checkpoint:** before writing `main.tsx` / `App.tsx`, re-read this section and the App Setup note in `references/meta/quick-reference.md`. For greenfield strict setup, follow the same split documented there: create/export the frame in `src/setup.ts`, keep `import './setup'` first in the entrypoint, and pass that exported frame to `<reatomContext.Provider>`. If the reference is genuinely ambiguous for the installed version, validate against the local upstream Reatom source or the package export surface rather than starting in compiled `node_modules` output.
+> **Bootstrap wiring checkpoint:** before writing `main.tsx` / `App.tsx`, re-read this section and the App Setup note in `references/meta/quick-reference.md`. Follow the default strict-setup split documented there: create/export the frame in `src/setup.ts`, keep `import './setup'` first in the entrypoint, and pass that exported frame to `<reatomContext.Provider>`. If the reference is genuinely ambiguous for the installed version, validate against the local upstream Reatom source or the package export surface rather than starting in compiled `node_modules` output.
 
 Before writing the first React root/bootstrap file, verify the exact context/frame creation API from the setup quick reference first, then the local upstream Reatom source or package export surface if needed. Do not invent names from memory such as `createCtx` unless you have verified they exist in the installed version. The riskiest point in a fresh app is the seam between framework root code and Reatom's frame/provider.
 
@@ -66,7 +66,7 @@ In the v1000+ source, `reatomContext` is `React.createContext<null | Frame>(null
 
 `useFrame()` reads `reatomContext` and falls back to `STACK[0]`; if neither exists, it throws that the root/provider is not set. In React structure terms, this means the first component that reads atoms must render **under** `<reatomContext.Provider>` (or another established frame source). Under strict setup, avoid making the top-level wrapper both provide the frame and read atoms before the provider exists.
 
-For greenfield strict setup, prefer this shape:
+The default app setup shape is:
 
 ```tsx
 // src/setup.ts
@@ -99,9 +99,9 @@ const AppRoot = reatomComponent(() => {
 })
 ```
 
-If the project already uses the default global context instead of strict setup, preserve that style; do not add or remove `clearStack()` casually. Avoid a top-level component that reads atoms or routes first and only later returns the provider wrapper. If the render needs Reatom state, split the file into a plain provider wrapper and an inner `reatomComponent` root.
+Only preserve the default global context when editing an existing codebase that already depends on it; do not add or remove `clearStack()` casually just to quiet behavior. The planning default is still strict setup. Avoid a top-level component that reads atoms or routes first and only later returns the provider wrapper. If the render needs Reatom state, split the file into a plain provider wrapper and an inner `reatomComponent` root.
 
-For greenfield strict setup and active debugging, treat missing dev-time logger wiring as an incomplete bootstrap. If runtime behavior is still surprising, first verify that the logger is still connected before broad rewrites or hook-style detours.
+In the default strict setup and during active debugging, treat missing dev-time logger wiring as an incomplete bootstrap. If runtime behavior is still surprising, first verify that the logger is still connected before broad rewrites or hook-style detours.
 
 ## bindField
 
@@ -202,7 +202,7 @@ For callback wrapping, the default rule is:
 - **inside `reatomComponent`, plain `wrap(...)` is often enough for ordinary event handlers**;
 - **inside hook-style components, or whenever stable callback identity matters, use `useWrap(...)`**.
 
-This distinction matters because `wrap()` captures the current frame at call time. In `reatomComponent`, render already runs inside a Reatom boundary, so creating `wrap(...)` handlers during render is normally fine. In a plain function component under strict setup, render-time `wrap(...)` can capture the wrong context; `useWrap(...)` fixes that by binding to the frame through React hooks.
+This distinction matters because `wrap()` captures the current frame at call time. In `reatomComponent`, render already runs inside a Reatom boundary, so creating `wrap(...)` handlers during render is normally fine. In a plain function component, render-time `wrap(...)` can capture the wrong context; `useWrap(...)` fixes that by binding to the frame through React hooks.
 
 Both styles are valid. `reatomComponent` is more concise when reading many atoms; hook APIs give more control and may feel more natural in codebases that prefer explicit hook-style composition. Check existing components to see which pattern the project already uses and follow it. In a greenfield example or newly generated app with no existing convention, start with `reatomComponent`; if you choose hooks, keep the entire file in hook semantics and treat hook results as plain values.
 
@@ -228,7 +228,7 @@ For other framework adapters substitute the renderable element type (`VNode`, `T
 
 ### Wrap callbacks that cross back into Reatom
 
-UI event handlers, timers, and any host-scheduled callback run in a fresh execution context with no active reactive frame. Under `clearStack()` the first atom read or write inside such a callback throws `missing async stack`; wrapping the callback boundary with `wrap()` re-enters the reactive system. The principle is independent of which framework or which event names are involved — it applies wherever a function leaves the current synchronous frame and is later re-invoked by the host.
+UI event handlers, timers, and any host-scheduled callback run in a fresh execution context with no active reactive frame. The first atom read or write inside such a callback can throw `missing async stack`; wrapping the callback boundary with `wrap()` re-enters the reactive system. The principle is independent of which framework or which event names are involved — it applies wherever a function leaves the current synchronous frame and is later re-invoked by the host.
 
 ```tsx
 // ❌ handler runs outside any frame after the host calls it back
@@ -239,9 +239,9 @@ UI event handlers, timers, and any host-scheduled callback run in a fresh execut
 
 Adapter helpers that *produce* callbacks for you (form binders, link/navigation generators, async sampling primitives like `take`/`onEvent`) wrap internally so you don't double-wrap. Callbacks you write by hand — custom buttons, link-style anchors, `setTimeout`, `requestAnimationFrame`, observers, message-port handlers, or any UI control whose `onChange` hands you a raw value — do not. The rule of thumb: if the callback was constructed by you and reads or writes a Reatom primitive, it needs `wrap()`.
 
-The place where you call `wrap(...)` matters too. `wrap()` captures the current Reatom frame at call time, so creating wrapped callbacks directly inside JSX is only safe when that render already runs inside a reactive boundary such as `reatomComponent`. In a plain function component, `onClick={wrap(doSomething)}` or `const handleClick = wrap(doSomething)` can fail under `clearStack()` because the `wrap(...)` call itself happens during a non-Reatom React render. Fix that by converting the component to `reatomComponent`, using `useWrap(...)`, or by pre-wrapping the callback in a reactive caller and passing the wrapped function down as a prop.
+The place where you call `wrap(...)` matters too. `wrap()` captures the current Reatom frame at call time, so creating wrapped callbacks directly inside JSX is only safe when that render already runs inside a reactive boundary such as `reatomComponent`. In a plain function component, `onClick={wrap(doSomething)}` or `const handleClick = wrap(doSomething)` can fail because the `wrap(...)` call itself happens during a non-Reatom React render. Fix that by converting the component to `reatomComponent`, using `useWrap(...)`, or by pre-wrapping the callback in a reactive caller and passing the wrapped function down as a prop.
 
-A second strict-setup trap is **creating `wrap()` lazily at event time** instead of render time. This is still too late:
+A second trap is **creating `wrap()` lazily at event time** instead of render time. This is still too late:
 
 ```tsx
 // ❌ Wrong — the event handler runs first, then tries to create a wrapped callback
@@ -260,7 +260,7 @@ In a Reatom app, React should render and bind atoms; it should not own model inv
 React built-in hooks are fine for isolated view/DOM integration: refs, focus, measurement, portals, media-query/read-only browser data, third-party UI-library hooks, memoizing expensive view calculations, stable DOM callbacks, or ephemeral widget state that does not affect application behavior. This warning is about React owning or synchronizing application state; it is not a ban on `@reatom/react` adapter APIs such as `reatomComponent`, `useAtom`, or `useWrap` when a codebase intentionally uses hook-style integration.
 
 - Do not use React `useEffect`/`useState` to synchronize or mutate Reatom model state. Put state transitions in atoms, actions, computeds, or Reatom hooks/extensions.
-- Components that read Reatom primitives during render must be wrapped with `reatomComponent`; this includes extracted child/row helpers, navigation items, and root/page components. Under `clearStack()`, treat render-time `wrap(...)` creation the same way.
+- Components that read Reatom primitives during render must be wrapped with `reatomComponent`; this includes extracted child/row helpers, navigation items, and root/page components. Treat render-time `wrap(...)` creation the same way.
 - **Passing atoms as props is perfectly valid** — unlike Redux where passing state to children is sometimes discouraged, Reatom atoms are first-class primitives. Passing them as props (e.g., `<CheckboxField field={form.fields.rememberMe} />`) is the standard way to build abstract, reusable components and avoid prop drilling of values.
 
 ## Initial render and instant async completion

@@ -294,19 +294,19 @@ await wrap(fetch(url)).then(res => res.json())  // chain after wrap
 fetch(url).then(res => doSomethingWithAtoms())  // missing wrap around atom work
 ```
 
-## App Setup — context options
+## App Setup — default strict context
 
-Reatom creates a default global context on import. `clearStack()` is optional and should be treated as an **opinionated strict mode**, not a Reatom requirement. For full greenfield production scaffolds, the setup guide recommends `clearStack()` + `context.start()` in the earliest setup import and passing the resulting frame to adapters such as `<reatomContext.Provider>`.
+Reatom creates a default global context on import, but the skill default is strict setup: use `clearStack()` + `context.start()` in the earliest setup import and pass the resulting frame to adapters such as `<reatomContext.Provider>`. Treat the default global context as a compatibility path for existing code or targeted tests, not as the planning default.
 
-When a project uses strict setup, `src/setup.ts` is runtime-critical: import it as soon as possible, before any atoms, routes, or components are imported, and keep `import './setup'` as the first import in app entrypoints. Configure linters, formatters, and import-sorting/organize-import tools so they do not move that side-effect import into the middle of the import block.
+With strict setup, `src/setup.ts` is runtime-critical: import it as soon as possible, before any atoms, routes, or components are imported, and keep `import './setup'` as the first import in app entrypoints. Configure linters, formatters, and import-sorting/organize-import tools so they do not move that side-effect import into the middle of the import block.
 
-For greenfield apps and debugging tasks, default to enabling `connectLogger()` in that same earliest setup import during development and keep it on until the risky behavior is proven correct. It traces Reatom atoms/actions/computeds with useful call stacks and pairs with the built-in `log` action for source-level debug points that are silent in production. Keep it behind a dev-only guard (`import.meta.env.MODE === 'development'` or equivalent) and register it before feature atoms/actions are created so it observes the app from startup. The setup guide contains the canonical snippet.
+Default to enabling `connectLogger()` in that same earliest setup import during development and keep it on until the risky behavior is proven correct. It traces Reatom atoms/actions/computeds with useful call stacks and pairs with the built-in `log` action for source-level debug points that are silent in production. Keep it behind a dev-only guard (`import.meta.env.MODE === 'development'` or equivalent) and register it before feature atoms/actions are created so it observes the app from startup. The setup guide contains the canonical snippet.
 
-Use the project’s existing context style when editing an app. Do not add or remove `clearStack()` casually: adding it makes host callbacks require `wrap()`, removing it weakens isolation and can hide missing async boundaries. For greenfield bootstrap defaults and full setup code, use the sibling `reatom-scaffold` skill.
+When editing an existing app, preserve the context style the repo already uses; do not add or remove `clearStack()` casually. Adding it makes host callbacks require `wrap()`, removing it weakens isolation and can hide missing async boundaries. But when the skill is teaching or choosing a setup, assume strict context by default and use the sibling `reatom-scaffold` skill for the full bootstrap shape.
 
 After `clearStack()`, module scope must stay declarative: create primitives and attach declaration-time extensions, but do not read/write atoms or install live observers at import time. Top-level `effect()` and equivalent live subscribers are the common trap.
 
-Boundary callbacks need a frame. UI events, timers, third-party callbacks, promise continuations, and anything scheduled by the host enter a fresh context. Under strict setup, treat handwritten callbacks that read/write atoms or call Reatom actions as `wrap()` boundaries. This is especially easy to miss with third-party UI controls whose `onChange`/`onClick` callbacks pass raw values or DOM events. Adapter-generated handlers are usually already wrapped; functions you write by hand are not.
+Boundary callbacks need a frame. UI events, timers, third-party callbacks, promise continuations, and anything scheduled by the host enter a fresh context. Treat handwritten callbacks that read/write atoms or call Reatom actions as `wrap()` boundaries. This is especially easy to miss with third-party UI controls whose `onChange`/`onClick` callbacks pass raw values or DOM events. Adapter-generated handlers are usually already wrapped; functions you write by hand are not.
 
 For one-shot side effects after a successful action (navigate, toast, focus), prefer `await wrap(action(...))` then act on the returned value, put the side effect inside the action body, or attach it with a source-level hook. Do not create module-level `action.subscribe(...)` / `effect()` bridges after `clearStack()` just to wait for one command.
 

@@ -22,7 +22,7 @@ Before editing code, capture:
 
 1. exact error text;
 2. smallest repro path or failing command;
-3. current context style (default global context vs `clearStack()` strict setup);
+3. current context style (default strict setup with `clearStack()` vs an existing-code global-context compatibility path);
 4. whether the project already has a dedicated setup import / test helper.
 
 Do not start with broad rewrites. Reatom bugs are usually boundary bugs: host callback, provider seam, route owner, loader invalidation, or test harness.
@@ -61,7 +61,7 @@ Checks:
 - setup import exists and stays first;
 - logger setup is dev-only;
 - logger is connected before feature atoms/routes are imported;
-- if the codebase intentionally does not use strict setup, preserve that choice and adapt the debug plan.
+- if the codebase intentionally does not use strict setup, preserve that existing choice and adapt the debug plan — but do not treat non-strict setup as the planning default.
 
 Optional trace helper from upstream source:
 

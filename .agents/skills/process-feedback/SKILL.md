@@ -67,6 +67,7 @@ When a feedback session arrives:
 7. **Propose a durable change.** Name the target file/section and the preventive mechanism.
 8. **Generalize wording before editing.** Do not paste model names, project paths, one-off library names, or incidental app details into distributed skill docs unless the topic truly belongs there.
 9. **Add or update evals when the failure is reproducible.** Evals should describe the failure pattern generically enough to catch future regressions.
+10. **Audit nearby skills for wording leaks, not only the obvious target file.** Especially check whether scaffold-only artifacts leaked into non-scaffold skills, whether strict setup was phrased as optional/default-inconsistent, whether `wrap()` rules were written as if they apply only in some modes, and whether wording nudges the model toward compiled `node_modules` exploration instead of repo references/docs/source.
 
 ## Misconception taxonomy
 
@@ -140,10 +141,14 @@ Before editing a distributed skill/reference/eval file:
 3. Keep text native to the document. It should read like it was designed for the skill, not pasted from a single current transcript.
 4. Prefer generic terms: "version-pinned UI library", "routed Browser Mode test", "one-off side effect", "runtime provider API".
 5. Avoid leaking one-off session specifics: model names, local paths, app names, commit hashes, package choices that are not the actual topic.
-6. Use `edit` for precise changes and `write` only for new local files or complete rewrites.
-7. Validate JSON eval files after editing.
-8. If `.md` links were added or changed, verify sibling reference links resolve from the file that contains them; nested reference docs should not quietly rely on skill-root-relative `references/...` paths.
-9. Do not run git-mutating commands. Report changed paths and ask for review.
+6. Check for artifact leakage across skills: scaffold-only artifacts such as `GOAL.md`, `postvalidate`, or a concrete `npm run validate` command should not silently become assumptions in general/debug/feedback skills.
+7. Check for default-posture drift: strict setup is the default teaching/setup mode, so wording should not make it sound optional or deferred unless preserving an existing codebase.
+8. Check `wrap()` guidance for mode-gated wording. Prefer direct rules like "handwritten callbacks need `wrap()`" over text that implies `wrap()` only matters in some special setup.
+9. Check whether instructions nudge the model toward low-signal artifact spelunking (compiled `node_modules`, screenshots, generated output) when docs, repo references, or local source would be a better first authority.
+10. Use `edit` for precise changes and `write` only for new local files or complete rewrites.
+11. Validate JSON eval files after editing.
+12. If `.md` links were added or changed, verify sibling reference links resolve from the file that contains them; nested reference docs should not quietly rely on skill-root-relative `references/...` paths.
+13. Do not run git-mutating commands. Report changed paths and ask for review.
 
 ## Where fixes usually belong
 

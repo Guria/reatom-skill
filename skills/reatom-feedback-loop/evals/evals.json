@@ -23,7 +23,7 @@
     },
     {
       "id": 2,
-      "prompt": "A previous Reatom dashboard run used useAtom throughout new pages, then called hook-return values like isOpen(), isReady(), selectedEntity(), tried route.render assignment, guessed a version-pinned UI library's APIs, and added casts/search-replace rewrites while typecheck was red. Analyze misconceptions and suggest skill improvements.",
+      "prompt": "A previous Reatom app run used useAtom throughout new pages, then called hook-return values like isOpen(), isReady(), selectedEntity(), tried route.render assignment, guessed a version-pinned UI library's APIs, and added casts/search-replace rewrites while typecheck was red. Analyze misconceptions and suggest skill improvements.",
       "expected_output": "The agent categorizes misconceptions by mental model: route render mutability, hook-return plain values vs atom getters, form binding with third-party controls, async data shape, UI-library guessing, and bad recovery strategy. It proposes specific improvements to routing, React, forms, scaffold phase gates, and feedback-loop evals.",
       "assertions": [
         {
@@ -108,7 +108,7 @@
       "assertions": [
         {
           "name": "wrap_timing_called_out",
-          "text": "The response distinguishes render-time wrap creation from the still-broken event-time pattern `() => wrap(...)()` under strict setup."
+          "text": "The response distinguishes render-time wrap creation from the still-broken event-time pattern `() => wrap(...)()`."
         },
         {
           "name": "connect_logger_default_strengthened",

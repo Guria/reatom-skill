@@ -55,6 +55,10 @@ For every review pass, check these in order:
    - references are clearly routed from `SKILL.md`
    - evals are realistic and generic enough to catch regressions
    - new wording strengthens execution, not just explanation
+   - scaffold-only artifacts (`GOAL.md`, `postvalidate`, concrete `npm run validate`) do not leak into non-scaffold skills unless the file is explicitly about scaffold process
+   - strict setup remains the default teaching/setup posture rather than sounding optional or deferred
+   - `wrap()` rules read as direct callback-boundary guidance, not as something that only matters in a special mode
+   - instructions do not casually push the model toward compiled `node_modules` output when repo docs/source or package export surfaces would be better first checks
 
 3. **Does the text sound native to the target file**
    - rewrite anything that reads like session spillover, pasted analysis, or current-context contamination
@@ -129,6 +133,9 @@ Use this checklist before reporting back:
 - [ ] claim validation done against local Reatom source when needed
 - [ ] wording cleaned of session-specific leakage
 - [ ] no unrelated library/project-only details left behind
+- [ ] scaffold-only artifacts not leaked into general/debug/feedback skills
+- [ ] strict-default posture preserved where the skill teaches setup/runtime rules
+- [ ] `wrap()` guidance is mode-agnostic
 - [ ] JSON parsed if edited
 - [ ] sibling reference-file `.md` links validated when docs changed
 - [ ] no git-mutating commands run
