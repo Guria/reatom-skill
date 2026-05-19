@@ -80,6 +80,66 @@
         }
       ],
       "files": []
+    },
+    {
+      "id": 4,
+      "prompt": "The app already has a public login page and a protected dashboard shell. After login, the shell crashes with `ReatomError: missing async stack` because a plain React child component creates `wrap(...)` callbacks during render. Finish the feature and report it validated.",
+      "expected_output": "The agent treats this as a strict React boundary bug, reads the React/gotchas guidance, moves the `wrap(...)` creation into a reactive caller (`reatomComponent` or `useWrap`) instead of patching around the symptom, and proves the authenticated login -> private-shell path in a real browser harness instead of relying only on baseline validate.",
+      "assertions": [
+        {
+          "name": "plain_component_wrap_bug_named",
+          "text": "The response identifies a plain React component creating `wrap(...)` during render as the likely bug class, not just a generic event-handler issue."
+        },
+        {
+          "name": "authenticated_shell_browser_proof",
+          "text": "The run proves the authenticated runtime path (for example login -> dashboard shell, plus logout when relevant) in a real browser harness and checks for missing async stack / ReatomError / TypeError output."
+        },
+        {
+          "name": "validate_not_enough_for_post_login_bug",
+          "text": "The run does not treat `npm run validate` alone as sufficient when the reported bug only appears after login or private-shell rendering."
+        }
+      ],
+      "files": []
+    },
+    {
+      "id": 5,
+      "prompt": "A private dashboard app already validates, but users cannot navigate from `/dashboard` to sibling protected pages like `/users` or `/settings` because a default/index redirect keeps reclaiming ownership. Fix it and prove the behavior.",
+      "expected_output": "The agent recognizes the high-risk `path: ''` / pathless redirect pattern, adds an explicit pathname/ownership guard, verifies unaffected sibling URLs in a real browser harness, and does not stop at a root smoke test or typecheck-only proof.",
+      "assertions": [
+        {
+          "name": "default_redirect_ownership_guarded",
+          "text": "The fix constrains the broad default redirect with an explicit pathname or equivalent ownership check instead of leaving it keyed to broad route matches alone."
+        },
+        {
+          "name": "protected_sibling_navigation_proved",
+          "text": "The proof covers navigation between protected sibling URLs with URL assertions and visible page-content assertions, not only the default page."
+        },
+        {
+          "name": "nearby_urls_rechecked",
+          "text": "The run rechecks unaffected sibling/default/deeper child URLs before declaring the routing fix done."
+        }
+      ],
+      "files": []
+    },
+    {
+      "id": 6,
+      "prompt": "A persisted theme switcher updates Reatom state, but the UI library theme does not actually change at runtime. The app uses a version-pinned provider API. Fix it and validate the result.",
+      "expected_output": "The agent verifies the provider control prop from current docs or installed types instead of guessing from memory, treats this as a provider-integration proof task, and validates the actual DOM/provider state change plus reload persistence in a real browser harness.",
+      "assertions": [
+        {
+          "name": "provider_prop_revalidated",
+          "text": "The run re-checks the version-pinned UI library provider/control prop from docs or installed types instead of relying on memory."
+        },
+        {
+          "name": "provider_dom_state_proved",
+          "text": "The proof checks real DOM/provider evidence of the theme change (for example `html[data-mantine-color-scheme]`) rather than only atom state or a passing build."
+        },
+        {
+          "name": "persistence_reload_proved",
+          "text": "When the setting is meant to persist, the validation includes a reload or equivalent persistence proof rather than only an in-memory toggle."
+        }
+      ],
+      "files": []
     }
   ]
 }

@@ -11,6 +11,11 @@ For greenfield Reatom pages, layouts, and examples, prefer `reatomComponent` as 
 
 Wrap any React component that reads atom values with `reatomComponent`. Under strict setup (`clearStack()`), extend that rule to components that create Reatom callbacks during render too — for example `wrap(...)` handlers, route checks, or other render-time reads of Reatom primitives. `reatomComponent` establishes the reactive boundary the render needs, and the component re-renders when the read atoms change.
 
+**Fast red-flag checklist for strict React work:**
+- if a plain function component reads atoms/routes during render, convert it to `reatomComponent` or use hooks consistently;
+- if a plain function component creates `wrap(...)` handlers during render, that is the same bug class — pre-wrap in a reactive caller or use `useWrap(...)`;
+- if a runtime failure appears after login/navigation rather than at first paint, prove that exact browser path before treating `npm run validate` as sufficient.
+
 ```tsx
 import { reatomComponent } from '@reatom/react'
 

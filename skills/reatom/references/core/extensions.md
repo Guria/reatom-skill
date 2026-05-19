@@ -44,6 +44,8 @@ ReatomError: status is turned off by default, you need to activate it explicitly
 
 To enable status tracking, pass `{ status: true }` to `withAsyncData()` or `withAsync()`:
 
+`withAsync()` tracks pending/error/status for async commands, but it does **not** add a `.data()` atom. If callers need the current resource value via `.data()` or `status.data`, model it with `withAsyncData()` instead.
+
 ```typescript
 const list = computed(async () => {
   return await wrap(api.getList())

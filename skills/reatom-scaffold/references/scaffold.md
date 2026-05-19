@@ -481,13 +481,42 @@ test('renders the initial page at root', async () => {
 
 Replace `My App` with the actual stable text for the generated landing page. Keep the assertion meaningful: checking only that `#root` exists, that React created an empty wrapper, or that no exception was thrown is a false pass. The smoke test should prove visible app content rendered.
 
-This entrypoint-import smoke test is appropriate for the single plain-scaffold bootstrap check. Do not reuse it as the general pattern for multiple routed Browser Mode tests: repeated `import('../main')` relies on app-entry side effects and module caching, so later route tests should mount the app or route shell directly with a fresh framework root per test and clean it up afterwards. Once routes/loaders/providers are involved, do not assume two `requestAnimationFrame` waits are enough either — prefer waiting for visible route content or another concrete settled signal rather than asserting immediately on injected styles or an empty shell.
+This entrypoint-import smoke test is appropriate for the single plain-scaffold bootstrap check. Do not reuse it as the general pattern for multiple routed/auth/provider Browser Mode tests: repeated `import('../main')` relies on app-entry side effects and module caching, so later route tests should mount the app or route shell directly with a fresh framework root per test and clean it up afterwards, or use direct Playwright against a running dev server when that is simpler. Once routes/loaders/providers are involved, do not assume two `requestAnimationFrame` waits are enough either — prefer waiting for visible route content or another concrete settled signal rather than asserting immediately on injected styles or an empty shell.
 
 As soon as the simple route tree exists, extend the browser harness from a root smoke check to route-navigation checks: mount the routed app, drive the URLs the skeleton owns, and assert visible route content. That is the runtime proof for route ownership, outlet composition, and setup wiring. Keep these checks aligned with the real route tree as it evolves instead of leaving them frozen at the placeholder stage.
 
-For routed browser tests, capture `console.error`. Unexpected `AbortError`, `missing async stack`, or `ReatomError` output during ordinary navigation is a sign that setup or route ownership still needs attention, so do not ignore it without proving it is expected for that flow.
+For routed browser tests, capture `console.error` and `pageerror`/uncaught runtime failures when the harness supports it. Unexpected `AbortError`, `missing async stack`, `ReatomError`, or `TypeError` output during ordinary navigation is a sign that setup, ownership, or provider wiring still needs attention, so do not ignore it without proving it is expected for that flow.
 
-During scaffold, prioritize these route-navigation browser checks over broader business-logic test expansion. Add finer-grained behavioral tests when the user explicitly asks for them or when a specific invariant is risky enough to justify the extra surface.
+Do not stop at a generic "browser test exists" milestone. Upgrade the proof matrix as the app gains new runtime seams:
+
+1. **Baseline validate phase** — the single root smoke test from this step.
+2. **Routing-skeleton phase** — prove route ownership with URL assertions, visible placeholder content, and console/error capture.
+3. **First gated-route phase** — when access to a route depends on session state, onboarding, role, feature flags, or any other gate, prove at least one gate-closed path and one gate-open path through the app's real source of truth.
+4. **First multi-owner navigation phase** — prove navigation between at least two sibling or peer URLs owned by different route nodes, with URL and visible-content assertions. This is the check that catches sticky `path: ''` / pathless redirects and other over-broad owners.
+5. **First provider/persistence phase** — prove the provider-controlled host-visible state actually changes (DOM attribute, visible layout/style change, text/content switch, etc.) and survives reload when persistence is part of the feature.
+
+`npm run validate` is not sufficient if it never exercises the runtime path that currently matters. When the reported bug only appears after a gate change, navigation change, or provider/state integration, add or rerun the browser proof for that exact path before calling the feature fixed.
+
+### Focused browser-test recipe
+
+Prefer one focused browser test per runtime seam instead of a giant end-to-end file unless the user explicitly wants the full journey.
+
+Each focused test should:
+- name the exact seam under test (route ownership, gated access, provider effect, or persistence restore);
+- start from the app's real boundary for that seam (concrete URL, real persisted state shape, real gate source, provider-owned UI state, etc.);
+- perform one visible action;
+- assert both owner/state change and visible UI change;
+- capture and fail on runtime errors;
+- have a narrow rerun command that is reported after edits.
+
+Recommended focused seam types:
+
+- **Route-owner test** — prove one navigation or redirect ownership change with URL + visible-content assertions.
+- **Gate-state test** — prove one gate-closed path and one gate-open path through the app's real source of truth. Keep this generic: auth/session is one common case, not the only one.
+- **Provider-effect test** — prove that app state causes a host-visible provider effect (DOM attribute, visible text/layout/style change, etc.), not only that an atom changed.
+- **Persistence-contract test** — seed restore state using the same serialization contract production uses, then prove the mounted UI/owner is correct.
+
+During scaffold, prioritize these focused route-navigation and milestone browser checks over broader business-logic test expansion. Add finer-grained behavioral tests when the user explicitly asks for them or when a specific invariant is risky enough to justify the extra surface.
 
 Initial smoke-test pitfall checklist:
 

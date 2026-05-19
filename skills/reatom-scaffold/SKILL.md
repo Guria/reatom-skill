@@ -79,6 +79,8 @@ This skill is not the best fit for ordinary bug fixing or API lookup in an exist
 - A test edit is not a test fix until the narrow proving command has been rerun and passed. Report the command and result, not the expectation.
 - Do not stage or commit a baseline unless the user explicitly asked for it, and even then prefer the validated Step 12 baseline.
 - After the first green pipeline, keep following `GOAL.md` and this scaffold flow. Use the referenced routing material for the routing-only pass, validate the skeleton, add browser checks that prove the routes are navigable, and only then resume broader implementation guidance.
+- Do not let browser proof stop at the root smoke test. As the app gains gated routes, multiple route owners, or provider-driven persisted settings, upgrade the real-browser harness to exercise those exact runtime paths before calling the feature stable.
+- Prefer one focused browser test per runtime seam: route ownership, gated access, provider effect, or persistence restore. Each should start from the real boundary, perform one visible action, assert owner/UI change, and fail on runtime errors.
 - When bootstrap finishes, switch to the `reatom-feedback-loop` skill's pitfall summary flow so the run improves the skill, not only the project.
 
 ## Completion contract
@@ -90,6 +92,7 @@ For the default recommended flow, that means the agent should normally complete 
 - the promised validation commands are wired and pass
 - a browser-level smoke check passes on the scaffolded baseline
 - once routes exist, browser tests prove the important routes are navigable and stay aligned with the evolving route tree
+- once gated routes, multiple route owners, or provider/persistence features exist, browser proofs cover those exact runtime paths instead of relying only on baseline validate
 - the project's single validation entry point passes
 - any additional runtime harness promised during bootstrap also runs successfully
 - only after that, a separate routing-scheme pass driven by `GOAL.md`
